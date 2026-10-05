@@ -140,14 +140,20 @@ lk_panel_start( 'Configurações', 'config' );
 
 
 	<section class="card step" id="ia">
-		<div class="card-head"><h3>IA (Gemini)</h3><span class="muted small">legendas, ideias do mês, revisão de texto e mensagens de prospecção</span></div>
-		<p class="muted small">Use a chave da API do Gemini que a agência já tem (Google AI Studio → Obter chave de API). O uso é cobrado pelo Google conforme o plano da conta.</p>
+		<div class="card-head"><h3>IA (Groq, Gemini, Mistral…)</h3><span class="muted small">legendas, ideias do mês, revisão de texto e mensagens de prospecção</span></div>
+		<p class="muted small">Escolha qual IA usar e cole a chave dela. <b>Groq</b> tem plano grátis sem cartão (console.groq.com → API Keys); o <b>Gemini</b> e a <b>Mistral</b> também têm plano grátis. Preencha só a do provedor que for usar.</p>
 		<div class="grid-3">
-			<?php lk_input( 'gemini_key', 'Chave da API do Gemini', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'gemini_key' ) ) . '"' ); ?>
-			<?php lk_input( 'gemini_model', 'Modelo', $s['gemini_model'], 'text', 'placeholder="gemini-2.5-flash"' ); ?>
+			<?php lk_select( 'ai_choice', 'IA em uso', array( '' => 'Automática (a primeira com chave)', 'groq' => 'Groq (grátis)', 'gemini' => 'Gemini', 'mistral' => 'Mistral', 'openrouter' => 'OpenRouter' ), $s['ai_choice'] ); ?>
+			<?php lk_input( 'groq_key', 'Chave da Groq', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'groq_key' ) ) . '"' ); ?>
+			<?php lk_input( 'groq_model', 'Modelo da Groq', $s['groq_model'], 'text', 'placeholder="llama-3.3-70b-versatile"' ); ?>
+			<?php lk_input( 'gemini_key', 'Chave do Gemini', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'gemini_key' ) ) . '"' ); ?>
+			<?php lk_input( 'gemini_model', 'Modelo do Gemini', $s['gemini_model'], 'text', 'placeholder="gemini-2.5-flash"' ); ?>
+			<?php lk_input( 'mistral_key', 'Chave da Mistral', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'mistral_key' ) ) . '"' ); ?>
+			<?php lk_input( 'mistral_model', 'Modelo da Mistral', $s['mistral_model'], 'text', 'placeholder="mistral-small-latest"' ); ?>
+			<?php lk_input( 'openrouter_key', 'Chave do OpenRouter', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'openrouter_key' ) ) . '"' ); ?>
 			<div class="field"><span>&nbsp;</span><?php lk_action_button( 'ai_test', array(), 'Testar a IA', 'btn btn--ghost' ); ?></div>
 		</div>
-		<p class="muted small">Dica: modelos "flash" são rápidos e baratos (ótimos para legendas); modelos "pro" pensam mais e custam mais. Salve a chave antes de testar.</p>
+		<p class="muted small">Salve as chaves antes de testar. Se o teste mostrar "limite grátis atingido", espere um minuto. Não envie dados sensíveis de clientes em planos grátis.</p>
 	</section>
 
 	<section class="card step" id="seguranca">

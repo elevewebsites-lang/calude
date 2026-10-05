@@ -16,11 +16,54 @@ function lk_gemini_key() {
 	return (string) lk_decrypt( lk_setting( 'gemini_key' ) );
 }
 
+/** Provedores no formato OpenAI (Groq, Mistral, OpenRouter): chave, endereço e modelo padrão. */
+function lk_ai_oai() {
+	return array(
+		'groq'       => array( 'Groq', 'https://api.groq.com/openai/v1/chat/completions', 'llama-3.3-70b-versatile' ),
+		'mistral'    => array( 'Mistral', 'https://api.mistral.ai/v1/chat/completions', 'mistral-small-latest' ),
+		'openrouter' => array( 'OpenRouter', 'https://openrouter.ai/api/v1/chat/completions', 'meta-llama/llama-3.3-70b-instruct:free' ),
+	);
+}
+
+function lk_ai_key( $prov ) {
+	return 'gemini' === $prov ? lk_gemini_key() : (string) lk_decrypt( lk_setting( $prov . '_key' ) );
+}
+
 function lk_ai_provider() {
-	if ( lk_gemini_key() ) {
-		return 'gemini';
+	$choice = (string) lk_setting( 'ai_choice' );
+	$all    = array_merge( array( 'gemini' ), array_keys( lk_ai_oai() ) );
+	if ( in_array( $choice, $all, true ) && lk_ai_key( $choice ) ) {
+		return $choice;
+	}
+	foreach ( $all as $prov ) {
+		if ( lk_ai_key( $prov ) ) {
+			return $prov;
+		}
 	}
 	return lk_decrypt( lk_setting( 'anthropic_key' ) ) ? 'anthropic' : '';
+}
+
+function lk_ai_label( $prov ) {
+	$oai = lk_ai_oai();
+	if ( isset( $oai[ $prov ] ) ) {
+		return $oai[ $prov ][0] . ' · ' . ( trim( (string) lk_setting( $prov . '_model' ) ) ?: $oai[ $prov ][2] );
+	}
+	return 'gemini' === $prov ? 'Gemini · ' . ( trim( (string) lk_setting( 'gemini_model' ) ) ?: 'gemini-2.5-flash' ) : 'Anthropic';
+}
+
+/** Mensagem clara para erros comuns de IA (chave, limite grátis, modelo). */
+function lk_ai_http_error( $name, $code, $json ) {
+	$msg = (string) ( $json['error']['message'] ?? ( is_string( $json['error'] ?? null ) ? $json['error'] : '' ) );
+	if ( 401 === $code || 403 === $code ) {
+		return new WP_Error( 'lk', $name . ': a chave foi recusada. Confira se copiou a chave inteira, sem espaços, e se ela está ativa.' . ( $msg ? ' (' . $msg . ')' : '' ) );
+	}
+	if ( 429 === $code ) {
+		return new WP_Error( 'lk', $name . ': o limite grátis foi atingido por agora. Espere um minuto e tente de novo (ou troque de provedor em Configurações → IA).' );
+	}
+	if ( 404 === $code ) {
+		return new WP_Error( 'lk', $name . ': modelo não encontrado. Confira o nome do modelo em Configurações → IA.' . ( $msg ? ' (' . $msg . ')' : '' ) );
+	}
+	return new WP_Error( 'lk', $name . ': ' . ( $msg ?: 'erro ' . $code ) );
 }
 
 function lk_ai_ready() {
@@ -32,7 +75,7 @@ function lk_ai_call( $prompt, $o = array() ) {
 	$o    = $o + array( 'system' => '', 'json' => false, 'temperature' => 0.8, 'max' => 8192 );
 	$prov = lk_ai_provider();
 	if ( ! $prov ) {
-		return new WP_Error( 'lk', 'Coloque a chave do Gemini em Configurações → IA para usar este recurso.' );
+		return new WP_Error( 'lk', 'Coloque a chave de uma IA (Groq, Gemini, Mistral…) em Configurações → IA para usar este recurso.' );
 	}
 	if ( 'gemini' === $prov ) {
 		$model = trim( (string) lk_setting( 'gemini_model' ) ) ?: 'gemini-2.5-flash';
@@ -52,7 +95,7 @@ function lk_ai_call( $prompt, $o = array() ) {
 		}
 		$json = json_decode( wp_remote_retrieve_body( $res ), true );
 		if ( wp_remote_retrieve_response_code( $res ) >= 300 || isset( $json['error'] ) ) {
-			return new WP_Error( 'lk', 'Gemini: ' . ( $json['error']['message'] ?? 'erro ' . wp_remote_retrieve_response_code( $res ) ) );
+			return lk_ai_http_error( 'Gemini', (int) wp_remote_retrieve_response_code( $res ), $json );
 		}
 		if ( ! empty( $json['promptFeedback']['blockReason'] ) ) {
 			return new WP_Error( 'lk', 'O Gemini recusou este texto (' . $json['promptFeedback']['blockReason'] . '). Reformule e tente de novo.' );
@@ -64,6 +107,28 @@ function lk_ai_call( $prompt, $o = array() ) {
 			}
 		}
 		return '' !== trim( $text ) ? trim( $text ) : new WP_Error( 'lk', 'O Gemini não devolveu texto. Tente de novo.' );
+	}
+	$oai = lk_ai_oai();
+	if ( isset( $oai[ $prov ] ) ) {
+		$msgs = array();
+		if ( $o['system'] ) {
+			$msgs[] = array( 'role' => 'system', 'content' => $o['system'] );
+		}
+		$msgs[] = array( 'role' => 'user', 'content' => $prompt );
+		$body   = array( 'model' => trim( (string) lk_setting( $prov . '_model' ) ) ?: $oai[ $prov ][2], 'messages' => $msgs, 'temperature' => (float) $o['temperature'], 'max_tokens' => min( 4096, (int) $o['max'] ) );
+		if ( $o['json'] && 'openrouter' !== $prov ) {
+			$body['response_format'] = array( 'type' => 'json_object' );
+		}
+		$res = wp_remote_post( $oai[ $prov ][1], array( 'timeout' => 90, 'headers' => array( 'Content-Type' => 'application/json', 'Authorization' => 'Bearer ' . lk_ai_key( $prov ) ), 'body' => wp_json_encode( $body ) ) );
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		$json = json_decode( wp_remote_retrieve_body( $res ), true );
+		if ( wp_remote_retrieve_response_code( $res ) >= 300 || isset( $json['error'] ) ) {
+			return lk_ai_http_error( $oai[ $prov ][0], (int) wp_remote_retrieve_response_code( $res ), (array) $json );
+		}
+		$text = (string) ( $json['choices'][0]['message']['content'] ?? '' );
+		return '' !== trim( $text ) ? trim( $text ) : new WP_Error( 'lk', $oai[ $prov ][0] . ' não devolveu texto. Tente de novo.' );
 	}
 	$res = wp_remote_post(
 		'https://api.anthropic.com/v1/messages',
@@ -277,5 +342,5 @@ function lk_do_ai_test() {
 	if ( is_wp_error( $t ) ) {
 		lk_back( 'A IA não respondeu: ' . $t->get_error_message(), 'erro' );
 	}
-	lk_back( 'IA funcionando ✓ (' . ( 'gemini' === lk_ai_provider() ? 'Gemini · ' . ( lk_setting( 'gemini_model' ) ?: 'gemini-2.5-flash' ) : 'Anthropic' ) . '). Resposta: ' . mb_substr( $t, 0, 40 ) );
+	lk_back( 'IA funcionando ✓ (' . lk_ai_label( lk_ai_provider() ) . '). Resposta: ' . mb_substr( $t, 0, 40 ) );
 }
