@@ -148,6 +148,8 @@ function lk_route() {
 			'feedback'    => array( 'feedback', '' ),
 			'novidades'   => array( 'novidades', '' ),
 			'ajuda'       => array( 'ajuda', '' ),
+			'ranking'     => array( 'ranking', '' ),
+			'gamificacao' => array( 'gamificacao', 'admin' ),
 		);
 
 		if ( ! isset( $map[ $section ] ) || lk_page_off( $section ) ) {

@@ -110,6 +110,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 			'tarefas'   => array( 'Tarefas', 'tarefas', 'tarefas' ),
 			'foco'      => array( 'Modo foco', 'alvo', '' ),
 			'chat'      => array( 'Chat da equipe', 'chat', '' ),
+			'ranking'   => array( 'Ranking e prêmios', 'alvo', '' ),
 			'apontamentos' => array( 'Apontamentos', 'alvo', '' ),
 		),
 		'Clientes' => array(
@@ -137,6 +138,9 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 			'feedback'   => array( 'Feedback', 'chat', '' ),
 		),
 	);
+	if ( ! lk_game_on() ) {
+		unset( $items['Operação']['ranking'] );
+	}
 	$today_count = lk_count_today_tasks();
 	$fb_open     = lk_feedback_open_count();
 	// Apontamentos: some do menu quando o botão está desligado e não sobrou nenhum aberto.
@@ -183,6 +187,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 			<?php if ( lk_is_admin() ) : ?>
 				<span class="side-label">Admin</span>
 				<a href="<?php echo esc_url( lk_panel_url( 'equipe' ) ); ?>" class="<?php echo 'equipe' === $active ? 'is-active' : ''; ?>"><?php echo lk_icon( 'equipe' ); // phpcs:ignore ?><span>Equipe</span></a>
+				<a href="<?php echo esc_url( lk_panel_url( 'gamificacao' ) ); ?>" class="<?php echo 'gamificacao' === $active ? 'is-active' : ''; ?>"><?php echo lk_icon( 'alvo' ); // phpcs:ignore ?><span>Gamificação</span></a>
 				<a href="<?php echo esc_url( lk_panel_url( 'config' ) ); ?>" class="<?php echo 'config' === $active ? 'is-active' : ''; ?>"><?php echo lk_icon( 'config' ); // phpcs:ignore ?><span>Configurações</span></a>
 				<a href="<?php echo esc_url( lk_panel_url( 'saude' ) ); ?>" class="<?php echo 'saude' === $active ? 'is-active' : ''; ?>"><?php echo lk_icon( 'pulso' ); // phpcs:ignore ?><span>Saúde do sistema</span><?php $hb = lk_health_bad_count(); if ( $hb ) : ?><em class="side-count"><?php echo (int) $hb; ?></em><?php endif; ?></a>
 			<?php endif; ?>
@@ -274,6 +279,9 @@ function lk_client_end() {
 }
 
 function lk_flash_html() {
+	if ( function_exists( 'lk_game_toast_html' ) ) {
+		echo lk_game_toast_html(); // phpcs:ignore WordPress.Security.EscapeOutput -- já escapado lá.
+	}
 	$flash = lk_take_flash();
 	if ( $flash ) {
 		echo '<div class="flash flash--' . esc_attr( $flash[1] ) . '" role="status">' . esc_html( $flash[0] ) . '</div>';

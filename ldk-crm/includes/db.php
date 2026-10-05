@@ -892,7 +892,9 @@ function lk_update( $table, $id, $data ) {
 	if ( in_array( $table, array( 'projects', 'leads', 'quotes', 'posts' ), true ) ) {
 		$data['updated_at'] = lk_now();
 	}
-	return $wpdb->update( lk_table( $table ), $data, array( 'id' => (int) $id ) );
+	$res = $wpdb->update( lk_table( $table ), $data, array( 'id' => (int) $id ) );
+	do_action( 'lk_updated', $table, (int) $id, $data ); // gamificação e afins
+	return $res;
 }
 
 function lk_delete( $table, $id ) {

@@ -2598,3 +2598,15 @@ body.lk.plx-page { background: #010a13 !important; color: #e8f1f6; }
 .lkcrop-zoom { display: flex; align-items: center; gap: 10px; font-size: 13px; }
 .lkcrop-zoom input { flex: 1; }
 .lkcrop-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+/* Gamificação */
+.game-card { display: flex; flex-direction: column; gap: 10px; }
+.game-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.game-lv { font-size: 20px; font-weight: 700; }
+.game-bar { height: 10px; background: var(--line-2, #e5e3de); border-radius: 999px; overflow: hidden; }
+.game-bar i { display: block; height: 100%; background: var(--accent, #14e9ec); border-radius: 999px; }
+.game-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.game-badge { display: flex; flex-direction: column; align-items: center; min-width: 74px; padding: 8px 10px; border-radius: 12px; border: 1px dashed var(--line-2, #ddd); font-size: 22px; opacity: .4; filter: grayscale(1); }
+.game-badge small { font-size: 11px; margin-top: 2px; }
+.game-badge.is-on { opacity: 1; filter: none; border-style: solid; }
+.table-row.is-me { background: var(--accent-soft, rgba(20,233,236,.1)); }
