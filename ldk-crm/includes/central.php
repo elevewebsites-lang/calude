@@ -13,6 +13,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.11.0' => array(
+			'date'  => '2026-10-05',
+			'title' => 'Aprovação com cara de Instagram e logo do cliente',
+			'items' => array(
+				array( '📱', 'Prévia como no Instagram', 'O cliente vê o post já "postado": feed, carrossel, Reels ou Story, com a arte, a legenda e as hashtags em destaque, e a aba "No perfil" mostra a grade com o post novo em primeiro. Dá para passar de um post para o outro.' ),
+				array( '🖼️', 'Logo do cliente', 'A logo aparece na lista de clientes, no dashboard, no painel do cliente e na página de aprovação, no lugar das iniciais.' ),
+			),
+		),
 		'1.10.0' => array(
 			'date'  => '2026-10-05',
 			'title' => 'Prospecção pelo Google',

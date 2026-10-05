@@ -251,6 +251,7 @@ function lk_client_start( $title, $client ) {
 <header class="ctop">
 	<div class="ctop-inner">
 		<a class="ctop-brand" href="<?php echo esc_url( lk_client_link() ); ?>"><?php if ( lk_setting( 'logo' ) ) : ?><img src="<?php echo esc_url( lk_setting( 'logo' ) ); ?>" alt="<?php echo esc_attr( lk_setting( 'empresa' ) ); ?>"><?php endif; ?><span>Área do cliente</span></a>
+		<span class="ctop-who"><?php echo lk_client_avatar_html( $client, 'avatar avatar--sm' ); // phpcs:ignore ?><b><?php echo esc_html( lk_client_label( $client ) ); ?></b></span>
 		<nav class="ctop-nav">
 			<a href="<?php echo esc_url( lk_client_link() ); ?>">Início</a>
 			<a href="<?php echo esc_url( lk_client_link( 'conteudos' ) ); ?>">Conteúdos</a>

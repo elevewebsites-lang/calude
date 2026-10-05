@@ -22,7 +22,7 @@ lk_head( 'Aprovação · ' . $p->title );
 <div class="apx">
 	<header class="apx-top">
 		<?php if ( lk_setting( 'logo' ) ) : ?><img src="<?php echo esc_url( lk_setting( 'logo' ) ); ?>" alt="<?php echo esc_attr( lk_setting( 'empresa' ) ); ?>"><?php endif; ?>
-		<span><?php echo esc_html( lk_client_label( $client ) ); ?></span>
+		<span class="apx-who"><?php echo lk_client_avatar_html( $client, 'avatar avatar--sm' ); // phpcs:ignore ?><?php echo esc_html( lk_client_label( $client ) ); ?></span>
 	</header>
 
 	<main class="apx-main">
@@ -37,42 +37,13 @@ lk_head( 'Aprovação · ' . $p->title );
 			</div>
 		</div>
 
-		<article class="apx-post" aria-label="Prévia do post">
-			<div class="apx-head">
-				<span class="apx-av"><?php echo esc_html( mb_strtoupper( mb_substr( lk_client_label( $client ), 0, 1 ) ) ); ?><?php if ( $avatar ) : ?><img src="<?php echo esc_url( $avatar ); ?>" alt="" onerror="this.remove()"><?php endif; ?></span>
-				<strong><?php echo esc_html( $handle ); ?></strong>
-				<span class="apx-dots" aria-hidden="true">•••</span>
-			</div>
-			<div class="apx-media">
-				<?php if ( ! $media ) : ?>
-					<div class="apx-empty">A arte ainda não foi enviada.</div>
-				<?php else : ?>
-					<div class="apx-slides" data-slides>
-						<?php foreach ( $media as $mi => $m ) : $src = lk_media_src( $p, $mi, $m ); ?>
-							<div class="apx-slide">
-								<?php if ( $src && 'video' === $m['type'] ) : ?><video src="<?php echo esc_url( $src ); ?>" controls playsinline preload="metadata" data-mi="<?php echo (int) $mi; ?>"></video>
-								<?php elseif ( $src ) : ?><img src="<?php echo esc_url( $src ); ?>" alt="Arte <?php echo esc_attr( $p->title ); ?>">
-								<?php else : ?><iframe src="<?php echo esc_url( 'https://drive.google.com/file/d/' . rawurlencode( $m['id'] ) . '/preview' ); ?>" allow="autoplay" loading="lazy"></iframe><?php endif; ?>
-							</div>
-						<?php endforeach; ?>
-					</div>
-					<?php if ( count( $media ) > 1 ) : ?>
-						<span class="apx-count" data-count>1/<?php echo count( $media ); ?></span>
-						<div class="apx-pager" data-pager><?php foreach ( $media as $i => $m ) : ?><i class="<?php echo 0 === $i ? 'is-on' : ''; ?>"></i><?php endforeach; ?></div>
-					<?php endif; ?>
-				<?php endif; ?>
-			</div>
-			<div class="apx-actions" aria-hidden="true">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="#ed4956"><path d="M12 21.35 10.55 20C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z"/></svg>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/></svg>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>
-				<svg class="apx-save" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-			</div>
-			<div class="apx-caption" data-caption>
-				<?php if ( $p->caption ) : ?><strong><?php echo esc_html( $handle ); ?></strong> <?php echo nl2br( esc_html( lk_post_final_caption( $p ) ) ); ?><?php else : ?><em>Sem legenda.</em><?php endif; ?>
-			</div>
-			<button type="button" class="apx-more" data-more hidden>mais</button>
-		</article>
+		<?php
+		$pend_all = lk_posts( 'p.client_id = %d AND ( p.stage = %s OR p.client_status = %s )', array( $p->client_id, lk_stage_for( 'aprovacao' ), 'pendente' ), 'p.scheduled_at, p.id' );
+		$ids      = array_map( function ( $x ) { return (int) $x->id; }, $pend_all );
+		$pos      = array_search( (int) $p->id, $ids, true );
+		$nav      = false === $pos ? array() : array( 'pos' => $pos + 1, 'total' => count( $ids ), 'prev' => $pos > 0 ? lk_post_url( $pend_all[ $pos - 1 ] ) : '', 'next' => $pos < count( $ids ) - 1 ? lk_post_url( $pend_all[ $pos + 1 ] ) : '' );
+		echo lk_ig_preview_html( $p, $client, $media, $ig, $nav ); // phpcs:ignore
+		?>
 
 		<?php if ( $msg ) : ?><div class="apx-msg"><?php echo esc_html( $msg ); ?></div><?php endif; ?>
 		<?php if ( ! $open && ! $msg ) : ?>

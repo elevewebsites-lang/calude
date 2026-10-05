@@ -9,7 +9,7 @@ $report = lk_rows( 'reports', "client_id = %d AND status = 'publicado'", array( 
 lk_client_start( 'Início', $client );
 $first = $client->name ? strtok( $client->name, ' ' ) : lk_client_label( $client );
 ?>
-<section class="chello"><span class="eyebrow">Área do cliente</span><h1>Olá, <?php echo esc_html( $first ); ?>.</h1><p class="muted">Aprove seus conteúdos, veja o calendário e os relatórios.</p></section>
+<section class="chello chello--logo"><?php echo lk_client_avatar_html( $client, 'avatar avatar--xl' ); // phpcs:ignore ?><div><span class="eyebrow">Área do cliente</span><h1>Olá, <?php echo esc_html( $first ); ?>.</h1><p class="muted">Aprove seus conteúdos, veja o calendário e os relatórios.</p></div></section>
 <?php foreach ( $plans as $pl ) : ?>
 	<a class="plan-cta" href="<?php echo esc_url( lk_plan_url( $pl ) ); ?>"><span><strong>📝 Planejamento de <?php echo esc_html( lk_month_label( $pl->period ) ); ?> pronto</strong><small>Veja os temas e as legendas do mês e aprove</small></span><em>Ver e aprovar →</em></a>
 <?php endforeach; ?>
