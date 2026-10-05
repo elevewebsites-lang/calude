@@ -54,7 +54,7 @@ function lk_social_auth_url( $net, $st ) {
 				'client_id'     => lk_setting( 'ig_app_id' ),
 				'redirect_uri'  => rawurlencode( lk_social_redirect( 'instagram' ) ),
 				'response_type' => 'code',
-				'scope'         => 'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_insights,instagram_business_manage_comments',
+				'scope'         => 'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_insights',
 				'state'         => $st,
 				'force_reauth'  => 'true',
 			),
@@ -68,7 +68,7 @@ function lk_social_auth_url( $net, $st ) {
 		array(
 			'client_id'    => lk_setting( 'meta_app_id' ),
 			'redirect_uri' => rawurlencode( lk_social_redirect( 'facebook' ) ),
-			'scope'        => 'pages_show_list,pages_manage_posts,pages_read_engagement,read_insights,business_management',
+			'scope'        => 'pages_show_list,pages_manage_posts,pages_read_engagement,read_insights',
 			'state'        => $st,
 			'auth_type'    => 'rerequest',
 		),
