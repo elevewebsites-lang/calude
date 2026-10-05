@@ -13,6 +13,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.10.0' => array(
+			'date'  => '2026-10-05',
+			'title' => 'Prospecção pelo Google',
+			'items' => array(
+				array( '🔎', 'Buscador de empresas', 'Digite o nicho e a cidade (ex.: engenharia + Taubaté SP) e veja nome, nicho, telefone, site, nota e endereço direto do Google. Marque as que interessam e mande para o Funil de leads, sem duplicar quem já está lá ou já é cliente.' ),
+				array( '📧', 'E-mail e Instagram', 'O botão lê o site da própria empresa e traz o e-mail de contato e o Instagram que ela publica. Também exporta CSV.' ),
+			),
+		),
 		'1.9.0' => array(
 			'date'  => '2026-10-05',
 			'title' => 'Revisão do texto antes de postar e hashtags',

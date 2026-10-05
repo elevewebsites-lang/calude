@@ -70,6 +70,7 @@ function lk_default_settings() {
 		'email_pronto'   => '1',
 		'email_pagamento' => '1',
 		'google_client_id' => '',
+		'places_key'     => '',
 		'google_client_secret' => '',
 		'google_pasta'   => '',
 		'anthropic_key'  => '',

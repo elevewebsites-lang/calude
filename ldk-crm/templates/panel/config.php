@@ -133,6 +133,7 @@ lk_panel_start( 'Configurações', 'config' );
 			<?php lk_input( 'google_client_id', 'Client ID', $s['google_client_id'], 'text', 'autocomplete="off"' ); ?>
 			<?php lk_input( 'google_client_secret', 'Client Secret', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'google_client_secret' ) ) . '"' ); ?>
 			<?php lk_input( 'google_pasta', 'Pasta principal no Drive', $s['google_pasta'], 'text', 'placeholder="' . esc_attr( $s['empresa'] ) . '"' ); ?>
+			<?php lk_input( 'places_key', 'Chave da Places API (Prospecção)', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'places_key' ) ) . '"' ); ?>
 		</div>
 	</section>
 

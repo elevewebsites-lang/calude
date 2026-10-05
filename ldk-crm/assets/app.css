@@ -2705,3 +2705,10 @@ a.dsh-stat:hover { transform: translateY(-2px); }
 .rev-list li { padding: 8px 10px; border-radius: 10px; background: var(--accent-soft, #f3f3f0); } .rev-err { color: #b42318; font-weight: 600; } .rev-warn { color: #7a5a00; } .rev-ok { color: #127a3a; }
 .rev-list code { background: rgba(0,0,0,.07); padding: 1px 5px; border-radius: 5px; } .rev-list em { color: #127a3a; font-style: normal; font-weight: 600; }
 .rev-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; } .rev-tag { border: 1px solid var(--line-2, #ddd); background: transparent; color: inherit; border-radius: 999px; padding: 3px 10px; cursor: pointer; font-size: 13px; } .rev-tag:disabled { opacity: .45; }
+
+/* Prospecção */
+.pros-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+.pros-wrap { overflow-x: auto; } .pros-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.pros-table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.pros-table td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; } .pros-table tr:hover td { background: var(--accent-soft, #f6f6f3); }
+@media (max-width: 720px) { .pros-form { grid-template-columns: 1fr; } }
