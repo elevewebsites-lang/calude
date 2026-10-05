@@ -670,6 +670,7 @@ function lk_do_settings_save() {
 	lk_require( 'admin' );
 	$out = array();
 	$current = lk_settings();
+	$new_ai  = '';
 	foreach ( lk_default_settings() as $key => $default ) {
 		// Campo que não veio no formulário (outra aba): mantém o valor salvo.
 		if ( ! isset( $_POST[ $key ] ) && ! in_array( $key, array( 'melhorenvio_sandbox', 'email_pronto', 'email_boasvindas', 'email_etapas', 'email_pagamento', 'cobranca_auto', 'seg_2fa', 'revisao_obrigatoria' ), true ) ) { // phpcs:ignore WordPress.Security.NonceVerification
@@ -680,15 +681,21 @@ function lk_do_settings_save() {
 		if ( in_array( $key, array( 'google_client_secret', 'smtp_pass', 'anthropic_key', 'gemini_key', 'groq_key', 'mistral_key', 'openrouter_key', 'places_key', 'melhorenvio_token', 'ml_secret', 'shopee_key', 'ig_app_secret', 'meta_app_secret', 'meta_ads_token', 'voz_turn_pass', 'linkedin_client_secret' ), true ) ) {
 			$sec         = 'smtp_pass' === $key ? (string) lk_in( $key, 'raw' ) : trim( (string) lk_in( $key, 'raw' ) );
 			$out[ $key ] = '' === $sec ? $current[ $key ] : lk_encrypt( $sec );
+			if ( '' !== $sec && in_array( $key, array( 'gemini_key', 'groq_key', 'mistral_key', 'openrouter_key' ), true ) ) {
+				$new_ai = substr( $key, 0, -4 ); // chave nova colada agora: essa IA passa a ser a escolhida
+			}
 			continue;
 		}
 		$out[ $key ] = in_array( $key, array( 'colunas', 'categorias_in', 'categorias_out', 'metodos', 'funil', 'origens', 'tipos_preco', 'dificuldades', 'descontos_qtd', 'revenda_descontos', 'caixas', 'taxas_canais', 'retirada_texto', 'empresa_nota', 'etapas_conteudo', 'briefing_perguntas', 'contrato_modelo', 'pacotes' ), true )
 			? lk_in( $key, 'textarea' )
 			: ( in_array( $key, array( 'logo', 'logo_icone', 'favicon', 'site' ), true ) ? lk_in( $key, 'url' ) : lk_in( $key ) );
 	}
+	if ( $new_ai ) {
+		$out['ai_choice'] = $new_ai;
+	}
 	update_option( 'lk_settings', $out );
 	flush_rewrite_rules();
-	lk_back( 'Configurações salvas.' );
+	lk_back( 'Configurações salvas.' . ( $new_ai ? ' IA em uso: ' . $new_ai . '.' : '' ) );
 }
 
 /* -----------------------------------------------------------------------

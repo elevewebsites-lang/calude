@@ -48,7 +48,7 @@ function lk_ai_label( $prov ) {
 	if ( isset( $oai[ $prov ] ) ) {
 		return $oai[ $prov ][0] . ' · ' . ( trim( (string) lk_setting( $prov . '_model' ) ) ?: $oai[ $prov ][2] );
 	}
-	return 'gemini' === $prov ? 'Gemini · ' . ( trim( (string) lk_setting( 'gemini_model' ) ) ?: 'gemini-2.5-flash' ) : 'Anthropic';
+	return 'gemini' === $prov ? 'Gemini · ' . ( trim( (string) lk_setting( 'gemini_model' ) ) ?: 'gemini-flash-latest' ) : 'Anthropic';
 }
 
 /** Mensagem clara para erros comuns de IA (chave, limite grátis, modelo). */
@@ -72,13 +72,33 @@ function lk_ai_ready() {
 
 /** Chama a IA. $o: system, json (bool), temperature, max. Devolve o texto ou WP_Error. */
 function lk_ai_call( $prompt, $o = array() ) {
-	$o    = $o + array( 'system' => '', 'json' => false, 'temperature' => 0.8, 'max' => 8192 );
-	$prov = lk_ai_provider();
-	if ( ! $prov ) {
+	$first = lk_ai_provider();
+	if ( ! $first ) {
 		return new WP_Error( 'lk', 'Coloque a chave de uma IA (Groq, Gemini, Mistral…) em Configurações → IA para usar este recurso.' );
 	}
+	// Tenta a IA escolhida; se ela falhar (chave bloqueada, limite grátis, modelo antigo), tenta as outras que têm chave.
+	$order = array( $first );
+	foreach ( array_merge( array( 'gemini' ), array_keys( lk_ai_oai() ), array( 'anthropic' ) ) as $p ) {
+		if ( $p !== $first && ( 'anthropic' === $p ? (bool) lk_decrypt( lk_setting( 'anthropic_key' ) ) : (bool) lk_ai_key( $p ) ) ) {
+			$order[] = $p;
+		}
+	}
+	$err = null;
+	foreach ( $order as $prov ) {
+		$r = lk_ai_call_one( $prov, $prompt, $o );
+		if ( ! is_wp_error( $r ) ) {
+			return $r;
+		}
+		$err = $err ? $err : $r;
+	}
+	return $err;
+}
+
+function lk_ai_call_one( $prov, $prompt, $o = array() ) {
+	$o = $o + array( 'system' => '', 'json' => false, 'temperature' => 0.8, 'max' => 8192 );
 	if ( 'gemini' === $prov ) {
-		$model = trim( (string) lk_setting( 'gemini_model' ) ) ?: 'gemini-2.5-flash';
+		$model = trim( (string) lk_setting( 'gemini_model' ) );
+		$model = ( '' === $model || 'gemini-2.5-flash' === $model ) ? 'gemini-flash-latest' : $model; // 2.5 sai do ar em out/2026
 		$body  = array(
 			'contents'         => array( array( 'role' => 'user', 'parts' => array( array( 'text' => $prompt ) ) ) ),
 			'generationConfig' => array( 'temperature' => (float) $o['temperature'], 'maxOutputTokens' => (int) $o['max'] ),

@@ -6,7 +6,7 @@
 	function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 	function api(path, data) {
 		return fetch(window.LK.rest + path, { method: 'POST', credentials: 'same-origin', headers: { 'X-WP-Nonce': window.LK.nonce, 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-			.then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || 'Erro.'); return j; }); });
+			.then(function (r) { return r.text().then(function (t) { var j = null; try { j = JSON.parse(t); } catch (e) {} if (!j) throw new Error('O servidor respondeu algo inesperado (código ' + r.status + '). Se persistir, recarregue a página (a sessão pode ter expirado) ou veja se algum plugin de segurança/cache bloqueia /wp-json/.'); if (!r.ok) throw new Error(j.message || ('Erro ' + r.status + '.')); return j; }); });
 	}
 	function fire(node) { node.dispatchEvent(new Event('input', { bubbles: true })); }
 	function addTags(tg, list) {
