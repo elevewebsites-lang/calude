@@ -3234,3 +3234,25 @@ body.lk-lobby { margin: 0; background: #02060b; }
 .avatar--photo { overflow: hidden; padding: 0; }
 .avatar--photo img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
 .avpick-photo { margin: 6px 0 14px; padding: 12px 14px; border: 1px dashed var(--line-2); border-radius: var(--radius-sm); }
+
+/* Login: celular deitado (pouca altura) — porta à esquerda, painel à direita e tudo mais compacto */
+@media (max-height: 640px) and (min-aspect-ratio: 5/4) {
+	.lobby-door { left: 26%; top: 3%; width: 44vw; }
+	.pane-logo { top: 9%; }
+	.pane-logo img { width: min(60%, 220px); max-height: 56px; }
+	.pane-logo b { font-size: clamp(26px, 5vw, 44px); }
+	.lobby-front { justify-content: flex-end; align-items: center; padding: 14px 3vw; }
+	.lobby-form { width: min(420px, 52vw); padding: 12px 14px 14px; }
+	.lobby-form > .muted { display: none; }
+	.lobby-form h1 { margin: 8px 0 4px; font-size: 18px; }
+	.gate-card, .gate-reader { height: 100px; }
+	.gc-av { width: 42px; height: 42px; font-size: 20px; }
+	.gc-info strong { font-size: 14px; }
+	.lobby-form .field { margin-bottom: 7px; }
+	.lobby-form input[type=text], .lobby-form input[type=password] { padding: 8px 12px; min-height: 0; }
+	.lobby-welcome strong { font-size: clamp(20px, 4vw, 34px); }
+	.lobby-copy { display: none; }
+	.lobby-door { transition: transform 2.6s cubic-bezier(.3, .6, .2, 1), left 1.7s ease .1s, width 1.7s ease .1s; }
+	.lobby[data-state="ok"] .lobby-door { left: 50%; width: 94vw; }
+}
+@media (max-width: 380px) { .lobby-front { padding-left: 10px; padding-right: 10px; } .gate-stage { gap: 8px; } }
