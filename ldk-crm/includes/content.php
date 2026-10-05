@@ -302,6 +302,7 @@ function lk_do_post_save() {
 		'revisor_id'     => lk_in( 'revisor_id', 'int' ) ? lk_in( 'revisor_id', 'int' ) : (int) $client->revisor_id,
 		'notes'          => lk_in( 'notes', 'textarea' ),
 		'idea'           => lk_in( 'idea', 'textarea' ),
+		'hashtags'       => lk_in( 'hashtags', 'textarea' ),
 	);
 	$data['deadlines'] = lk_prazos_from_form( $data['scheduled_at'] );
 	$check = $data['scheduled_at'] && ( ! $old || substr( (string) $old->scheduled_at, 0, 7 ) !== substr( $data['scheduled_at'], 0, 7 ) );
@@ -711,6 +712,20 @@ function lk_post_form( $p = null, $client_id = 0, $back = '' ) {
 		<?php lk_input( 'idea', 'Ideia do conteúdo (o cliente vê no planejamento)', $p ? $p->idea : '', 'textarea', 'rows="3" placeholder="Em 1–2 frases: o que vai ser esse post, o objetivo e a ideia visual…"' ); ?>
 		<?php lk_input( 'caption', 'Legenda', $p ? $p->caption : '', 'textarea', 'rows="6" placeholder="A legenda que vai ser publicada…" data-caption' ); ?>
 		<small class="muted" data-caption-count></small>
+		<?php lk_input( 'hashtags', 'Hashtags (entram no fim da legenda ao publicar)', $p ? (string) $p->hashtags : '', 'textarea', 'rows="2" placeholder="#suaempresa #nicho #cidade" data-hashtags' ); ?>
+		<div class="rev-tools">
+			<button type="button" class="btn btn--ghost btn--sm" data-client-tags>#️⃣ Hashtags do cliente</button>
+			<button type="button" class="btn btn--primary btn--sm" data-review>🔎 Revisar texto</button>
+			<small class="muted" data-tag-count></small>
+		</div>
+		<div class="rev-out" data-review-out><?php echo $p ? lk_review_summary_html( $p ) : ''; // phpcs:ignore ?></div>
+		<?php
+		$tagmap = array();
+		foreach ( lk_clients() as $tc ) {
+			$tagmap[ $tc->id ] = (string) $tc->hashtags;
+		}
+		?>
+		<script type="application/json" data-tags-map><?php echo wp_json_encode( $tagmap ); ?></script>
 		<div class="grid-2">
 			<?php lk_input( 'date', 'Dia da publicação', $p && $p->scheduled_at ? substr( $p->scheduled_at, 0, 10 ) : '', 'date', 'data-post-date' ); ?>
 			<?php lk_input( 'time', 'Horário', $p && $p->scheduled_at ? substr( $p->scheduled_at, 11, 5 ) : '10:00', 'time' ); ?>

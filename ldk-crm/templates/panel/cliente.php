@@ -146,6 +146,7 @@ lk_panel_start( $label, 'clientes', $actions );
 				<?php lk_input( 'cnpj', 'CNPJ / CPF', $c->cnpj, 'text', 'data-mask="doc"' ); ?>
 				<?php lk_input( 'rep_cpf', 'CPF do responsável (contrato)', $c->rep_cpf, 'text', 'data-mask="doc"' ); ?>
 				<?php lk_input( 'instagram', 'Instagram', $c->instagram, 'text', 'placeholder="@empresa"' ); ?>
+				<?php lk_input( 'hashtags', 'Hashtags padrão do cliente (para os posts)', (string) $c->hashtags, 'textarea', 'rows="2" placeholder="#suaempresa #nicho #cidade"' ); ?>
 				<?php lk_input( 'site', 'Site', $c->site, 'url', 'placeholder="https://"' ); ?>
 				<div class="grid-2">
 					<?php lk_input( 'whatsapp', 'WhatsApp', $c->whatsapp, 'tel', 'data-mask="phone"' ); ?>

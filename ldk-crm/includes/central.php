@@ -13,6 +13,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.9.0' => array(
+			'date'  => '2026-10-05',
+			'title' => 'Revisão do texto antes de postar e hashtags',
+			'items' => array(
+				array( '🔎', 'Revisar texto', 'Botão no post: confere português, gramática, pontuação e contexto (cliente, briefing, data e feriado da publicação) com IA, mostra o que achou e aplica a correção com um clique. Precisa da chave da Anthropic em Configurações.' ),
+				array( '#️⃣', 'Hashtags', 'Campo de hashtags no post e hashtags padrão na ficha de cada cliente. Entram no fim da legenda ao publicar e o cliente vê o texto final na aprovação. A IA sugere hashtags.' ),
+				array( '🛡️', 'Trava de limites', 'Mais de 2.200 caracteres ou 30 hashtags não é publicado: volta para Revisão com o motivo. Avisos de espaço duplo, link na legenda, hashtag com hífen e texto em maiúsculas.' ),
+				array( '⏰', 'Revisão automática', 'Posts que saem nas próximas 24 h e ainda não foram revisados são conferidos sozinhos, e o social media é avisado se houver pontos.' ),
+			),
+		),
 		'1.8.0' => array(
 			'date'  => '2026-10-05',
 			'title' => 'Dashboard novo, gamificação, vídeo com play e apontamentos',

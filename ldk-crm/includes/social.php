@@ -448,6 +448,16 @@ function lk_publish_post( $p ) {
 		lk_update( 'posts', $p->id, array( 'publish_error' => 'Sem arte.' ) );
 		return;
 	}
+	// Limites do Instagram (legenda e hashtags): não publica; volta para Revisão com o motivo.
+	$block = lk_publish_blockers( $p );
+	if ( $block ) {
+		$why = implode( ' ', $block );
+		lk_update( 'posts', $p->id, array( 'publish_error' => $why, 'stage' => lk_stage_for( 'revisao' ) ) );
+		lk_post_log( $p->id, 'Não publicou: ' . $why );
+		lk_notify( $p->social_id, '⚠️ "' . $p->title . '" não foi publicado: ' . $why, lk_panel_url( 'post', $p->id ) );
+		return;
+	}
+	$p->caption = lk_post_final_caption( $p ); // legenda + hashtags (só em memória; o banco não muda)
 	$urls = null;
 	foreach ( lk_post_networks( $p ) as $net ) {
 		if ( isset( $done[ $net ] ) ) {

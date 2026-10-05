@@ -150,7 +150,7 @@ lk_head( 'Planejamento · ' . lk_month_label( $ym ) . ' · ' . lk_client_label( 
 								<div class="plx-meta"><span class="plx-fmt"><?php echo esc_html( lk_formats()[ $p->format ] ?? '' ); ?></span><?php foreach ( lk_post_networks( $p ) as $n ) : ?><span class="plx-net plx-net--<?php echo esc_attr( $n ); ?>"><?php echo esc_html( lk_networks()[ $n ] ?? $n ); ?></span><?php endforeach; ?><?php $hd = $p->scheduled_at ? lk_is_holiday( $p->scheduled_at ) : null; if ( $hd ) : ?><span class="plx-holb">🔴 <?php echo esc_html( $hd['name'] ); ?></span><?php endif; ?><?php if ( $locked ) : ?><span class="plx-okb">✓ aprovado</span><?php endif; ?></div>
 								<h3><?php echo esc_html( ( $i + 1 ) . '. ' . $p->title ); ?></h3>
 								<?php if ( $p->idea ) : ?><div class="plx-idea"><span>💡 A ideia</span><p><?php echo nl2br( esc_html( $p->idea ) ); ?></p></div><?php endif; ?>
-								<div class="plx-cap"><?php echo $p->caption ? nl2br( esc_html( $p->caption ) ) : '<em>Legenda em produção.</em>'; ?></div>
+								<div class="plx-cap"><?php echo $p->caption ? nl2br( esc_html( lk_post_final_caption( $p ) ) ) : '<em>Legenda em produção.</em>'; ?></div>
 								<?php foreach ( $notes as $n ) : ?><p class="plx-note"><strong><?php echo $n->from_client ? 'Você' : esc_html( lk_setting( 'empresa' ) ); ?>:</strong> <?php echo esc_html( $n->body ); ?></p><?php endforeach; ?>
 								<?php if ( $can ) : ?>
 									<div class="plx-dec" role="radiogroup" aria-label="Sua decisão sobre este post">

@@ -69,7 +69,7 @@ lk_head( 'Aprovação · ' . $p->title );
 				<svg class="apx-save" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
 			</div>
 			<div class="apx-caption" data-caption>
-				<?php if ( $p->caption ) : ?><strong><?php echo esc_html( $handle ); ?></strong> <?php echo nl2br( esc_html( $p->caption ) ); ?><?php else : ?><em>Sem legenda.</em><?php endif; ?>
+				<?php if ( $p->caption ) : ?><strong><?php echo esc_html( $handle ); ?></strong> <?php echo nl2br( esc_html( lk_post_final_caption( $p ) ) ); ?><?php else : ?><em>Sem legenda.</em><?php endif; ?>
 			</div>
 			<button type="button" class="apx-more" data-more hidden>mais</button>
 		</article>

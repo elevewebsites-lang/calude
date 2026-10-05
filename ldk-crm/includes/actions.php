@@ -106,6 +106,7 @@ function lk_do_client_save() {
 		'city'     => lk_in( 'city' ),
 		'rep_cpf'  => lk_in( 'rep_cpf' ),
 		'instagram' => ltrim( lk_in( 'instagram' ), '@' ),
+		'hashtags' => lk_in( 'hashtags', 'textarea' ),
 		'site'     => lk_in( 'site', 'url' ),
 		'source'   => lk_in( 'source' ),
 		'birthday' => lk_in( 'birthday', 'date' ),
