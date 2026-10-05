@@ -76,7 +76,7 @@
 			if (d.need_code) { el.hello.textContent = 'Senha confirmada ✓'; el.role.textContent = 'Falta só o código enviado ao seu e-mail'; }
 			else { el.hello.textContent = 'Seja bem-vindo(a), ' + (d.first || d.name || '') + '!'; el.role.textContent = d.role || ''; }
 			var wait2 = reduce ? 700 : (d.need_code ? 2200 : 3000);
-			setTimeout(function () { gate.classList.add('is-leaving'); }, Math.max(0, wait2 - 550));
+			setTimeout(function () { var l = gate.querySelector('[data-g-loading]'); if (l) l.hidden = false; }, Math.max(0, wait2 - 700));
 			setTimeout(function () { location.href = d.redirect; }, wait2);
 		} else {
 			state('deny', 'ACESSO NEGADO');

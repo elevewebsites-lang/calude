@@ -18,10 +18,12 @@ function lk_lobby_start( $gate = true ) {
 	?>
 <div class="lobby split" <?php echo $gate ? 'data-gate data-endpoint="' . esc_url( rest_url( 'lk/v1/login-card' ) ) . '" data-preview="' . ( '1' === (string) lk_setting( 'login_card' ) ? 1 : 0 ) . '"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?> aria-live="polite">
 	<section class="split-art">
-		<?php if ( $bg ) : ?><div class="split-art-img" style="background-image:url('<?php echo esc_url( $bg ); ?>')" aria-hidden="true"></div><?php else : ?><div class="split-art-svg" aria-hidden="true"><?php echo lk_login_art_svg(); // phpcs:ignore WordPress.Security.EscapeOutput ?></div><?php endif; ?>
+		<?php if ( $bg ) : ?><div class="split-art-img" style="background-image:url('<?php echo esc_url( $bg ); ?>')" aria-hidden="true"></div><?php endif; ?>
 		<i class="led led--top" aria-hidden="true"></i><i class="led led--bot" aria-hidden="true"></i><i class="led led--v" aria-hidden="true"></i>
-		<div class="split-brand"><?php echo lk_lobby_logo(); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
-		<div class="split-text"><span class="eyebrow">Painel da Agência</span><h2>Redes sociais<br><strong>com estratégia.</strong></h2><p>Planejamento, aprovação, publicação e resultados em um só lugar.</p></div>
+		<div class="split-center">
+			<div class="split-brand"><?php echo lk_lobby_logo(); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+			<div class="split-text"><span class="eyebrow">Painel LDK</span><h2>Seja bem-vindo</h2><p>Acesso restrito a pessoas autorizadas. Identifique-se para entrar.</p></div>
+		</div>
 	</section>
 	<main class="lobby-front">
 	<?php
@@ -29,6 +31,7 @@ function lk_lobby_start( $gate = true ) {
 
 function lk_lobby_end() {
 	?>
+	<span class="lobby-loading" data-g-loading hidden><i></i>Abrindo o seu painel…</span>
 	<span class="lobby-copy">© <?php echo esc_html( gmdate( 'Y' ) . ' ' . lk_setting( 'empresa' ) ); ?> <?php echo lk_credit_html( 'dark' ); // phpcs:ignore ?></span>
 	</main>
 </div>

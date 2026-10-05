@@ -41,6 +41,9 @@ function lk_dash_zones() {
 }
 
 function lk_dash_allowed( $id ) {
+	if ( in_array( $id, array( 'hero', 'perfil' ), true ) ) {
+		return false; // perfil + demandas ficam sempre fixos no topo, fora da personalização
+	}
 	$w = lk_dash_widgets()[ $id ] ?? null;
 	if ( ! $w || ! lk_is_team() ) {
 		return false;
@@ -93,10 +96,10 @@ function lk_dash_zone( $zone, $only_on = true ) {
 /** id => array( largura padrão em colunas (de 12), largura MÍNIMA que não corta as informações ). */
 function lk_dash_sizes() {
 	return array(
-		'hero' => array( 12, 6 ), 'stats' => array( 12, 6 ), 'chart' => array( 12, 6 ), 'etapas' => array( 6, 4 ), 'tarefas_semana' => array( 6, 4 ),
-		'comigo' => array( 6, 4 ), 'hoje' => array( 6, 4 ), 'atrasados' => array( 6, 4 ), 'aguardando' => array( 6, 4 ), 'cobrancas' => array( 6, 4 ),
-		'instagram' => array( 6, 4 ), 'reunioes' => array( 6, 4 ), 'datas' => array( 6, 4 ), 'ranking' => array( 6, 4 ), 'contratos' => array( 6, 4 ),
-		'funil' => array( 6, 4 ), 'chat' => array( 6, 5 ), 'formularios' => array( 6, 4 ), 'trafego_resumo' => array( 6, 4 ),
+		'hero' => array( 12, 6 ), 'stats' => array( 12, 6 ), 'chart' => array( 8, 6 ), 'etapas' => array( 4, 4 ), 'tarefas_semana' => array( 4, 4 ),
+		'comigo' => array( 4, 4 ), 'hoje' => array( 4, 4 ), 'atrasados' => array( 4, 4 ), 'aguardando' => array( 4, 4 ), 'cobrancas' => array( 4, 4 ),
+		'instagram' => array( 4, 4 ), 'reunioes' => array( 4, 4 ), 'datas' => array( 4, 4 ), 'ranking' => array( 4, 4 ), 'contratos' => array( 4, 4 ),
+		'funil' => array( 4, 4 ), 'chat' => array( 4, 5 ), 'formularios' => array( 4, 4 ), 'trafego_resumo' => array( 4, 4 ),
 		'perfil' => array( 4, 3 ), 'metas' => array( 4, 3 ), 'andamento' => array( 4, 3 ), 'clientes_ult' => array( 4, 3 ),
 	);
 }

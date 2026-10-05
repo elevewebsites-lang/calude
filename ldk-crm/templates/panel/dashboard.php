@@ -111,6 +111,8 @@ foreach ( array_keys( lk_dash_zones() ) as $zn ) {
 		$vis[ $zid ] = true;
 	}
 }
+$vis['hero']   = true; // sempre no topo: demandas do dia + andamento do mês
+$vis['perfil'] = true; // sempre no topo: nome, função, nível
 ?>
 <?php if ( isset( $vis['hero'] ) ) : ob_start(); ?>
 	<section class="dsh-hero" data-dash="hero">
@@ -361,7 +363,9 @@ $fmax = max( 1, max( array_merge( array( 0 ), array_values( $fcnt ) ) ) );
 
 
 <div class="dw-hint" data-board-hint hidden><span><strong>Organizando o dashboard.</strong> Arraste pelo <b>⠿</b> para mover, pelo canto de baixo para redimensionar e use o <b>×</b> para remover. Cada cartão tem um tamanho mínimo, para as informações não ficarem cortadas. Tudo salva sozinho.</span><button type="button" class="btn btn--primary btn--sm" data-add-open>+ Adicionar cartão</button><?php lk_action_button( 'dash_reset', array(), 'Restaurar o padrão', 'btn btn--link btn--sm', 'Voltar o dashboard ao padrão (posição, tamanho e quais blocos aparecem)?' ); ?></div>
-<div class="dsh-ct"><div class="dsh-board" data-board data-dash-grid>
+<div class="dsh-ct">
+<div class="dsh-top"><?php echo $W['perfil'] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput ?><?php echo $W['hero'] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+<div class="dsh-board" data-board data-dash-grid>
 <?php foreach ( lk_dash_board_ids() as $bid ) : if ( empty( $W[ $bid ] ) ) { continue; } list( $bw, $bh, $bmin ) = lk_dash_size( $bid ); ?>
 <div class="dw <?php echo $bw > 6 ? 'dw--l' : 'dw--s'; ?>" data-dw="<?php echo esc_attr( $bid ); ?>" data-w="<?php echo (int) $bw; ?>" data-h="<?php echo (int) $bh; ?>" data-min="<?php echo (int) $bmin; ?>" style="--w:<?php echo (int) $bw; ?>;--h:<?php echo (int) $bh; ?>">
 	<div class="dw-bar"><span class="dw-grip" title="Arraste para mover">⠿</span><span class="dw-name"><?php echo esc_html( lk_dash_widgets()[ $bid ][0] ); ?></span><span class="dw-btns"><button type="button" data-dw-step="-1" aria-label="Mais estreito">−</button><button type="button" data-dw-step="1" aria-label="Mais largo">+</button><button type="button" data-dw-rm aria-label="Remover este cartão" title="Remover este cartão">×</button></span></div>
