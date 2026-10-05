@@ -258,7 +258,14 @@ function lk_client_start( $title, $client ) {
 	<div class="ctop-inner">
 		<a class="ctop-brand" href="<?php echo esc_url( lk_client_link() ); ?>"><?php if ( lk_setting( 'logo' ) ) : ?><img src="<?php echo esc_url( lk_setting( 'logo' ) ); ?>" alt="<?php echo esc_attr( lk_setting( 'empresa' ) ); ?>"><?php endif; ?><span>Área do cliente</span></a>
 		<span class="ctop-who"><?php echo lk_client_avatar_html( $client, 'avatar avatar--sm' ); // phpcs:ignore ?><b><?php echo esc_html( lk_client_label( $client ) ); ?></b></span>
-		<nav class="ctop-nav">
+		<div class="ctop-tools">
+			<?php echo lk_client_alerts_html( $client ); // phpcs:ignore ?>
+			<?php echo $preview ? '' : lk_bell_html(); // phpcs:ignore ?>
+			<?php lk_theme_button(); ?>
+			<?php if ( ! $preview ) : ?><a href="<?php echo esc_url( lk_url( 'sair' ) ); ?>" class="ctop-out"><?php echo lk_icon( 'sair', 16 ); // phpcs:ignore ?> Sair</a><?php endif; ?>
+		</div>
+	</div>
+	<nav class="ctop-nav"><div class="ctop-nav-in">
 			<a href="<?php echo esc_url( lk_client_link() ); ?>">Início</a>
 			<a href="<?php echo esc_url( lk_client_link( 'conteudos' ) ); ?>">Conteúdos</a>
 			<a href="<?php echo esc_url( lk_client_link( 'aprovacoes' ) ); ?>">Aprovações</a>
@@ -267,12 +274,7 @@ function lk_client_start( $title, $client ) {
 			<a href="<?php echo esc_url( lk_client_link( 'relatorios' ) ); ?>">Relatórios</a>
 			<a href="<?php echo esc_url( lk_client_link( 'mensagens' ) ); ?>">Mensagens</a>
 			<a href="<?php echo esc_url( lk_client_link( 'perfil' ) ); ?>">Meus dados</a>
-			<?php echo lk_client_alerts_html( $client ); // phpcs:ignore ?>
-			<?php echo $preview ? '' : lk_bell_html(); // phpcs:ignore ?>
-			<?php lk_theme_button(); ?>
-			<?php if ( ! $preview ) : ?><a href="<?php echo esc_url( lk_url( 'sair' ) ); ?>" class="ctop-out"><?php echo lk_icon( 'sair', 16 ); // phpcs:ignore ?> Sair</a><?php endif; ?>
-		</nav>
-	</div>
+		</div></nav>
 </header>
 <main class="cmain">
 	<?php lk_flash_html(); ?>
@@ -459,7 +461,7 @@ function lk_existing_client_select( $selected = 0 ) {
 	echo '</select></label>';
 }
 
-function lk_project_options( $empty = 'Sem pedido (tarefa do estúdio)' ) {
+function lk_project_options( $empty = 'Sem projeto (tarefa da agência)' ) {
 	$out = array( '' => $empty );
 	foreach ( lk_projects( 'p.archived = 0' ) as $p ) {
 		$out[ $p->id ] = $p->title;

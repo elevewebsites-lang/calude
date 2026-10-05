@@ -19,9 +19,11 @@ lk_head( 'Entrar' );
 <div class="auth">
 	<div class="auth-side">
 		<?php if ( lk_setting( 'logo' ) ) : ?><img class="auth-logo" src="<?php echo esc_url( lk_setting( 'logo' ) ); ?>" alt="<?php echo esc_attr( lk_setting( 'empresa' ) ); ?>"><?php endif; ?>
+		<div class="auth-art" aria-hidden="false"><?php echo lk_login_art_svg(); // phpcs:ignore WordPress.Security.EscapeOutput -- SVG fixo do tema. ?></div>
 		<div class="auth-side-text">
-			<span class="eyebrow">Painel do estúdio</span>
-			<h2>Ideias que<br><strong>ganham forma.</strong></h2>
+			<span class="eyebrow">Painel da Agência</span>
+			<h2>Redes sociais<br><strong>com estratégia.</strong></h2>
+			<p class="auth-sub">Planejamento, aprovação, publicação e resultados em um só lugar.</p>
 		</div>
 		<span class="auth-copy">© <?php echo esc_html( gmdate( 'Y' ) . ' ' . lk_setting( 'empresa' ) ); ?> <?php echo lk_credit_html( 'dark' ); // phpcs:ignore ?></span>
 	</div>

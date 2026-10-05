@@ -268,7 +268,7 @@ function lk_api_search( WP_REST_Request $r ) {
 		if ( $i >= 8 ) {
 			break;
 		}
-		$out[] = array( 'type' => 'Tarefa', 'title' => $t->title, 'sub' => $t->project_title ? $t->project_title : 'Tarefa do estúdio', 'url' => lk_panel_url( 'tarefa', $t->id ) );
+		$out[] = array( 'type' => 'Tarefa', 'title' => $t->title, 'sub' => $t->project_title ? $t->project_title : 'Tarefa da agência', 'url' => lk_panel_url( 'tarefa', $t->id ) );
 	}
 	return $out;
 }

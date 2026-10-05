@@ -484,7 +484,7 @@ a.table-row:hover, .table-row[data-open]:hover { background: #fafaf8; cursor: po
 
 .lk-auth { background: var(--card); }
 .auth { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); min-height: 100vh; }
-.auth-side { display: flex; flex-direction: column; justify-content: space-between; gap: 40px; padding: 48px; background: var(--ink); color: var(--on-ink); position: relative; overflow: hidden; }
+.auth-side { display: flex; flex-direction: column; justify-content: space-between; gap: 40px; padding: 48px; background: var(--ink); color: #fff; position: relative; overflow: hidden; }
 .auth-side::after { content: ''; position: absolute; width: 520px; height: 520px; right: -200px; bottom: -220px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 65%); }
 .auth-logo { height: 36px; width: auto; align-self: flex-start; position: relative; z-index: 1; }
 .auth-side-text { position: relative; z-index: 1; max-width: 440px; }
@@ -2895,3 +2895,25 @@ input::selection, textarea::selection { background: var(--accent); color: var(--
 .dc-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: 12px; background: var(--card); }
 .dc-mv { display: flex; gap: 4px; } .dc-mv button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line-2); background: transparent; cursor: pointer; color: inherit; }
 .dc-mv button:hover { background: var(--accent-soft); }
+
+/* Login com arte de redes sociais */
+.auth-side { background: radial-gradient(120% 90% at 100% 0, #0a2a44 0, transparent 55%), linear-gradient(160deg, #05080b, #071826 70%, #05080b); gap: 18px; }
+.auth-side::after { background: radial-gradient(circle, rgba(20,233,236,.22) 0%, rgba(20,233,236,0) 65%); }
+.auth-art { position: relative; z-index: 1; flex: 1; min-height: 240px; display: grid; place-items: center; margin: -8px -24px; }
+.auth-art .la { width: 100%; max-width: 560px; max-height: 56vh; height: auto; }
+.la-t { font-family: var(--font); }
+.auth-side-text .eyebrow { color: var(--accent); letter-spacing: .16em; }
+.auth-sub { margin: 12px 0 0; color: #b4c6d4; font-size: 15px; max-width: 38ch; }
+@media (max-width: 900px) { .auth { grid-template-columns: minmax(0, 1fr); } .auth-art { display: none; } .auth-side { padding: 28px 24px; min-height: 0; } .auth-sub { display: none; } }
+
+/* Cabeçalho do cliente em duas linhas: marca/ações em cima, menu embaixo */
+.ctop-inner { display: flex; align-items: center; gap: 14px; flex-wrap: nowrap; padding-top: 10px; padding-bottom: 6px; }
+.ctop-brand { flex: 0 0 auto; min-width: 0; }
+.ctop-who { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.ctop-who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ctop-tools { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+.ctop-nav { display: block; max-width: 1040px; margin: 0 auto; padding: 0 20px 8px; }
+.ctop-nav-in { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; border-top: 1px solid rgba(255,255,255,.12); padding-top: 8px; }
+.ctop-nav-in::-webkit-scrollbar { display: none; }
+.ctop-nav-in a { flex: 0 0 auto; white-space: nowrap; padding: 8px 14px; border-radius: 999px; font-size: 14px; line-height: 1; }
+@media (max-width: 640px) { .ctop-who b, .ctop-brand span { display: none; } .ctop-nav { padding: 0 12px 8px; } }

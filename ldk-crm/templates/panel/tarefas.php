@@ -31,7 +31,7 @@ foreach ( $tasks as $t ) {
 	$by_col[ isset( $by_col[ $t->status ] ) ? $t->status : 'todo' ][] = $t;
 }
 
-$tabs = array( 'todas' => 'Todas', 'minhas' => 'Minhas', 'agencia' => 'Estúdio' );
+$tabs = array( 'todas' => 'Todas', 'minhas' => 'Minhas', 'agencia' => 'Agência' );
 $seg  = '';
 if ( ! $only_mine ) {
 	$seg = '<div class="seg">';
@@ -48,7 +48,7 @@ lk_panel_start( 'Tarefas', 'tarefas', $actions );
 	<?php $pp = lk_get( 'projects', $project ); ?>
 	<p class="muted">Tarefas do pedido <a href="<?php echo esc_url( lk_panel_url( 'pedido', $project ) ); ?>"><?php echo esc_html( $pp ? $pp->title : '' ); ?></a>. <a href="<?php echo esc_url( lk_panel_url( 'tarefas' ) ); ?>">Ver todas</a></p>
 <?php else : ?>
-	<p class="muted small hint">Tarefas do estúdio e dos pedidos: produzir pedidos pagos, chamar leads, combinar entregas… As automáticas (pedido pago, pagamento com problema) entram sozinhas.</p>
+	<p class="muted small hint">Tarefas da agência e dos projetos: produzir pedidos pagos, chamar leads, combinar entregas… As automáticas (pedido pago, pagamento com problema) entram sozinhas.</p>
 <?php endif; ?>
 
 <div class="kanban kanban--tasks" data-kanban="task">
