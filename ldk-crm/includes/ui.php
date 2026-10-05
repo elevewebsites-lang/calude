@@ -108,6 +108,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 			''          => array( 'Dashboard', 'dashboard', '' ),
 			'conteudo'  => array( 'Conteúdo', 'projetos', 'conteudo' ),
 			'planejamento' => array( 'Planejamento do mês', 'lista', 'conteudo' ),
+			'reunioes'  => array( 'Reuniões', 'relogio', '' ),
 			'time'      => array( 'Equipe e demandas', 'equipe', '' ),
 			'tarefas'   => array( 'Tarefas', 'tarefas', 'tarefas' ),
 			'foco'      => array( 'Modo foco', 'alvo', '' ),

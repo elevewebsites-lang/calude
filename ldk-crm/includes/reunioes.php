@@ -30,10 +30,26 @@ function lk_meeting_when( $m ) {
 	return $lab . ' · ' . gmdate( 'H:i', $ts );
 }
 
+function lk_meeting_data( $m ) {
+	return array( 'id' => (int) $m->id, 'client_id' => (int) $m->client_id, 'title' => $m->title, 'date' => gmdate( 'Y-m-d', strtotime( $m->starts_at ) ), 'time' => gmdate( 'H:i', strtotime( $m->starts_at ) ), 'duration' => (int) $m->duration, 'kind' => $m->kind, 'place' => $m->place, 'guests' => $m->guests, 'notes' => (string) $m->notes, 'status' => $m->status );
+}
+
+/** Escolher o cliente numa lista com busca (logo, nome e e-mail), em vez de um campo escondido. */
+function lk_client_picker( $selected = 0 ) {
+	echo '<div class="cpick" data-cpick><input type="hidden" name="client_id" value="' . (int) $selected . '"><span class="cpick-label">Cliente</span>';
+	echo '<div class="cpick-sel" data-cpick-sel hidden></div>';
+	echo '<input type="search" class="cpick-q" placeholder="🔍 Buscar cliente pelo nome…" data-cpick-q autocomplete="off"><ul class="cpick-list" data-cpick-list>';
+	echo '<li><button type="button" data-cid="0" data-cname="Reunião interna" data-cmail="1"><span class="avatar avatar--sm">·</span><span><b>Reunião interna</b><small>sem cliente</small></span></button></li>';
+	foreach ( lk_clients() as $c ) {
+		echo '<li><button type="button" data-cid="' . (int) $c->id . '" data-cname="' . esc_attr( lk_client_label( $c ) ) . '" data-cmail="' . ( is_email( $c->email ) ? 1 : 0 ) . '">' . lk_client_avatar_html( $c, 'avatar avatar--sm' ) . '<span><b>' . esc_html( lk_client_label( $c ) ) . '</b><small>' . esc_html( $c->email ? $c->email : 'sem e-mail cadastrado' ) . '</small></span></button></li>'; // phpcs:ignore WordPress.Security.EscapeOutput
+	}
+	echo '</ul></div>';
+}
+
 function lk_meeting_row_html( $m, $show_client = true ) {
 	$c    = $m->client_id ? lk_get( 'clients', $m->client_id ) : null;
 	$link = $m->place && preg_match( '#^https?://#i', $m->place ) ? '<a class="btn btn--primary btn--sm" href="' . esc_url( $m->place ) . '" target="_blank" rel="noopener">Entrar</a>' : '';
-	$data = array( 'id' => (int) $m->id, 'client_id' => (int) $m->client_id, 'title' => $m->title, 'date' => gmdate( 'Y-m-d', strtotime( $m->starts_at ) ), 'time' => gmdate( 'H:i', strtotime( $m->starts_at ) ), 'duration' => (int) $m->duration, 'kind' => $m->kind, 'place' => $m->place, 'guests' => $m->guests, 'notes' => (string) $m->notes, 'status' => $m->status );
+	$data = lk_meeting_data( $m );
 	$h    = '<li class="meet"><span class="meet-time">' . esc_html( lk_meeting_when( $m ) ) . '</span><span class="meet-main"><strong>' . esc_html( $m->title ) . '</strong><small>' . esc_html( ( $show_client && $c ? lk_client_label( $c ) . ' · ' : '' ) . ( lk_meeting_kinds()[ $m->kind ] ?? '' ) . ( $m->place && ! $link ? ' · ' . $m->place : '' ) ) . '</small></span><span class="meet-btns">' . $link;
 	$h   .= '<button type="button" class="icon-btn" title="Editar / registrar ata" data-open="editar-reuniao-crm" data-reuniao="' . esc_attr( wp_json_encode( $data ) ) . '">' . lk_icon( 'editar', 15 ) . '</button></span></li>';
 	return $h;
@@ -118,15 +134,30 @@ function lk_meeting_modals_html( $client_id = 0 ) {
 	lk_modal_end();
 	?>
 	<script>
+	(function(){
+	function sync(f){var h=f.querySelector('[name=client_id]');if(!h)return;var root=f.querySelector('[data-cpick]'),sel=root.querySelector('[data-cpick-sel]'),btn=root.querySelector('[data-cid="'+(h.value||0)+'"]');
+		if(h.value&&h.value!=='0'&&btn){sel.hidden=false;sel.innerHTML='<span>✓ <b></b></span><button type="button" data-cchange>trocar</button>'+(btn.dataset.cmail==='0'?'<em>sem e-mail na ficha: não dá para avisar</em>':'');sel.querySelector('b').textContent=btn.dataset.cname;root.classList.add('is-picked');}
+		else{sel.hidden=true;sel.innerHTML='';root.classList.remove('is-picked');if(h.value==='0'){h.value='0';}}}
+	window.lkPickSync=sync;
 	document.addEventListener('click',function(e){
-		var b=e.target.closest&&e.target.closest('[data-reuniao],[data-reuniao-client]');if(!b)return;
+		var pb=e.target.closest&&e.target.closest('[data-cpick] [data-cid]');
+		if(pb){var root=pb.closest('[data-cpick]');root.querySelector('[name=client_id]').value=pb.dataset.cid;sync(root.closest('form'));return;}
+		if(e.target.closest&&e.target.closest('[data-cchange]')){var r=e.target.closest('[data-cpick]');r.querySelector('[name=client_id]').value='';sync(r.closest('form'));return;}
+		var b=e.target.closest&&e.target.closest('[data-reuniao],[data-reuniao-client],[data-reuniao-date]');if(!b)return;
 		setTimeout(function(){
 			var f;
-			if(b.dataset.reuniao){var d=JSON.parse(b.dataset.reuniao);f=document.querySelector('#editar-reuniao-crm form, [data-modal="editar-reuniao-crm"] form');if(!f)return;
-				['id','client_id','title','date','time','duration','kind','place','guests','notes','status'].forEach(function(n){var i=f.querySelector('[name='+n+']');if(i)i.value=d[n]==null?'':d[n];});}
-			else if(b.dataset.reuniaoClient){f=document.querySelector('#nova-reuniao-crm form, [data-modal="nova-reuniao-crm"] form');var i=f&&f.querySelector('[name=client_id]');if(i)i.value=b.dataset.reuniaoClient;}
+			if(b.dataset.reuniao){var d=JSON.parse(b.dataset.reuniao);f=document.querySelector('#editar-reuniao-crm form');if(!f)return;
+				['id','client_id','title','date','time','duration','kind','place','guests','notes','status'].forEach(function(n){var i=f.querySelector('[name='+n+']');if(i)i.value=d[n]==null?'':d[n];});sync(f);}
+			else{f=document.querySelector('#nova-reuniao-crm form');if(!f)return;
+				if(b.dataset.reuniaoClient){f.querySelector('[name=client_id]').value=b.dataset.reuniaoClient;}
+				if(b.dataset.reuniaoDate){f.querySelector('[name=date]').value=b.dataset.reuniaoDate;}
+				if(b.dataset.reuniaoTime){f.querySelector('[name=time]').value=b.dataset.reuniaoTime;}
+				sync(f);}
 		},30);
 	});
+	document.addEventListener('input',function(e){var q=e.target;if(!q.matches||!q.matches('[data-cpick-q]'))return;var t=q.value.toLowerCase();q.closest('[data-cpick]').querySelectorAll('[data-cpick-list] li').forEach(function(li){li.hidden=t&&li.textContent.toLowerCase().indexOf(t)<0;});});
+	document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('#nova-reuniao-crm form,#editar-reuniao-crm form').forEach(sync);});
+	})();
 	</script>
 	<?php
 	return ob_get_clean();
@@ -135,7 +166,7 @@ function lk_meeting_modals_html( $client_id = 0 ) {
 function lk_meeting_form( $client_id = 0, $edit = false ) {
 	lk_form( 'reuniao_save', 'stack' );
 	echo '<input type="hidden" name="id" value="0">';
-	lk_select( 'client_id', 'Cliente (opcional)', lk_client_options( '— Sem cliente / interna —' ), $client_id );
+	lk_client_picker( $client_id );
 	lk_input( 'title', 'Assunto', '', 'text', 'required placeholder="Ex.: Alinhamento do mês · Apresentação da proposta"' );
 	echo '<div class="grid-3">';
 	lk_input( 'date', 'Data', lk_today(), 'date', 'required' );

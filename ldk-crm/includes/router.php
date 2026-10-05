@@ -111,6 +111,7 @@ function lk_route() {
 			'chat'        => array( 'chat', '' ),
 			'foco'        => array( 'foco', '' ),
 			'agenda'      => array( 'agenda', 'clientes' ),
+			'reunioes'    => array( 'reunioes', '' ),
 			'relatorios'  => array( 'relatorios', 'relatorios' ),
 			'relatorio'   => array( 'relatorio', 'relatorios' ),
 			'trafego'     => array( 'trafego', 'trafego' ),
