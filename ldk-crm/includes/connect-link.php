@@ -108,3 +108,50 @@ function lk_connect_done( $cid, $msg, $type = 'ok' ) {
 	wp_safe_redirect( lk_connect_url( $cid ) );
 	exit;
 }
+
+/* -----------------------------------------------------------------------
+ * Vigia diário: conta caída ou perto de vencer → avisa o cliente (com o link) e a equipe
+ * -------------------------------------------------------------------- */
+
+add_action( 'lk_daily', 'lk_connect_watch' );
+function lk_connect_watch() {
+	$sent  = (array) get_option( 'lk_connect_alerts', array() );
+	$limit = gmdate( 'Y-m-d H:i:s', time() + 5 * DAY_IN_SECONDS );
+	$team  = array();
+	// Só Instagram e Facebook: são as que o link do cliente reconecta.
+	foreach ( lk_rows( 'social_accounts', "network IN ('instagram','facebook') AND ( status <> 'ok' OR ( expires_at IS NOT NULL AND expires_at < %s ) )", array( $limit ) ) as $a ) {
+		if ( ! empty( $sent[ $a->id ] ) && $sent[ $a->id ] > time() - 5 * DAY_IN_SECONDS ) {
+			continue; // já avisou há pouco
+		}
+		$c = lk_get( 'clients', $a->client_id );
+		if ( ! $c ) {
+			continue;
+		}
+		$rede = lk_networks()[ $a->network ] ?? $a->network;
+		if ( $c->email && ! $c->email_optout ) {
+			lk_mail(
+				$c->email,
+				'Reconecte seu ' . $rede . ' para continuarmos postando',
+				'Precisamos reconectar seu ' . $rede,
+				'A conexão do seu ' . $rede . ( $a->username ? ' (@' . esc_html( $a->username ) . ')' : '' ) . ' com a ' . esc_html( lk_setting( 'empresa' ) ) . ' venceu ou foi interrompida. Sem ela, as publicações agendadas não saem. Leva menos de um minuto: é só entrar na sua conta e autorizar.',
+				array(),
+				'Reconectar agora',
+				lk_connect_url( $c->id )
+			);
+		}
+		$team[] = lk_client_label( $c ) . ' — ' . $rede . ( $a->error ? ' (' . $a->error . ')' : '' );
+		$sent[ $a->id ] = time();
+	}
+	update_option( 'lk_connect_alerts', $sent, false );
+	if ( $team ) {
+		lk_mail(
+			get_option( 'admin_email' ),
+			'Redes sociais para reconectar (' . count( $team ) . ')',
+			'Redes para reconectar',
+			'Estas contas caíram ou estão perto de vencer. O cliente já recebeu o link por e-mail (quando tem e-mail cadastrado):<br>• ' . implode( '<br>• ', array_map( 'esc_html', $team ) ),
+			array(),
+			'Abrir clientes',
+			lk_panel_url( 'clientes' )
+		);
+	}
+}
