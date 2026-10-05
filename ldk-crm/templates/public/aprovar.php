@@ -9,7 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 $client = lk_get( 'clients', $p->client_id );
 $media  = lk_post_media( $p );
 $open   = $p->stage === lk_stage_for( 'aprovacao' ) || 'pendente' === $p->client_status;
-$hist   = lk_rows( 'post_comments', 'post_id = %d AND internal = 0 AND target <> %s', array( $p->id, 'log' ), 'id' );
+$hist   = lk_rows( 'post_comments', "post_id = %d AND internal = 0 AND target NOT IN ('log','apontamento')", array( $p->id ), 'id' );
+$cnotes = lk_post_notes( $p, true );
 $ig     = $client ? lk_social_account( $client->id, 'instagram' ) : null;
 $handle = $ig && $ig->username ? $ig->username : sanitize_title( lk_client_label( $client ) );
 $avatar = $ig && $ig->avatar ? $ig->avatar : '';
@@ -47,15 +48,11 @@ lk_head( 'Aprovação · ' . $p->title );
 					<div class="apx-empty">A arte ainda não foi enviada.</div>
 				<?php else : ?>
 					<div class="apx-slides" data-slides>
-						<?php foreach ( $media as $m ) : ?>
+						<?php foreach ( $media as $mi => $m ) : $src = lk_media_src( $p, $mi, $m ); ?>
 							<div class="apx-slide">
-								<?php if ( 'video' === $m['type'] ) : ?>
-									<?php if ( 0 === strpos( (string) $m['id'], 'wp-' ) ) : ?><video src="<?php echo esc_url( $m['link'] ); ?>" controls playsinline></video><?php else : ?><iframe src="<?php echo esc_url( 'https://drive.google.com/file/d/' . rawurlencode( $m['id'] ) . '/preview' ); ?>" allow="autoplay" loading="lazy"></iframe><?php endif; ?>
-								<?php elseif ( 0 === strpos( (string) $m['id'], 'wp-' ) ) : ?>
-									<img src="<?php echo esc_url( $m['link'] ); ?>" alt="Arte <?php echo esc_attr( $p->title ); ?>">
-								<?php else : ?>
-									<iframe src="<?php echo esc_url( 'https://drive.google.com/file/d/' . rawurlencode( $m['id'] ) . '/preview' ); ?>" loading="lazy"></iframe>
-								<?php endif; ?>
+								<?php if ( $src && 'video' === $m['type'] ) : ?><video src="<?php echo esc_url( $src ); ?>" controls playsinline preload="metadata" data-mi="<?php echo (int) $mi; ?>"></video>
+								<?php elseif ( $src ) : ?><img src="<?php echo esc_url( $src ); ?>" alt="Arte <?php echo esc_attr( $p->title ); ?>">
+								<?php else : ?><iframe src="<?php echo esc_url( 'https://drive.google.com/file/d/' . rawurlencode( $m['id'] ) . '/preview' ); ?>" allow="autoplay" loading="lazy"></iframe><?php endif; ?>
 							</div>
 						<?php endforeach; ?>
 					</div>
@@ -82,6 +79,19 @@ lk_head( 'Aprovação · ' . $p->title );
 			<div class="apx-msg"><?php echo 'aprovado' === $p->client_status ? 'Conteúdo aprovado ✓ Obrigado!' : 'Estamos trabalhando no ajuste. Você recebe de novo para aprovar.'; ?></div>
 		<?php endif; ?>
 
+		<?php if ( $cnotes ) : ?><div class="apx-hist"><p class="apx-hist-t">Apontamentos</p><?php echo lk_notes_html( $p, $cnotes, false ); // phpcs:ignore ?></div><?php endif; ?>
+		<?php if ( $open && $media && lk_note_can_client( $p->client_id ) ) : ?>
+			<details class="apx-hist apx-note"><summary>📌 Fazer apontamento</summary>
+				<form method="post" class="note-form">
+					<?php wp_nonce_field( 'lk_approve_' . $p->id ); ?>
+					<label>Sobre <select name="alvo"><?php foreach ( lk_note_abouts() as $k => $lab ) : ?><option value="<?php echo esc_attr( $k ); ?>"><?php echo esc_html( $lab ); ?></option><?php endforeach; ?></select></label>
+					<label>No tempo do vídeo (opcional) <span class="note-at"><input type="text" name="at" placeholder="0:12" inputmode="numeric"><button type="button" data-grab>📍 Pegar do vídeo</button></span></label>
+					<input type="hidden" name="media_i" value="">
+					<textarea name="comentario" rows="3" placeholder="Escreva o que você quer apontar…" required></textarea>
+					<button type="submit" name="decisao" value="apontar" class="apx-send">Enviar apontamento</button>
+				</form>
+			</details>
+		<?php endif; ?>
 		<?php if ( $hist ) : ?>
 			<div class="apx-hist">
 				<p class="apx-hist-t">Conversa sobre este post</p>
@@ -121,6 +131,7 @@ lk_head( 'Aprovação · ' . $p->title );
 	<?php endif; ?>
 	<footer class="apx-foot"><?php echo lk_credit_html( 'dark' ); // phpcs:ignore ?></footer>
 </div>
+<script src="<?php echo esc_url( LK_URL . 'assets/notes.js?ver=' . LK_VERSION ); ?>"></script>
 <script>
 (function () {
 	// Carrossel: contador e pontinhos.

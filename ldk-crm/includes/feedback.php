@@ -32,9 +32,9 @@ function lk_feedback_allowed() {
 		return false;
 	}
 	if ( lk_is_team() ) {
-		return '1' === (string) lk_setting( 'apontamentos' );
+		return '1' === (string) lk_setting( 'apontamentos' ) && lk_note_can();
 	}
-	return '1' === (string) lk_setting( 'apontamentos_clientes' ) && lk_current_client();
+	return '1' === (string) lk_setting( 'apontamentos_clientes' ) && lk_current_client() && lk_note_can();
 }
 
 function lk_feedback_open_count() {

@@ -405,6 +405,10 @@ function lk_do_post_media() {
 			$media[] = array( 'id' => sanitize_text_field( $f['id'] ), 'name' => sanitize_text_field( $f['name'] ?? '' ), 'size' => (int) ( $f['size'] ?? 0 ), 'link' => esc_url_raw( $f['link'] ?? '' ), 'type' => preg_match( '/\.(mp4|mov|m4v|webm)$/i', $f['name'] ?? '' ) ? 'video' : 'image' );
 		}
 	}
+	$bad = lk_media_check( $p, $media );
+	if ( $bad ) {
+		lk_back( $bad, 'erro' );
+	}
 	// Ordem do carrossel.
 	$order = array_filter( array_map( 'absint', explode( ',', (string) lk_in( 'order' ) ) ), 'is_int' );
 	if ( $order && count( $order ) === count( $media ) ) {
@@ -528,7 +532,9 @@ add_action(
 		}
 		$msg = '';
 		if ( 'POST' === ( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : '' ) && isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'lk_approve_' . $p->id ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-			if ( $p->stage === lk_stage_for( 'aprovacao' ) || 'pendente' === $p->client_status ) {
+			if ( 'apontar' === lk_in( 'decisao' ) ) {
+				$msg = lk_note_from_client( $p );
+			} elseif ( $p->stage === lk_stage_for( 'aprovacao' ) || 'pendente' === $p->client_status ) {
 				$msg = lk_approval_decide( $p, lk_in( 'decisao' ), lk_in( 'alvo' ), lk_in( 'comentario', 'textarea' ), ! lk_is_team() );
 				$p   = lk_get( 'posts', $p->id );
 			} else {

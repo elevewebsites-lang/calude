@@ -186,6 +186,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 			<?php endforeach; ?>
 			<?php if ( lk_is_admin() ) : ?>
 				<span class="side-label">Admin</span>
+				<a href="<?php echo esc_url( lk_panel_url( 'conta' ) ); ?>" class="<?php echo 'conta' === $active ? 'is-active' : ''; ?>"><?php echo lk_icon( 'config' ); // phpcs:ignore ?><span>Minha conta e senha</span></a>
 				<a href="<?php echo esc_url( lk_panel_url( 'equipe' ) ); ?>" class="<?php echo 'equipe' === $active ? 'is-active' : ''; ?>"><?php echo lk_icon( 'equipe' ); // phpcs:ignore ?><span>Equipe</span></a>
 				<a href="<?php echo esc_url( lk_panel_url( 'gamificacao' ) ); ?>" class="<?php echo 'gamificacao' === $active ? 'is-active' : ''; ?>"><?php echo lk_icon( 'alvo' ); // phpcs:ignore ?><span>Gamificação</span></a>
 				<a href="<?php echo esc_url( lk_panel_url( 'config' ) ); ?>" class="<?php echo 'config' === $active ? 'is-active' : ''; ?>"><?php echo lk_icon( 'config' ); // phpcs:ignore ?><span>Configurações</span></a>
@@ -333,6 +334,10 @@ function lk_select( $name, $label, $options, $selected = '', $attrs = '' ) {
 
 function lk_check( $name, $label, $checked = false ) {
 	echo '<label class="check"><input type="checkbox" name="' . esc_attr( $name ) . '" value="1"' . checked( (bool) $checked, true, false ) . '><span>' . esc_html( $label ) . '</span></label>';
+}
+
+function lk_check_named( $name, $value, $label, $checked = false, $disabled = false ) {
+	echo '<label class="check"><input type="checkbox" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '"' . checked( (bool) $checked, true, false ) . ( $disabled ? ' disabled' : '' ) . '><span>' . esc_html( $label ) . '</span></label>';
 }
 
 /* -----------------------------------------------------------------------

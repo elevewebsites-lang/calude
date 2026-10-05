@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	var input = document.querySelector('[data-media-upload]');
 	if (!input || !window.LK) return;
 	var form = input.closest('form'), list = form.querySelector('[data-upfiles]'), hid = form.querySelector('[data-new-media]');
-	var client = input.getAttribute('data-client'), busy = 0;
+	var client = input.getAttribute('data-client'), busy = 0, grid = form.querySelector('[data-media-grid]');
 	var api = function (path, body, isForm) {
 		return fetch(window.LK.rest + path, { method: 'POST', credentials: 'same-origin', headers: isForm ? { 'X-WP-Nonce': window.LK.nonce } : { 'X-WP-Nonce': window.LK.nonce, 'Content-Type': 'application/json' }, body: isForm ? body : JSON.stringify(body) }).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || 'Erro.'); return j; }); });
 	};
@@ -23,6 +23,60 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 	function toggle() { form.querySelectorAll('[data-media-save]').forEach(function (b) { b.disabled = busy > 0; }); }
 
+
+	/* ---- Limites do Instagram (valores vêm do servidor em window.LK_LIMITS) ---- */
+	var L = window.LK_LIMITS || { image_mb: 8, image_max_w: 1440, video_mb: 300, video_min_s: 3, video_max_s: 900, story_mb: 100, story_min_s: 3, story_max_s: 60, carousel_max: 10, video_ext: ['mp4', 'mov'] };
+	function fmtNow() { return (document.querySelector('select[name="format"]') || {}).value || ''; }
+	function mb(n) { return (n / 1048576).toFixed(n > 10485760 ? 0 : 1) + ' MB'; }
+	function reencode(img, file) { // JPEG, até a largura máxima e dentro do peso máximo
+		return new Promise(function (ok) {
+			var jpeg = /^image\/jpeg$/.test(file.type);
+			if (jpeg && file.size <= L.image_mb * 1048576 && img.width <= L.image_max_w) return ok(file);
+			var w = Math.min(img.width, L.image_max_w), h = Math.round(img.height * w / img.width), c = document.createElement('canvas');
+			c.width = w; c.height = h; var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h);
+			(function tryQ(q) { c.toBlob(function (b) { if (b.size > L.image_mb * 1048576 && q > 0.5) return tryQ(q - 0.15); ok(new File([b], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' })); }, 'image/jpeg', q); })(0.92);
+		});
+	}
+	function videoDialog(file) {
+		return new Promise(function (done) {
+			var story = fmtNow() === 'story', maxMb = story ? L.story_mb : L.video_mb, minS = story ? L.story_min_s : L.video_min_s, maxS = story ? L.story_max_s : L.video_max_s;
+			var ext = (file.name.split('.').pop() || '').toLowerCase(), url = URL.createObjectURL(file);
+			var el = document.createElement('div'); el.className = 'lkcrop';
+			el.innerHTML = '<div class="lkcrop-box" role="dialog" aria-modal="true"><div class="lkcrop-head"><strong>Conferir vídeo</strong><span class="muted small">' + file.name + '</span></div>' +
+				'<div class="lkcrop-stage"><video controls playsinline preload="metadata" style="max-width:100%;max-height:360px"></video></div><ul class="lkv-checks"></ul>' +
+				'<div class="lkcrop-actions"><button type="button" class="btn btn--ghost" data-skip>Cancelar</button><button type="button" class="btn btn--primary" data-ok disabled>Usar este vídeo</button></div></div>';
+			document.body.appendChild(el);
+			var v = el.querySelector('video'), ul = el.querySelector('.lkv-checks'), ok = el.querySelector('[data-ok]');
+			function row(level, text) { var li = document.createElement('li'); li.className = 'lkv-' + level; li.textContent = (level === 'ok' ? '✓ ' : level === 'warn' ? '⚠ ' : '✗ ') + text; ul.appendChild(li); return level; }
+			function check(meta) {
+				ul.innerHTML = ''; var bad = 0;
+				bad += row(L.video_ext.indexOf(ext) >= 0 ? 'ok' : 'err', 'Formato .' + ext + (L.video_ext.indexOf(ext) >= 0 ? '' : ' — use MP4 ou MOV')) === 'err';
+				bad += row(file.size <= maxMb * 1048576 ? 'ok' : 'err', 'Tamanho ' + mb(file.size) + ' (máximo ' + maxMb + ' MB' + (story ? ' para Story' : '') + ')') === 'err';
+				if (meta) {
+					var d = meta.duration;
+					bad += row(d >= minS && d <= maxS ? 'ok' : 'err', 'Duração ' + Math.round(d) + ' s (de ' + minS + ' s a ' + (maxS >= 60 ? Math.round(maxS / 60) + ' min' : maxS + ' s') + ')') === 'err';
+					var r = meta.w / meta.h;
+					if (fmtNow() === 'reels' || story) row(Math.abs(r - 0.5625) < 0.03 ? 'ok' : 'warn', 'Proporção ' + meta.w + '×' + meta.h + (Math.abs(r - 0.5625) < 0.03 ? ' (9:16)' : ' — o ideal é vertical 9:16 (1080×1920); pode ser cortado'));
+					row(meta.w >= 540 ? 'ok' : 'warn', 'Resolução ' + meta.w + '×' + meta.h + (meta.w >= 540 ? '' : ' — baixa, vai ficar com pouca qualidade'));
+				} else row('warn', 'Não consegui ler os dados do vídeo neste navegador. Confira se está em H.264/AAC antes de enviar.');
+				ok.disabled = !!bad;
+			}
+			check(null);
+			v.addEventListener('loadedmetadata', function () { check({ duration: v.duration, w: v.videoWidth, h: v.videoHeight }); });
+			v.addEventListener('error', function () { check(null); });
+			v.src = url;
+			function close(res) { URL.revokeObjectURL(url); el.remove(); done(res); }
+			el.querySelector('[data-skip]').onclick = function () { close(null); };
+			ok.onclick = function () { close(file); };
+		});
+	}
+	function prepare(file) {
+		var isVideo = /^video\//.test(file.type) || /\.(mp4|mov|m4v|webm|avi|mkv)$/i.test(file.name);
+		if (isVideo) return videoDialog(file);
+		if (croppable(file)) return cropDialog(file);
+		alert('"' + file.name + '": o Instagram só aceita imagem JPG. Envie JPG, PNG ou WebP (eu converto).');
+		return null;
+	}
 	/* ---- Recorte automático (tamanhos exatos do Instagram) ---- */
 	var RATIOS = [
 		{ k: '4:5',  label: 'Feed 4:5',     w: 1080, h: 1350 },
@@ -84,7 +138,11 @@ document.addEventListener('DOMContentLoaded', function () {
 					zoom = +rg.value; ox = fw / 2 - cx * img.width * scale * zoom; oy = fh / 2 - cy * img.height * scale * zoom; draw();
 				});
 				function close(res) { URL.revokeObjectURL(url); el.remove(); done(res); }
-				el.querySelector('[data-orig]').onclick = function () { close(file); };
+				el.querySelector('[data-orig]').onclick = function () {
+					var ratio = img.width / img.height, fmt = (document.querySelector('select[name="format"]') || {}).value || '';
+					if (fmt !== 'story' && (ratio < 0.8 || ratio > 1.91) && !confirm('Essa proporção (' + img.width + '×' + img.height + ') pode ser recusada pelo Instagram no feed (aceita de 4:5 a 1.91:1). Usar mesmo assim?')) return;
+					reencode(img, file).then(close);
+				};
 				el.querySelector('[data-skip]').onclick = function () { close(null); };
 				el.querySelector('[data-ok]').onclick = function () {
 					var out = document.createElement('canvas'); out.width = r.w; out.height = r.h;
@@ -104,8 +162,12 @@ document.addEventListener('DOMContentLoaded', function () {
 	input.addEventListener('change', function () {
 		var files = Array.prototype.slice.call(input.files), chain = Promise.resolve();
 		input.value = '';
+		if (fmtNow() === 'carrossel') { // carrossel: no máximo 10 itens no total
+			var have = (grid ? grid.querySelectorAll('.media-item').length : 0) + JSON.parse(hid.value || '[]').length, room = L.carousel_max - have;
+			if (files.length > room) { alert('Carrossel aceita no máximo ' + L.carousel_max + ' itens (já tem ' + have + '). Vou usar só os primeiros ' + Math.max(0, room) + '.'); files = files.slice(0, Math.max(0, room)); }
+		}
 		files.forEach(function (orig) {
-			chain = chain.then(function () { return croppable(orig) ? cropDialog(orig) : orig; }).then(function (file) { if (file) send(file); });
+			chain = chain.then(function () { return prepare(orig); }).then(function (file) { if (file) send(file); });
 		});
 	});
 	function send(file) {
@@ -127,7 +189,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 	// Ordem do carrossel (arrastar).
-	var grid = form.querySelector('[data-media-grid]');
 	if (grid) {
 		var drag = null;
 		grid.addEventListener('dragstart', function (e) { drag = e.target.closest('.media-item'); });

@@ -517,6 +517,11 @@ function lk_install_tables() {
 			internal tinyint(1) NOT NULL DEFAULT 0,
 			target varchar(20) NOT NULL DEFAULT 'geral',
 			body text NULL,
+			about varchar(20) NOT NULL DEFAULT '',
+			media_i int(11) NOT NULL DEFAULT -1,
+			at_sec int(11) NOT NULL DEFAULT -1,
+			assignee bigint(20) unsigned NOT NULL DEFAULT 0,
+			resolved tinyint(1) NOT NULL DEFAULT 0,
 			created_at datetime NOT NULL,
 			PRIMARY KEY  (id),
 			KEY post_id (post_id)

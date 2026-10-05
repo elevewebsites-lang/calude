@@ -20,6 +20,17 @@ if ( lk_is_admin() ) {
 	echo '<a class="btn btn--link btn--sm" href="' . esc_url( lk_panel_url( 'feedback' ) ) . '">Feedback do dia a dia →</a></div>';
 }
 ?>
+<?php if ( lk_is_admin() ) : $perm = lk_note_perm(); ?>
+<details class="card"><summary class="card-head" style="cursor:pointer"><h3>Quem pode fazer apontamento</h3><span class="muted small">você decide pessoa por pessoa</span></summary>
+	<?php lk_form( 'note_perm_save', 'stack' ); ?>
+		<h4 style="margin:8px 0 4px">Equipe</h4>
+		<?php foreach ( lk_team_users() as $u ) : ?><?php lk_check_named( 'users[]', $u->ID, $u->display_name . ( lk_is_admin( $u->ID ) ? ' (admin: sempre pode)' : '' ), lk_is_admin( $u->ID ) || '0' !== (string) ( $perm['users'][ $u->ID ] ?? '1' ), lk_is_admin( $u->ID ) ); ?><?php endforeach; ?>
+		<h4 style="margin:12px 0 4px">Clientes</h4>
+		<?php foreach ( lk_clients() as $c ) : ?><?php lk_check_named( 'clients[]', $c->id, lk_client_label( $c ), '0' !== (string) ( $perm['clients'][ $c->id ] ?? '1' ) ); ?><?php endforeach; ?>
+		<div class="form-actions"><button type="submit" class="btn btn--primary">Salvar</button></div>
+	</form>
+</details>
+<?php endif; ?>
 <p class="muted hint">
 	<?php if ( '1' === (string) lk_setting( 'apontamentos' ) ) : ?>
 		Em qualquer tela, o botão <strong>Apontar</strong> (canto de baixo, à esquerda) marca um ponto e guarda o comentário aqui. Clique em <em>Abrir no ponto</em> para ver exatamente onde foi.

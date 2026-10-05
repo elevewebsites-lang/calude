@@ -10,7 +10,16 @@ if ( ! $p ) {
 $client   = lk_get( 'clients', $p->client_id );
 $stages   = lk_stages();
 $media    = lk_post_media( $p );
-$comments = lk_rows( 'post_comments', 'post_id = %d', array( $p->id ), 'id' );
+$comments = lk_rows( 'post_comments', "post_id = %d AND target <> 'apontamento'", array( $p->id ), 'id' );
+$notes    = lk_post_notes( $p );
+$teamu    = array( '' => 'Automático (quem cuida do assunto)' );
+foreach ( lk_team_users() as $tu ) {
+	$teamu[ $tu->ID ] = $tu->display_name;
+}
+$mopts = array( '' => 'Geral' );
+foreach ( $media as $mi => $mm ) {
+	$mopts[ $mi ] = ( $mi + 1 ) . ' · ' . $mm['name'];
+}
 $pub      = lk_json( $p->published );
 $owner    = get_userdata( lk_post_owner( $p ) );
 $send     = get_transient( 'lk_last_send_' . get_current_user_id() );
@@ -75,14 +84,14 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 					<div class="media-grid" data-media-grid>
 						<?php foreach ( $media as $i => $m ) : ?>
 							<figure class="media-item" draggable="true" data-i="<?php echo (int) $i; ?>">
-								<?php if ( 'video' === $m['type'] ) : ?><div class="media-video"><?php echo lk_icon( 'tela', 28 ); // phpcs:ignore ?><span>Vídeo</span></div><?php elseif ( 0 === strpos( (string) $m['id'], 'wp-' ) ) : ?><img src="<?php echo esc_url( $m['link'] ); ?>" alt=""><?php else : ?><div class="media-video"><?php echo lk_icon( 'imagem', 28 ); // phpcs:ignore ?><span>Drive</span></div><?php endif; ?>
+								<?php $src = lk_media_src( $p, $i, $m ); ?><?php if ( $src && 'video' === $m['type'] ) : ?><video class="media-play" src="<?php echo esc_url( $src ); ?>" controls preload="metadata" playsinline data-mi="<?php echo (int) $i; ?>"></video><?php elseif ( $src ) : ?><img src="<?php echo esc_url( $src ); ?>" alt="" loading="lazy"><?php elseif ( 'video' === $m['type'] ) : ?><div class="media-video"><?php echo lk_icon( 'tela', 28 ); // phpcs:ignore ?><span>Vídeo</span></div><?php else : ?><div class="media-video"><?php echo lk_icon( 'imagem', 28 ); // phpcs:ignore ?><span>Drive</span></div><?php endif; ?>
 								<figcaption><a href="<?php echo esc_url( $m['link'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $m['name'] ); ?></a><label class="chk small"><input type="checkbox" name="remove[]" value="<?php echo (int) $i; ?>"> remover</label></figcaption>
 							</figure>
 						<?php endforeach; ?>
 					</div>
 					<?php if ( count( $media ) > 1 ) : ?><p class="muted small">Arraste para mudar a ordem do carrossel.</p><?php endif; ?>
 				<?php endif; ?>
-				<label class="drop drop--file"><input type="file" multiple accept="image/*,video/*" data-media-upload data-client="<?php echo (int) $p->client_id; ?>"><?php echo lk_icon( 'upload', 20 ); // phpcs:ignore ?><span><strong>Subir arte, fotos ou vídeo</strong><small>vídeo grande vai direto para o Drive · carrossel: até 10</small></span></label>
+				<label class="drop drop--file"><input type="file" multiple accept="image/*,video/*" data-media-upload data-client="<?php echo (int) $p->client_id; ?>"><?php echo lk_icon( 'upload', 20 ); // phpcs:ignore ?><span><strong>Subir arte, fotos ou vídeo</strong><small>Instagram: imagem JPG até 8 MB · vídeo MP4/MOV até 300 MB (3 s a 15 min) · Story até 100 MB (60 s) · carrossel até 10 · vídeo grande vai direto para o Drive</small></span></label>
 				<div class="upfiles" data-upfiles></div>
 				<div class="form-actions">
 					<?php if ( $p->stage === lk_stage_for( 'design' ) ) : ?>
@@ -93,6 +102,24 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 					<?php endif; ?>
 				</div>
 			</form>
+		</section>
+
+		<section class="card" id="apontamentos">
+			<div class="card-head"><h3>Apontamentos</h3><span class="muted small"><?php echo count( array_filter( $notes, function ( $n ) { return ! $n->resolved; } ) ); ?> aberto(s)</span></div>
+			<?php if ( lk_note_can() ) : ?><details class="note-new"><summary class="btn btn--primary btn--sm">📌 Fazer apontamento</summary>
+				<?php lk_form( 'post_note', 'stack' ); ?>
+					<input type="hidden" name="id" value="<?php echo (int) $p->id; ?>">
+					<div class="grid-2">
+						<?php lk_select( 'assignee', 'Para quem é', $teamu, '' ); ?>
+						<?php lk_select( 'about', 'Sobre', lk_note_abouts(), 'arte' ); ?>
+						<?php lk_select( 'media_i', 'Em qual arquivo', $mopts, '' ); ?>
+						<label class="field"><span>No tempo do vídeo (mm:ss)</span><span class="note-at"><input type="text" name="at" placeholder="0:12" inputmode="numeric"><button type="button" class="btn btn--ghost btn--sm" data-grab>📍 Pegar do player</button></span></label>
+					</div>
+					<?php lk_input( 'body', 'O que precisa mudar', '', 'textarea', 'rows="3" required placeholder="Ex.: trocar a trilha aos 0:12; texto cortado na lateral"' ); ?>
+					<div class="form-actions"><?php lk_check( 'visible', 'Mostrar também ao cliente (desmarcado = só a equipe vê, antes de chegar nele)', false ); ?><button type="submit" class="btn btn--primary">Enviar apontamento</button></div>
+				</form>
+			</details><?php else : ?><p class="muted small">Seu usuário não está liberado para fazer apontamentos (o administrador decide).</p><?php endif; ?>
+			<?php echo lk_notes_html( $p, $notes, true ); // phpcs:ignore ?>
 		</section>
 
 		<section class="card">
@@ -128,7 +155,9 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 		</div>
 	</aside>
 </div>
+<script>window.LK_LIMITS = <?php echo wp_json_encode( lk_media_limits() ); ?>;</script>
 <script src="<?php echo esc_url( LK_URL . 'assets/media.js?ver=' . LK_VERSION ); ?>"></script>
+<script src="<?php echo esc_url( LK_URL . 'assets/notes.js?ver=' . LK_VERSION ); ?>"></script>
 <script src="<?php echo esc_url( LK_URL . 'assets/content.js?ver=' . LK_VERSION ); ?>"></script>
 <?php
 lk_panel_end();
