@@ -62,9 +62,13 @@ function lk_meetings_widget_html() {
 		$items[] = array( strtotime( $m->starts_at ), lk_meeting_row_html( $m ) );
 	}
 	if ( function_exists( 'lk_calendar_upcoming' ) && lk_google_connected() ) {
-		$ev = lk_calendar_upcoming( 14, 8 );
+		$ev     = lk_calendar_upcoming( 14, 8 );
+		$linked = array_filter( wp_list_pluck( lk_rows( 'meetings', "google_id <> ''", array() ), 'google_id' ) );
 		if ( ! is_wp_error( $ev ) ) {
 			foreach ( $ev as $e ) {
+				if ( in_array( $e['id'], $linked, true ) ) {
+					continue;
+				}
 				$day  = wp_date( 'Y-m-d', $e['start'] );
 				$d    = lk_days_until( $day );
 				$when = ( 0 === $d ? 'Hoje' : ( 1 === $d ? 'Amanhã' : lk_date( $day, 'd/m' ) . ' · ' . lk_dow_short( $day ) ) ) . ( $e['all_day'] ? '' : ' · ' . wp_date( 'H:i', $e['start'] ) );
@@ -175,7 +179,12 @@ function lk_meeting_form( $client_id = 0, $edit = false ) {
 	echo '</div>';
 	lk_select( 'kind', 'Tipo', lk_meeting_kinds(), 'online' );
 	lk_input( 'place', 'Link ou local', '', 'text', 'placeholder="https://meet.google.com/… ou endereço"' );
-	lk_input( 'guests', 'Participantes', '', 'text', 'placeholder="Quem vai participar"' );
+	lk_input( 'guests', 'Participantes (nomes ou e-mails)', '', 'text', 'placeholder="Quem vai participar"' );
+	if ( function_exists( 'lk_google_connected' ) && lk_google_connected() ) {
+		echo '<label class="check"><input type="checkbox" name="google" value="1" checked><span>Criar no Google Agenda com link do Google Meet (os e-mails em "Participantes" recebem o convite do Google)</span></label>';
+	} else {
+		echo '<p class="muted small">Google Agenda não conectado: a reunião fica só no CRM. <a href="' . esc_url( lk_panel_url( 'config' ) . '#google' ) . '">Conectar o Google</a> para criar o link do Meet automaticamente.</p>';
+	}
 	lk_input( 'notes', 'Pauta / ata (uso interno: o cliente não vê)', '', 'textarea', 'rows="4"' );
 	echo '<label class="check"><input type="checkbox" name="avisar" value="1" checked><span>Avisar o cliente por e-mail agora (com link e convite de calendário) e lembrar 10 minutos antes</span></label>';
 	if ( $edit ) {
@@ -195,6 +204,9 @@ function lk_do_reuniao_save() {
 	$id = lk_in( 'id', 'int' );
 	$m  = $id ? lk_get( 'meetings', $id ) : null;
 	if ( $m && lk_in( 'excluir', 'bool' ) ) {
+		if ( $m->google_id && function_exists( 'lk_calendar_delete' ) ) {
+			lk_calendar_delete( $m->google_id );
+		}
 		lk_delete( 'meetings', $m->id );
 		lk_back( 'Reunião excluída.' );
 	}
@@ -224,8 +236,17 @@ function lk_do_reuniao_save() {
 			$data['reminded'] = 0;
 		}
 		lk_update( 'meetings', $m->id, $data );
+		$old = $m;
 		$m   = lk_get( 'meetings', $m->id );
 		$msg = 'Reunião atualizada.';
+		if ( $m->google_id && function_exists( 'lk_calendar_move' ) ) {
+			$g = 'cancelada' === $m->status ? lk_calendar_delete( $m->google_id ) : ( $moved && $data['starts_at'] !== $old->starts_at ? lk_calendar_move( $m->google_id, $date, $time ) : null );
+			if ( is_wp_error( $g ) ) {
+				$msg .= ' (Google Agenda: ' . $g->get_error_message() . ')';
+			} elseif ( $g ) {
+				$msg .= ' Google Agenda atualizado.';
+			}
+		}
 		if ( $avisar && $m->client_id ) {
 			$type = 'cancelada' === $m->status ? 'cancelada' : ( $moved ? 'remarcada' : '' );
 			if ( $type ) {
@@ -237,6 +258,17 @@ function lk_do_reuniao_save() {
 	$data['created_by'] = get_current_user_id();
 	$mid                = lk_insert( 'meetings', $data );
 	$msg                = 'Reunião marcada. Ela aparece no dashboard, na Agenda e na área do cliente.';
+	if ( lk_in( 'google', 'bool' ) && function_exists( 'lk_calendar_create' ) && lk_google_connected() ) {
+		$emails = function_exists( 'lk_parse_emails' ) ? lk_parse_emails( $data['guests'] ) : array();
+		$res    = lk_calendar_create( $title, $date, $time, $data['duration'], $emails, null, 'Reunião com ' . lk_setting( 'empresa' ) . ( $data['place'] ? "\n" . $data['place'] : '' ), 'presencial' !== $data['kind'] );
+		if ( is_wp_error( $res ) ) {
+			$msg .= ' (Não foi possível criar no Google Agenda: ' . $res->get_error_message() . ' Reconecte o Google em Configurações.)';
+		} else {
+			$meet = isset( $res['hangoutLink'] ) ? $res['hangoutLink'] : '';
+			lk_update( 'meetings', $mid, array( 'google_id' => isset( $res['id'] ) ? $res['id'] : '', 'meet_link' => $meet, 'place' => $data['place'] ? $data['place'] : $meet ) );
+			$msg .= $meet ? ' Link do Meet criado.' : ' Criada no Google Agenda.';
+		}
+	}
 	if ( $avisar && $data['client_id'] ) {
 		$msg .= lk_meeting_mail( lk_get( 'meetings', $mid ), 'novo' ) ? ' O cliente recebeu o e-mail com o link.' : ' (O cliente não tem e-mail válido na ficha, então não foi avisado.)';
 	}
@@ -343,4 +375,50 @@ function lk_client_meetings_area_html( $client ) {
 		}
 	}
 	return $soon . $h . '</ul></section>';
+}
+
+/* -----------------------------------------------------------------------
+ * Google Agenda dentro do calendário de reuniões
+ * -------------------------------------------------------------------- */
+
+/** Eventos do Google Agenda de um período (AAAA-MM-DD), que ainda não estão no CRM. Cache de 5 min. */
+function lk_gcal_events( $from, $to ) {
+	if ( ! function_exists( 'lk_google_connected' ) || ! lk_google_connected() ) {
+		return array();
+	}
+	$key = 'lk_gev_' . (int) get_option( 'lk_cal_v', 1 ) . '_' . $from . '_' . $to;
+	$ev  = get_transient( $key );
+	if ( false === $ev ) {
+		$tz  = wp_timezone();
+		$url = add_query_arg(
+			array(
+				'timeMin'      => rawurlencode( ( new DateTime( $from . ' 00:00:00', $tz ) )->format( 'c' ) ),
+				'timeMax'      => rawurlencode( ( new DateTime( $to . ' 00:00:00', $tz ) )->format( 'c' ) ),
+				'singleEvents' => 'true',
+				'orderBy'      => 'startTime',
+				'maxResults'   => 250,
+			),
+			'https://www.googleapis.com/calendar/v3/calendars/primary/events'
+		);
+		$res = lk_google_api( 'GET', $url );
+		$ev  = array();
+		if ( ! is_wp_error( $res ) ) {
+			foreach ( (array) ( $res['items'] ?? array() ) as $e ) {
+				if ( ! empty( $e['extendedProperties']['private']['lk_call'] ) || empty( $e['start']['dateTime'] ) ) {
+					continue; // chamadas rápidas do chat e eventos de dia inteiro ficam de fora
+				}
+				$ev[] = array(
+					'id'    => $e['id'],
+					'title' => $e['summary'] ?? '(sem título)',
+					'start' => strtotime( $e['start']['dateTime'] ),
+					'end'   => strtotime( $e['end']['dateTime'] ?? $e['start']['dateTime'] ),
+					'meet'  => $e['hangoutLink'] ?? '',
+					'link'  => $e['htmlLink'] ?? '',
+				);
+			}
+		}
+		set_transient( $key, $ev, 5 * MINUTE_IN_SECONDS );
+	}
+	$linked = array_filter( wp_list_pluck( lk_rows( 'meetings', "google_id <> ''", array() ), 'google_id' ) );
+	return array_values( array_filter( $ev, function ( $e ) use ( $linked ) { return ! in_array( $e['id'], $linked, true ); } ) );
 }

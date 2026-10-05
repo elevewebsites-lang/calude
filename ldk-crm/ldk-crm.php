@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LDK CRM
  * Description: Modelo base de CRM (painel + área do cliente + orçamentos com pagamento + pedidos em Kanban + financeiro), com segurança, tema e módulos opcionais. Identidade em identity.php.
- * Version: 1.20.0
+ * Version: 1.20.1
  * Author: Eleve Websites
  * Author URI: https://elevewebsites.com.br
  * Text Domain: ldk-crm
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LK_VERSION', '1.20.0' );
+define( 'LK_VERSION', '1.20.1' );
 define( 'LK_FILE', __FILE__ );
 define( 'LK_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LK_URL', plugin_dir_url( __FILE__ ) );

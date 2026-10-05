@@ -40,9 +40,19 @@ $chip = function ( $m, $full = false ) {
 	$t = gmdate( 'H:i', strtotime( $m->starts_at ) );
 	return '<button type="button" class="rm rm--' . esc_attr( $m->status ) . '" data-open="editar-reuniao-crm" data-reuniao="' . esc_attr( wp_json_encode( lk_meeting_data( $m ) ) ) . '" title="' . esc_attr( $t . ' · ' . $m->title . ( $c ? ' · ' . lk_client_label( $c ) : '' ) ) . '"><b>' . esc_html( $t ) . '</b> <span>' . esc_html( $c ? lk_client_label( $c ) : $m->title ) . '</span>' . ( $full && $c ? '<small>' . esc_html( $m->title ) . '</small>' : '' ) . '</button>';
 };
-$n_up = count( lk_meetings_upcoming( 200 ) );
+$gev = lk_gcal_events( $start, $end );
+$gby = array();
+foreach ( $gev as $e ) {
+	$gby[ wp_date( 'Y-m-d', $e['start'] ) ][] = $e;
+}
+$gchip = function ( $e, $full = false ) {
+	$t = wp_date( 'H:i', $e['start'] );
+	return '<a class="rm rm--google" href="' . esc_url( $e['meet'] ? $e['meet'] : $e['link'] ) . '" target="_blank" rel="noopener" title="' . esc_attr( $t . ' · ' . $e['title'] . ' (Google Agenda)' ) . '"><b>' . esc_html( $t ) . '</b> <span>' . esc_html( $e['title'] ) . '</span>' . ( $full ? '<small>Google Agenda' . ( $e['meet'] ? ' · Meet' : '' ) . '</small>' : '' ) . '</a>';
+};
+$gconn = function_exists( 'lk_google_connected' ) && lk_google_connected();
 lk_panel_start( 'Reuniões', 'reunioes', '<button type="button" class="btn btn--primary" data-open="nova-reuniao-crm" data-reuniao-date="' . esc_attr( $today ) . '">' . lk_icon( 'mais', 16 ) . '<span>Marcar reunião</span></button>' );
 ?>
+<?php if ( ! $gconn ) : ?><div class="flash flash--warn">O <strong>Google Agenda não está conectado</strong> (ou a conexão expirou). Sem ele, as reuniões não ganham link do Meet e as antigas do Google não aparecem aqui. <?php if ( lk_is_admin() ) : ?><a class="btn btn--primary btn--sm" href="<?php echo esc_url( lk_panel_url( 'config' ) . '#google' ); ?>">Reconectar o Google</a><?php endif; ?></div><?php endif; ?>
 <section class="card rcal">
 	<div class="rcal-bar">
 		<span class="rcal-nav">
@@ -59,8 +69,19 @@ lk_panel_start( 'Reuniões', 'reunioes', '<button type="button" class="btn btn--
 				<div class="rday<?php echo $in ? '' : ' is-out'; ?><?php echo $day === $today ? ' is-today' : ''; ?>">
 					<span class="rday-n"><?php echo esc_html( (int) gmdate( 'j', strtotime( $day ) ) ); ?></span>
 					<button type="button" class="rday-add" data-open="nova-reuniao-crm" data-reuniao-date="<?php echo esc_attr( $day ); ?>" aria-label="Marcar reunião em <?php echo esc_attr( lk_date( $day ) ); ?>" title="Marcar reunião neste dia">+</button>
-					<?php foreach ( array_slice( $list, 0, 3 ) as $m ) { echo $chip( $m ); // phpcs:ignore WordPress.Security.EscapeOutput ?><?php } ?>
-					<?php if ( count( $list ) > 3 ) : ?><a class="rday-more" href="<?php echo esc_url( $url( 'semana', $day ) ); ?>">+<?php echo (int) ( count( $list ) - 3 ); ?> mais</a><?php endif; ?>
+					<?php
+					$cells = array();
+					foreach ( $list as $m ) {
+						$cells[] = array( strtotime( $m->starts_at ), $chip( $m ) );
+					}
+					foreach ( ( $gby[ $day ] ?? array() ) as $e ) {
+						$cells[] = array( (int) strtotime( wp_date( 'Y-m-d H:i:s', $e['start'] ) ), $gchip( $e ) );
+					}
+					usort( $cells, function ( $a, $b ) { return $a[0] <=> $b[0]; } );
+					foreach ( array_slice( $cells, 0, 3 ) as $cell ) { echo $cell[1]; // phpcs:ignore WordPress.Security.EscapeOutput
+					}
+					?>
+					<?php if ( count( $cells ) > 3 ) : ?><a class="rday-more" href="<?php echo esc_url( $url( 'semana', $day ) ); ?>">+<?php echo (int) ( count( $cells ) - 3 ); ?> mais</a><?php endif; ?>
 				</div>
 			<?php endfor; ?>
 		</div>
@@ -76,14 +97,25 @@ lk_panel_start( 'Reuniões', 'reunioes', '<button type="button" class="btn btn--
 						<?php foreach ( ( $by[ $day ] ?? array() ) as $m ) : $mt = strtotime( $m->starts_at ); $mins = ( (int) gmdate( 'G', $mt ) - $h0 ) * 60 + (int) gmdate( 'i', $mt ); if ( $mins < 0 ) { $mins = 0; } ?>
 							<div class="rweek-ev" style="top:calc(<?php echo (int) $mins; ?> / 60 * var(--px));height:calc(<?php echo (int) max( 30, (int) $m->duration ); ?> / 60 * var(--px) - 2px)"><?php echo $chip( $m, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 						<?php endforeach; ?>
+						<?php foreach ( ( $gby[ $day ] ?? array() ) as $e ) : $mins = max( 0, ( (int) wp_date( 'G', $e['start'] ) - $h0 ) * 60 + (int) wp_date( 'i', $e['start'] ) ); $dur = max( 30, (int) round( ( $e['end'] - $e['start'] ) / 60 ) ); ?>
+							<div class="rweek-ev" style="top:calc(<?php echo (int) $mins; ?> / 60 * var(--px));height:calc(<?php echo (int) $dur; ?> / 60 * var(--px) - 2px)"><?php echo $gchip( $e, true ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+						<?php endforeach; ?>
 					</div>
 				<?php endfor; ?>
 			</div>
 		</div>
 
 	<?php else : ?>
-		<?php if ( ! $all ) : ?><div class="empty"><h3>Nenhuma reunião nos próximos 60 dias</h3><p class="muted">Clique em <strong>Marcar reunião</strong> para começar.</p></div><?php endif; ?>
-		<?php $last = ''; foreach ( $all as $m ) : $day = gmdate( 'Y-m-d', strtotime( $m->starts_at ) ); if ( $day !== $last ) { if ( $last ) { echo '</ul>'; } $dd = lk_days_until( $day ); echo '<h4 class="rlist-day">' . esc_html( 0 === $dd ? 'Hoje' : ( 1 === $dd ? 'Amanhã' : ucfirst( lk_date_long( $day ) ) ) ) . '</h4><ul class="meetings">'; $last = $day; } echo lk_meeting_row_html( $m ); // phpcs:ignore WordPress.Security.EscapeOutput ?><?php endforeach; if ( $last ) { echo '</ul>'; } ?>
+		<?php if ( ! $all && ! $gev ) : ?><div class="empty"><h3>Nenhuma reunião nos próximos 60 dias</h3><p class="muted">Clique em <strong>Marcar reunião</strong> para começar.</p></div><?php endif; ?>
+		<?php $last = ''; $rows = array();
+		foreach ( $all as $m ) {
+			$rows[] = array( strtotime( $m->starts_at ), gmdate( 'Y-m-d', strtotime( $m->starts_at ) ), lk_meeting_row_html( $m ) );
+		}
+		foreach ( $gev as $e ) {
+			$rows[] = array( (int) strtotime( wp_date( 'Y-m-d H:i:s', $e['start'] ) ), wp_date( 'Y-m-d', $e['start'] ), '<li class="meet"><span class="meet-time">' . esc_html( wp_date( 'H:i', $e['start'] ) ) . '</span><span class="meet-main"><strong>' . esc_html( $e['title'] ) . '</strong><small>Google Agenda</small></span><span class="meet-btns">' . ( $e['meet'] ? '<a class="btn btn--primary btn--sm" href="' . esc_url( $e['meet'] ) . '" target="_blank" rel="noopener">Entrar no Meet</a>' : '' ) . '</span></li>' );
+		}
+		usort( $rows, function ( $a, $b ) { return $a[0] <=> $b[0]; } );
+		foreach ( $rows as $row ) : $day = $row[1]; if ( $day !== $last ) { if ( $last ) { echo '</ul>'; } $dd = lk_days_until( $day ); echo '<h4 class="rlist-day">' . esc_html( 0 === $dd ? 'Hoje' : ( 1 === $dd ? 'Amanhã' : ucfirst( lk_date_long( $day ) ) ) ) . '</h4><ul class="meetings">'; $last = $day; } echo $row[2]; // phpcs:ignore WordPress.Security.EscapeOutput ?><?php endforeach; if ( $last ) { echo '</ul>'; } ?>
 	<?php endif; ?>
 </section>
 <p class="muted small">Dica: no <strong>Mês</strong> clique no <strong>+</strong> do dia; na <strong>Semana</strong> clique no horário vazio. Ao marcar com um cliente, ele recebe o e-mail com o link e o lembrete 10 minutos antes.</p>

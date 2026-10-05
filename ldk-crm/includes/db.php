@@ -781,6 +781,8 @@ function lk_install_tables() {
 			guests varchar(255) NOT NULL DEFAULT '',
 			notes text NULL,
 			status varchar(20) NOT NULL DEFAULT 'agendada',
+			google_id varchar(190) NOT NULL DEFAULT '',
+			meet_link varchar(255) NOT NULL DEFAULT '',
 			notified tinyint(1) NOT NULL DEFAULT 0,
 			reminded tinyint(1) NOT NULL DEFAULT 0,
 			created_by bigint(20) unsigned NOT NULL DEFAULT 0,

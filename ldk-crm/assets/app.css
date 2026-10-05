@@ -2976,3 +2976,5 @@ input::selection, textarea::selection { background: var(--accent); color: var(--
 .cpick-sel em { font-style: normal; color: var(--warn-text); font-size: 12.5px; }
 .cpick.is-picked .cpick-q, .cpick.is-picked .cpick-list { display: none; }
 @media (max-width: 720px) { .rday { min-height: 78px; } .rm span { display: none; } .rm { justify-content: center; } }
+.rm--google { text-decoration: none; border-left-style: dashed; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-2); }
+.rm--google:hover { background: var(--accent-soft); }
