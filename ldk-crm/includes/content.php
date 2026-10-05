@@ -353,7 +353,14 @@ function lk_do_post_stage() {
 	lk_require( 'conteudo' );
 	$p = lk_get( 'posts', lk_in( 'id', 'int' ) );
 	if ( $p ) {
-		lk_post_move( $p, sanitize_key( lk_in( 'stage' ) ) );
+		$to = sanitize_key( lk_in( 'stage' ) );
+		if ( $to === lk_stage_for( 'aprovacao' ) && $p->stage !== $to ) {
+			$gate = lk_review_gate( $p, false );
+			if ( $gate ) {
+				lk_back( $gate, 'erro' );
+			}
+		}
+		lk_post_move( $p, $to );
 	}
 	lk_back( 'Etapa atualizada.' );
 }
@@ -451,6 +458,10 @@ function lk_do_post_send() {
 	}
 	if ( ! lk_post_media( $p ) ) {
 		lk_back( 'Esse post ainda não tem arte.', 'erro' );
+	}
+	$gate = lk_review_gate( $p, lk_in( 'forcar', 'bool' ) );
+	if ( $gate ) {
+		lk_back( $gate, 'erro' );
 	}
 	lk_update( 'posts', $p->id, array( 'client_status' => 'pendente', 'sent_at' => lk_now(), 'change_target' => '' ) );
 	lk_post_move( $p, lk_stage_for( 'aprovacao' ), 'Enviado para o cliente aprovar.' );

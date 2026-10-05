@@ -31,6 +31,7 @@ lk_panel_start( 'Configurações', 'config' );
 	<section class="card step" id="producao">
 		<div class="step-head"><span class="step-n">02</span><div><h3>Esteira de conteúdo e funil</h3><p class="muted small">Uma etapa por linha, na ordem. Você pode renomear e criar etapas; abaixo diga qual etapa faz o quê no fluxo automático.</p></div></div>
 		<div class="grid-3">
+			<?php lk_check( 'revisao_obrigatoria', 'Revisão do texto obrigatória antes de enviar ao cliente (confere português, contexto e limites do Instagram)', '1' === (string) ( $s['revisao_obrigatoria'] ?? '1' ) ); ?>
 			<?php lk_input( 'etapas_conteudo', 'Etapas do conteúdo', $s['etapas_conteudo'], 'textarea', 'rows="8" class="mono"' ); ?>
 			<?php lk_input( 'funil', 'Etapas do funil de vendas', $s['funil'], 'textarea', 'rows="8" class="mono"' ); ?>
 			<?php lk_input( 'origens', 'De onde vêm os clientes', $s['origens'], 'textarea', 'rows="8" class="mono"' ); ?>

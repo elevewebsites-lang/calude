@@ -2825,3 +2825,11 @@ img, video, canvas { max-width: 100%; }
 @keyframes cel-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 @media (prefers-reduced-motion: reduce) { .cel-glow, .cel-emoji, .cel-lv strong { animation: none; } .cel.is-in .cel-card { animation: none; transform: none; opacity: 1; } .cel-bar i { animation: none; width: 100%; } }
 @media (max-width: 720px) { .goal-grid { grid-template-columns: minmax(0, 1fr); } .goal-card { padding: 14px; } .goal-ring { width: 80px; height: 80px; } .cel-emoji { font-size: 60px; } .cel-card h2 { font-size: 22px; } }
+
+/* Status das redes */
+.net-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 4px 0 12px; } .net-sum div { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; } .net-sum b { font-size: 22px; } .net-sum span { color: var(--muted); font-size: 12px; margin-left: 4px; } .net-sum i { display: block; height: 6px; border-radius: 99px; background: var(--line); margin-top: 6px; overflow: hidden; } .net-sum u { display: block; height: 100%; background: linear-gradient(90deg, #6c5ce7, #14c8c8); text-decoration: none; }
+.net-cli { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; } .net-cli .avatar { width: 34px; height: 34px; }
+.net-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.net-pill--ok { background: #12b76a22; color: #0e8a50; } .net-pill--erro { background: #f0443822; color: #c2352b; font-weight: 600; } .net-pill--off { background: var(--accent-soft, #f0f0ec); color: var(--muted); }
+.net-act { white-space: nowrap; text-align: right; }
+@media (max-width: 720px) { .net-act { white-space: normal; } .net-table { min-width: 640px; } }

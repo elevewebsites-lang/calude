@@ -13,6 +13,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.13.0' => array(
+			'date'  => '2026-10-05',
+			'title' => 'Status das redes dos clientes, revisão obrigatória e logo no Drive',
+			'items' => array(
+				array( '🔗', 'Redes conectadas (todos os clientes)', 'Tabela com Instagram, Facebook, LinkedIn e YouTube de cada cliente (conectado, pendente ou reconectar), contadores, filtro só pendentes e botão para copiar a mensagem com o link de conexão ou abrir no WhatsApp.' ),
+				array( '🛡️', 'Revisão obrigatória', 'Antes de enviar o post ao cliente, o texto é revisado na hora. Limites do Instagram sempre bloqueiam; pontos de português/contexto bloqueiam a menos que você use "Enviar mesmo assim". No planejamento, nenhum texto pode estourar os limites. Liga/desliga em Configurações.' ),
+				array( '🗂️', 'Logo do cliente no Drive', 'A logo enviada vai também para Clientes/<cliente>/Identidade visual no Google Drive.' ),
+			),
+		),
 		'1.12.0' => array(
 			'date'  => '2026-10-05',
 			'title' => 'Metas da agência e comemorações',

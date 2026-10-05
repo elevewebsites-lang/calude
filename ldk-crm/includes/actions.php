@@ -131,11 +131,17 @@ function lk_do_client_save() {
 		$data['invite_token'] = wp_generate_password( 32, false );
 		$data['status']       = 'convidado';
 		$id                   = lk_insert( 'clients', $data );
+		if ( ! empty( $data['logo'] ) ) {
+			do_action( 'lk_client_logo_saved', $id, $data['logo'] );
+		}
 		lk_back( 'Cliente criado. Copie o link de cadastro (ou mande pelo WhatsApp): ele preenche os dados e cria a senha.', 'ok', lk_panel_url( 'cliente', $id ) );
 	}
 
 	lk_update( 'clients', $id, $data );
 	$client = lk_get( 'clients', $id );
+	if ( ! empty( $data['logo'] ) && ! empty( $_FILES['logo_file']['name'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		do_action( 'lk_client_logo_saved', $id, $data['logo'] ); // cópia na pasta do cliente no Drive
+	}
 
 	// Suporte: atualizar e-mail de acesso e redefinir a senha do cliente.
 	if ( $client && $client->user_id ) {
@@ -659,7 +665,7 @@ function lk_do_settings_save() {
 	$current = lk_settings();
 	foreach ( lk_default_settings() as $key => $default ) {
 		// Campo que não veio no formulário (outra aba): mantém o valor salvo.
-		if ( ! isset( $_POST[ $key ] ) && ! in_array( $key, array( 'melhorenvio_sandbox', 'email_pronto', 'email_boasvindas', 'email_etapas', 'email_pagamento', 'cobranca_auto', 'seg_2fa' ), true ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! isset( $_POST[ $key ] ) && ! in_array( $key, array( 'melhorenvio_sandbox', 'email_pronto', 'email_boasvindas', 'email_etapas', 'email_pagamento', 'cobranca_auto', 'seg_2fa', 'revisao_obrigatoria' ), true ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$out[ $key ] = $current[ $key ];
 			continue;
 		}

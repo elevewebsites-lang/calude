@@ -175,6 +175,10 @@ function lk_do_plan_send() {
 		lk_update( 'posts', $p->id, array( 'plan_id' => $plan->id ) );
 	}
 	if ( lk_in( 'direto', 'bool' ) && lk_is_plan_reviewer() ) {
+		$gate = lk_plan_review_gate( $client, $ym );
+		if ( $gate ) {
+			lk_back( $gate, 'erro' );
+		}
 		lk_update( 'plans', $plan->id, array( 'reviewed_by' => get_current_user_id(), 'reviewed_at' => lk_now(), 'review_note' => '' ) );
 		lk_plan_send_client( lk_get( 'plans', $plan->id ) );
 		lk_back( 'Revisado e enviado para a cliente.' );
@@ -208,6 +212,10 @@ function lk_do_plan_review_ok() {
 	$plan = lk_get( 'plans', lk_in( 'id', 'int' ) );
 	if ( ! $plan || ! lk_is_plan_reviewer() ) {
 		lk_back( 'Só quem revisa o planejamento pode aprovar.', 'erro' );
+	}
+	$gate = lk_plan_review_gate( lk_get( 'clients', $plan->client_id ), $plan->period );
+	if ( $gate ) {
+		lk_back( $gate, 'erro' );
 	}
 	lk_update( 'plans', $plan->id, array( 'reviewed_by' => get_current_user_id(), 'reviewed_at' => lk_now(), 'review_note' => '' ) );
 	lk_plan_send_client( lk_get( 'plans', $plan->id ) );

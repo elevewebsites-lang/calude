@@ -80,6 +80,7 @@ function lk_default_settings() {
 		'shopee_partner_id' => '',
 		'shopee_key'     => '',
 		'taxas_canais'   => "Loja própria | 0 | 0\nMercado Livre | 14 | 6,75\nShopee | 20 | 4\nElo7 | 18 | 0\nAmazon | 15 | 0",
+		'revisao_obrigatoria' => '1',
 		'etapas_conteudo' => "Planejamento\nDesign\nRevisão\nAprovação do cliente\nAgendado\nPublicado",
 		'etapa_planejamento' => 'planejamento',
 		// Prazos de entrega: quantos dias antes da publicação cada etapa precisa estar pronta.

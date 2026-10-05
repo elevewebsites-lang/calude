@@ -61,6 +61,7 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 				<?php endif; ?>
 				<?php if ( in_array( $p->stage, array( lk_stage_for( 'revisao' ), lk_stage_for( 'aprovacao' ) ), true ) && $media ) : ?>
 					<?php lk_action_button( 'post_send', array( 'id' => $p->id ), lk_icon( 'email', 16 ) . '<span>' . ( $p->stage === lk_stage_for( 'revisao' ) ? 'Revisado ✓ enviar para o cliente' : 'Reenviar para o cliente' ) . '</span>', 'btn btn--primary' ); ?>
+					<?php if ( get_transient( 'lk_gate_' . $p->id ) ) : ?><?php lk_action_button( 'post_send', array( 'id' => $p->id, 'forcar' => 1 ), 'Enviar mesmo assim (ignorar a revisão)', 'btn btn--ghost', 'Enviar para o cliente mesmo com os pontos da revisão?' ); ?><?php endif; ?>
 				<?php endif; ?>
 				<?php if ( in_array( $p->stage, array( lk_stage_for( 'revisao' ), lk_stage_for( 'aprovacao' ) ), true ) && $media ) : ?>
 					<?php lk_action_button( 'post_approve_manual', array( 'id' => $p->id ), 'Aprovar manualmente', 'btn btn--ghost', 'Marcar como aprovado pelo cliente (ele aprovou por fora) e agendar?' ); ?>

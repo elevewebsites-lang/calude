@@ -2,8 +2,49 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+$ver   = isset( $_GET['ver'] ) && 'pendentes' === $_GET['ver'] ? 'pendentes' : 'todos'; // phpcs:ignore WordPress.Security.NonceVerification
+$nets  = lk_connect_nets();
+$rows  = array();
+$count = array_fill_keys( array_keys( $nets ), 0 );
+foreach ( lk_clients() as $c ) {
+	$accs = lk_social_accounts( $c->id );
+	$st   = array();
+	$bad  = false;
+	foreach ( $nets as $nk => $ni ) {
+		$st[ $nk ] = lk_net_state( $accs, $nk );
+		if ( 'ok' === $st[ $nk ][0] ) {
+			$count[ $nk ]++;
+		}
+	}
+	if ( 'ok' !== $st['instagram'][0] || 'ok' !== $st['facebook'][0] ) {
+		$bad = true;
+	}
+	$rows[] = array( $c, $st, $bad );
+}
+$total   = count( $rows );
+$show    = 'pendentes' === $ver ? array_filter( $rows, function ( $r ) { return $r[2]; } ) : $rows;
+$pending = count( array_filter( $rows, function ( $r ) { return $r[2]; } ) );
 lk_panel_start( 'Redes conectadas', 'redes' );
 ?>
+<section class="card net-board">
+	<div class="card-head"><h3>Status dos <?php echo (int) $total; ?> clientes</h3>
+		<span class="chips"><a class="btn btn--sm btn--<?php echo 'todos' === $ver ? 'primary' : 'ghost'; ?>" href="<?php echo esc_url( lk_panel_url( 'redes' ) ); ?>">Todos (<?php echo (int) $total; ?>)</a> <a class="btn btn--sm btn--<?php echo 'pendentes' === $ver ? 'primary' : 'ghost'; ?>" href="<?php echo esc_url( lk_panel_url( 'redes', 0, array( 'ver' => 'pendentes' ) ) ); ?>">Só pendentes (<?php echo (int) $pending; ?>)</a></span></div>
+	<div class="net-sum"><?php foreach ( $nets as $nk => $ni ) : ?><div><b><?php echo (int) $count[ $nk ]; ?></b><span>/ <?php echo (int) $total; ?> · <?php echo esc_html( $ni[0] ); ?></span><i><u style="width:<?php echo $total ? (int) round( 100 * $count[ $nk ] / $total ) : 0; ?>%"></u></i></div><?php endforeach; ?></div>
+	<p class="muted small">Pendente = o cliente ainda não conectou. Use <strong>Copiar mensagem</strong> (ou o botão do WhatsApp) para mandar o link: ele entra na conta dele e autoriza, sem passar senha.</p>
+	<div class="pros-wrap"><table class="pros-table net-table">
+		<thead><tr><th>Cliente</th><?php foreach ( $nets as $nk => $ni ) : ?><th><?php echo esc_html( $ni[0] ); ?></th><?php endforeach; ?><th></th></tr></thead>
+		<tbody>
+		<?php foreach ( $show as $r ) : list( $c, $st ) = $r; $msg = lk_connect_message( $c ); ?>
+			<tr>
+				<td><a class="net-cli" href="<?php echo esc_url( lk_panel_url( 'cliente', $c->id ) ); ?>#redes"><?php echo lk_client_avatar_html( $c ); // phpcs:ignore ?><strong><?php echo esc_html( lk_client_label( $c ) ); ?></strong></a></td>
+				<?php foreach ( $nets as $nk => $ni ) : ?><td><span class="net-pill net-pill--<?php echo esc_attr( $st[ $nk ][0] ); ?>"><?php echo esc_html( $st[ $nk ][1] ); ?></span></td><?php endforeach; ?>
+				<td class="net-act"><button type="button" class="btn btn--ghost btn--sm" data-copy="<?php echo esc_attr( $msg ); ?>">Copiar mensagem</button><?php if ( $c->whatsapp ) : ?> <a class="btn btn--wa btn--sm" href="<?php echo esc_url( lk_wa_link( $c->whatsapp, $msg ) ); ?>" target="_blank" rel="noopener"><?php echo lk_icon( 'whatsapp', 14 ); // phpcs:ignore ?><span>WhatsApp</span></a><?php endif; ?></td>
+			</tr>
+		<?php endforeach; ?>
+		<?php if ( ! $show ) : ?><tr><td colspan="<?php echo count( $nets ) + 2; ?>" class="muted">Tudo conectado por aqui. 🎉</td></tr><?php endif; ?>
+		</tbody>
+	</table></div>
+</section>
 <details class="card howto" <?php echo lk_setting( 'ig_app_id' ) ? '' : 'open'; ?>>
 	<summary><strong>Passo a passo: conectar o Instagram de um cliente</strong></summary>
 	<ol>
