@@ -41,7 +41,7 @@ html.fb-mode .fb-bar .fb-btn { box-shadow: 0 0 0 4px rgba(225,29,72,.25); }
 .fb-a:disabled { opacity: .6; }
 .fb-a--main { background: var(--fb); border-color: var(--fb); color: #fff; }
 .fb-a--main:hover { border-color: var(--fb); filter: brightness(1.08); }
-.fb-a--ok { background: var(--ok, #1ab91e); border-color: transparent; color: #fff; }
+.fb-a--ok { background: var(--ok-solid); border-color: transparent; color: #fff; }
 .fb-a--del { margin-right: auto; color: var(--late, #dc2626); border-color: transparent; }
 .fb-toast { position: fixed; left: 18px; bottom: 74px; z-index: 9997; max-width: calc(100vw - 36px); padding: 10px 14px; border-radius: 10px; background: #111; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
 @media (max-width: 720px) {

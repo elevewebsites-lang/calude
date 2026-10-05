@@ -13,6 +13,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.13.1' => array(
+			'date'  => '2026-10-05',
+			'title' => 'Contraste revisado em todo o sistema',
+			'items' => array(
+				array( '🎨', 'Texto selecionado legível', 'No tema escuro, o texto selecionado fica escuro sobre a barra clara (antes ficava branco sobre branco). No tema claro, usa a cor da marca com texto que contrasta.' ),
+				array( '🌓', 'Contraste em todo o projeto', 'Auditoria de todos os pares de texto e fundo nos dois temas: botões, contadores, selos de status, etapas do conteúdo, avisos e cartões agora passam de 4,5:1 (padrão WCAG AA). As cores de destaque e de texto se ajustam sozinhas à cor da marca.' ),
+				array( '⌨️', 'Foco e campos', 'Anel de foco visível em links e botões, placeholders legíveis e preenchimento automático do navegador no tema escuro.' ),
+			),
+		),
 		'1.13.0' => array(
 			'date'  => '2026-10-05',
 			'title' => 'Status das redes dos clientes, revisão obrigatória e logo no Drive',

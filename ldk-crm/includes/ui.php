@@ -653,6 +653,42 @@ function lk_quick_commands() {
 	return $c;
 }
 
+/** Luminância relativa (WCAG) de #rrggbb. */
+function lk_hex_lum( $hex ) {
+	$hex = ltrim( (string) $hex, '#' );
+	if ( 3 === strlen( $hex ) ) {
+		$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+	}
+	if ( 6 !== strlen( $hex ) || ! ctype_xdigit( $hex ) ) {
+		return 0.0;
+	}
+	$f = function ( $c ) { $c = hexdec( $c ) / 255; return $c <= 0.03928 ? $c / 12.92 : pow( ( $c + 0.055 ) / 1.055, 2.4 ); };
+	return 0.2126 * $f( substr( $hex, 0, 2 ) ) + 0.7152 * $f( substr( $hex, 2, 2 ) ) + 0.0722 * $f( substr( $hex, 4, 2 ) );
+}
+
+function lk_contrast_ratio( $a, $b ) {
+	$la = lk_hex_lum( $a ); $lb = lk_hex_lum( $b );
+	return ( max( $la, $lb ) + 0.05 ) / ( min( $la, $lb ) + 0.05 );
+}
+
+/** Texto legível (preto ou branco) sobre uma cor de fundo. */
+function lk_on_color( $hex ) {
+	return lk_contrast_ratio( $hex, '#ffffff' ) >= lk_contrast_ratio( $hex, '#0a0a0a' ) ? '#ffffff' : '#0a0a0a';
+}
+
+/** Escurece a cor até ela servir como TEXTO (4.5:1) sobre $bg. */
+function lk_text_color_on( $hex, $bg = '#ffffff' ) {
+	$hex = '#' . ltrim( (string) $hex, '#' );
+	for ( $i = 0; $i < 40 && lk_contrast_ratio( $hex, $bg ) < 4.5; $i++ ) {
+		$h = ltrim( $hex, '#' );
+		if ( 3 === strlen( $h ) ) {
+			$h = $h[0] . $h[0] . $h[1] . $h[1] . $h[2] . $h[2];
+		}
+		$hex = sprintf( '#%02x%02x%02x', (int) ( hexdec( substr( $h, 0, 2 ) ) * 0.93 ), (int) ( hexdec( substr( $h, 2, 2 ) ) * 0.93 ), (int) ( hexdec( substr( $h, 4, 2 ) ) * 0.93 ) );
+	}
+	return $hex;
+}
+
 /**
  * Fontes + CSS + variáveis do tema (identity.php). $css: arquivo em assets/.
  */
@@ -668,7 +704,7 @@ function lk_theme_head( $css, $light = true ) {
 		esc_attr( $t['font'] ),
 		esc_attr( $t['radius'] )
 	);
-	$light_vars = sprintf( '--ink:%s;--bg:%s;--accent:%s;', esc_attr( $t['ink'] ), esc_attr( $t['bg'] ), esc_attr( $t['accent'] ) );
+	$light_vars = sprintf( '--ink:%s;--bg:%s;--accent:%s;--on-accent:%s;--accent-text:%s;--on-ink:%s;', esc_attr( $t['ink'] ), esc_attr( $t['bg'] ), esc_attr( $t['accent'] ), esc_attr( lk_on_color( $t['accent'] ) ), esc_attr( lk_text_color_on( $t['accent'], '#ffffff' ) ), esc_attr( lk_on_color( $t['ink'] ) ) );
 	$light = $light ? $light_vars : '';
 	echo '<style>:root{' . $vars . '}' . ( $light ? ':root:not([data-theme="dark"]){' . $light . '}' : '' ) . '.side{background:' . esc_attr( $t['side'] ) . '}</style>' . "\n"; // phpcs:ignore
 }

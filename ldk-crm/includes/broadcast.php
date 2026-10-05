@@ -78,7 +78,7 @@ function lk_do_broadcast_save() {
 function lk_broadcast_send_one( $b, $c ) {
 	$first = $c->name ? strtok( $c->name, ' ' ) : '';
 	$body  = str_replace( array( '{nome}', '{empresa}' ), array( $first, $c->company ?? '' ), (string) $b->body );
-	$out   = $c->id ? '<p style="margin-top:22px;font-size:11px;color:#9a9a9a;">Não quer mais receber estes e-mails? <a href="' . esc_url( add_query_arg( array( 'lk_sair' => $c->id, 'k' => substr( hash_hmac( 'sha256', 'out' . $c->id, wp_salt() ), 0, 16 ) ), home_url( '/' ) ) ) . '" style="color:#9a9a9a;">Descadastrar</a></p>' : '';
+	$out   = $c->id ? '<p style="margin-top:22px;font-size:11px;color:#6b6b6b;">Não quer mais receber estes e-mails? <a href="' . esc_url( add_query_arg( array( 'lk_sair' => $c->id, 'k' => substr( hash_hmac( 'sha256', 'out' . $c->id, wp_salt() ), 0, 16 ) ), home_url( '/' ) ) ) . '" style="color:#9a9a9a;">Descadastrar</a></p>' : '';
 	return lk_mail( $c->email, str_replace( '{nome}', $first, $b->subject ), str_replace( '{nome}', $first, $b->subject ), wpautop( $body ), array(), $b->cta_text, $b->cta_url, $out );
 }
 

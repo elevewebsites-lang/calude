@@ -230,7 +230,7 @@ $mail_fail = lk_is_admin() ? get_option( 'lk_2fa_mail_fail' ) : '';
 		<?php if ( ! $mine ) : ?><p class="muted small">Nada na sua etapa agora. ✨</p><?php endif; ?>
 		<div class="dsh-cards">
 			<?php $keys = array_keys( $stages ); foreach ( array_slice( $mine, 0, 2 ) as $mp ) : $pc = (int) round( 100 * ( 1 + (int) array_search( $mp->stage, $keys, true ) ) / max( 1, count( $keys ) ) ); $mc = lk_get( 'clients', $mp->client_id ); ?>
-				<a class="dsh-pcard" style="--c:<?php echo esc_attr( $mc && $mc->color ? $mc->color : '#6c5ce7' ); ?>" href="<?php echo esc_url( lk_panel_url( 'post', $mp->id ) ); ?>"><strong><?php echo esc_html( wp_trim_words( $mp->title, 5, '…' ) ); ?></strong><small><?php echo esc_html( lk_post_client_label( $mp ) ); ?></small><em><?php echo (int) $pc; ?>%</em></a>
+				<?php $pc_col = $mc && $mc->color ? $mc->color : '#6c5ce7'; ?><a class="dsh-pcard<?php echo '#0a0a0a' === lk_on_color( $pc_col ) ? ' is-light' : ''; ?>" style="--c:<?php echo esc_attr( $pc_col ); ?>" href="<?php echo esc_url( lk_panel_url( 'post', $mp->id ) ); ?>"><strong><?php echo esc_html( wp_trim_words( $mp->title, 5, '…' ) ); ?></strong><small><?php echo esc_html( lk_post_client_label( $mp ) ); ?></small><em><?php echo (int) $pc; ?>%</em></a>
 			<?php endforeach; ?>
 		</div>
 	</section>

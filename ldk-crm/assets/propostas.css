@@ -23,8 +23,8 @@
 .prop-send-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 18px; }
 .prop-send-head h2 { margin: 6px 0 4px; font-size: 22px; letter-spacing: -.02em; }
 .prop-send-head p { margin: 0; }
-.prop-tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; background: var(--ok-soft); color: #0f6f12; }
-.prop-seen { color: #0f6f12; }
+.prop-tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; background: var(--ok-soft); color: var(--ok-text); }
+.prop-seen { color: var(--ok-text); }
 .prop-link { flex: 1; min-width: 280px; max-width: 560px; }
 .prop-send-form { display: flex; flex-direction: column; gap: 14px; padding-top: 18px; border-top: 1px solid var(--line); }
 .prop-contact { gap: 14px; }
@@ -51,7 +51,7 @@
 }
 .ldkp-builder .ldkp-field--lines textarea { font-size: 12.5px; }
 .ldkp-builder code { background: var(--bg); color: var(--ink); }
-.ldkp-builder .button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--ink); background: var(--ink); color: #fff; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; }
+.ldkp-builder .button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--ink); background: var(--ink); color: var(--on-ink); font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; }
 .ldkp-builder .button:hover { filter: brightness(1.15); }
 .prop-plain { margin: 0; }
 .prop-submit { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 14px; padding: 14px 18px; background: color-mix(in srgb, var(--card) 92%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: var(--radius, 14px); box-shadow: 0 -8px 24px -16px rgba(0,0,0,.25); }
