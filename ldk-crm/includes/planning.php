@@ -96,6 +96,9 @@ function lk_plan_ensure( $client, $ym ) {
 			'created_by'    => get_current_user_id(),
 		)
 	);
+	if ( function_exists( 'lk_plan_notify_holidays' ) ) {
+		lk_plan_notify_holidays( $client, $ym );
+	}
 	return lk_get( 'plans', $id );
 }
 
@@ -264,22 +267,11 @@ function lk_plan_send_client( $plan ) {
  * Datas comemorativas do mês (para lembrar no planejamento).
  */
 function lk_plan_datas( $ym ) {
-	$m     = (int) substr( $ym, 5, 2 );
-	$datas = array(
-		1  => array( '01/01 · Ano Novo', 'Janeiro Branco (saúde mental)', '20/01 · Dia do Farmacêutico' ),
-		2  => array( 'Carnaval (confira a data)', '14/02 · Valentine\'s Day', 'Volta às aulas' ),
-		3  => array( '08/03 · Dia Internacional da Mulher', '15/03 · Dia do Consumidor', '20/03 · Início do outono' ),
-		4  => array( 'Páscoa (confira a data)', '21/04 · Tiradentes', '22/04 · Dia da Terra' ),
-		5  => array( '01/05 · Dia do Trabalhador', '2º domingo · Dia das Mães', 'Maio Amarelo (trânsito)' ),
-		6  => array( '12/06 · Dia dos Namorados', 'Festas Juninas', '05/06 · Dia do Meio Ambiente' ),
-		7  => array( 'Férias escolares', '20/07 · Dia do Amigo', '26/07 · Dia dos Avós' ),
-		8  => array( '2º domingo · Dia dos Pais', 'Agosto Lilás', '22/08 · Dia do Folclore' ),
-		9  => array( '07/09 · Independência', 'Setembro Amarelo', '15/09 · Dia do Cliente', '23/09 · Início da primavera' ),
-		10 => array( 'Outubro Rosa', '12/10 · Dia das Crianças', '15/10 · Dia do Professor', '31/10 · Halloween' ),
-		11 => array( 'Novembro Azul', '20/11 · Consciência Negra', 'Black Friday (última sexta)' ),
-		12 => array( 'Dezembro Laranja', '25/12 · Natal', '31/12 · Réveillon', 'Retrospectiva do ano' ),
-	);
-	return $datas[ $m ] ?? array();
+	$out = array();
+	foreach ( lk_month_dates( $ym ) as $d ) {
+		$out[] = ( $d['date'] ? substr( $d['date'], 8, 2 ) . '/' . substr( $d['date'], 5, 2 ) . ' · ' : '' ) . $d['name'] . ( 'feriado' === $d['type'] ? ' (feriado' . ( $d['sub'] ? ' · ' . $d['sub'] : '' ) . ')' : '' );
+	}
+	return $out;
 }
 
 /**

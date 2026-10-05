@@ -20,6 +20,14 @@ if ( ! $client ) {
 		<h3><?php echo esc_html( ucfirst( lk_month_label( $ym ) ) ); ?></h3>
 		<a class="icon-btn" href="<?php echo esc_url( lk_panel_url( 'planejamento', 0, array( 'mes' => $next ) ) ); ?>">›</a>
 	</div>
+	<?php if ( lk_is_admin() ) : ?>
+	<details class="card"><summary class="card-head" style="cursor:pointer"><h3>Datas extras e feriados locais</h3><span class="muted small">entram nos planejamentos e nos avisos</span></summary>
+		<?php lk_form( 'dates_extra_save', 'stack' ); ?>
+			<?php lk_input( 'datas_extra', 'Uma por linha: dia/mês | nome | feriado ou data (ano é opcional: 05/12/2026)', (string) get_option( 'lk_dates_extra', '' ), 'textarea', 'rows="4" placeholder="05/12 | Aniversário de Taubaté | feriado&#10;19/06 | Dia do Cinema | data"' ); ?>
+			<div class="form-actions"><button type="submit" class="btn btn--primary">Salvar</button></div>
+		</form>
+	</details>
+	<?php endif; ?>
 	<p class="muted small hint">Clique em <strong>▶ Start</strong> para abrir o planejamento do cliente: briefing, datas do mês e os posts. Depois vai para a revisão interna e, com o ok, direto para a cliente.</p>
 	<div class="table plan-table">
 		<div class="table-row table-head"><span>Cliente</span><span>Artes do mês</span><span>Planejamento</span><span>Com</span><span></span></div>
@@ -103,6 +111,24 @@ endif;
 	<section class="card card--accent ready-bar"><div><strong>Enviado para a cliente</strong> (painel dela + e-mail). Reforce pelo WhatsApp:</div><a class="btn btn--wa" href="<?php echo esc_url( $sent['wa'] ); ?>" target="_blank" rel="noopener"><?php echo lk_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>Mandar no WhatsApp</span></a></section>
 <?php endif; ?>
 <?php if ( $alert ) : ?><div class="flash flash--warn">⚠️ <?php echo esc_html( $alert ); ?></div><?php endif; ?>
+<?php
+$hol_list = array_values( array_filter( lk_month_dates( $ym ), function ( $d ) { return 'feriado' === $d['type']; } ) );
+if ( $hol_list ) :
+	$on_hol = array();
+	foreach ( $posts as $hp ) {
+		$hd = $hp->scheduled_at ? lk_is_holiday( $hp->scheduled_at ) : null;
+		if ( $hd ) {
+			$on_hol[] = lk_date( $hp->scheduled_at, 'd/m' ) . ' ' . $hp->title . ' (' . $hd['name'] . ')';
+		}
+	}
+	?>
+	<div class="flash flash--warn hol-alert">🔴 <strong>Feriados em <?php echo esc_html( lk_month_label( $ym ) ); ?>:</strong>
+		<?php echo esc_html( implode( ' · ', array_map( function ( $d ) { return $d['day'] . '/' . substr( $d['date'], 5, 2 ) . ' ' . $d['name'] . ( $d['sub'] ? ' (' . $d['sub'] . ')' : '' ); }, $hol_list ) ) ); ?>.
+		<?php if ( $on_hol ) : ?><br><strong>Posts marcados em feriado — confira se vale publicar ou mudar o dia:</strong> <?php echo esc_html( implode( '; ', $on_hol ) ); ?>.<?php else : ?> Nenhum post cai em feriado.<?php endif; ?>
+	</div>
+<?php endif; ?>
+<?php $sheet_url = lk_plan_sheet_url( $plan ); ?>
+<p class="muted small"><?php if ( $sheet_url ) : ?>📊 <a href="<?php echo esc_url( $sheet_url ); ?>" target="_blank" rel="noopener">Abrir a planilha do planejamento no Drive</a> (atualiza sozinha; abre e baixa como Excel)<?php elseif ( function_exists( 'lk_google_connected' ) && lk_google_connected() ) : ?>📊 A planilha deste planejamento no Drive é criada em instantes.<?php else : ?>Conecte o Google Drive em Configurações para guardar o planejamento numa planilha.<?php endif; ?> <?php $fl = lk_drive_folder_link( array( 'Clientes', lk_client_label( $client ) ) ); if ( $fl ) : ?> · <a href="<?php echo esc_url( $fl ); ?>" target="_blank" rel="noopener">Pasta do cliente no Drive</a><?php endif; ?></p>
 <?php if ( $plan->review_note && 'rascunho' === $status ) : ?><div class="flash flash--warn"><strong>Voltou da revisão:</strong> <?php echo nl2br( esc_html( $plan->review_note ) ); ?></div><?php endif; ?>
 <?php if ( $plan->client_notes ) : ?><div class="flash flash--warn"><strong>Comentário geral da cliente:</strong><br><?php echo nl2br( esc_html( $plan->client_notes ) ); ?></div><?php endif; ?>
 

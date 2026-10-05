@@ -39,6 +39,56 @@ $tasks = lk_tasks( $where, array( $today, $me ), "t.due_date, FIELD(t.priority, 
 $pend  = $fin ? lk_billing_pending() : array();
 $nocon = array_filter( lk_clients(), function ( $c ) { return ! isset( lk_social_accounts( $c->id )['instagram'] ); } );
 
+// Gráficos: publicações 14 dias atrás → 14 dias à frente, tarefas concluídas (7 dias) e posts por etapa.
+$win_from = gmdate( 'Y-m-d', strtotime( $today . ' -14 day' ) );
+$win_to   = gmdate( 'Y-m-d', strtotime( $today . ' +14 day' ) );
+$win      = lk_posts( 'p.scheduled_at BETWEEN %s AND %s', array( $win_from . ' 00:00:00', $win_to . ' 23:59:59' ), 'p.scheduled_at' );
+$ser_done = array_fill( 0, 29, 0 );
+$ser_plan = array_fill( 0, 29, 0 );
+$labels   = array();
+for ( $i = 0; $i < 29; $i++ ) {
+	$d        = gmdate( 'Y-m-d', strtotime( $win_from . ' +' . $i . ' day' ) );
+	$labels[] = ( 14 === $i ) ? 'hoje' : ( 0 === $i % 7 ? gmdate( 'd/m', strtotime( $d ) ) : '' );
+}
+foreach ( $win as $wp ) {
+	$i = (int) round( ( strtotime( substr( $wp->scheduled_at, 0, 10 ) ) - strtotime( $win_from ) ) / DAY_IN_SECONDS );
+	if ( $i >= 0 && $i < 29 ) {
+		if ( $wp->stage === lk_stage_for( 'publicado' ) ) {
+			$ser_done[ $i ]++;
+		} else {
+			$ser_plan[ $i ]++;
+		}
+	}
+}
+$done_week = array();
+for ( $i = 6; $i >= 0; $i-- ) {
+	$d               = gmdate( 'Y-m-d', strtotime( $today . ' -' . $i . ' day' ) );
+	$done_week[ $d ] = array( lk_dow_short( $d ), 0 );
+}
+foreach ( lk_tasks( "t.status = 'done' AND t.done_at >= %s AND t.assignee = %d", array( gmdate( 'Y-m-d', strtotime( $today . ' -6 day' ) ) . ' 00:00:00', $me ), 't.done_at' ) as $dt ) {
+	$k = substr( (string) $dt->done_at, 0, 10 );
+	if ( isset( $done_week[ $k ] ) ) {
+		$done_week[ $k ][1]++;
+	}
+}
+$month_posts = lk_posts( 'DATE_FORMAT(p.scheduled_at, %s) = %s', array( '%Y-%m', substr( $today, 0, 7 ) ) );
+$month_done  = count( array_filter( $month_posts, function ( $mp ) { return $mp->stage === lk_stage_for( 'publicado' ); } ) );
+$month_pct   = $month_posts ? (int) round( 100 * $month_done / count( $month_posts ) ) : 0;
+$slice_cls   = array( 'a', 'b', 'c', 'd', 'e', 'f' );
+$slices      = array();
+$si          = 0;
+foreach ( $stages as $sk => $sn ) {
+	$slices[] = array( $sn, (int) ( $by[ $sk ] ?? 0 ), $slice_cls[ $si % 6 ] );
+	$si++;
+}
+$me_user   = wp_get_current_user();
+$last_cli  = array_slice( array_reverse( lk_clients() ), 0, 5 );
+$game_on   = function_exists( 'lk_game_on' ) && lk_game_on();
+$earned    = $game_on ? lk_game_earned( $me ) : 0;
+$glv       = $game_on ? lk_game_level( $earned ) : null;
+$gnext     = $game_on ? lk_game_next_level( $earned ) : null;
+$gpct      = $game_on && $gnext && $glv ? min( 100, max( 0, round( ( $earned - $glv['min'] ) / max( 1, $gnext['min'] - $glv['min'] ) * 100 ) ) ) : 100;
+$todo_n    = count( $mine ) + count( $tasks );
 $hour  = (int) current_time( 'G' );
 $hello = $hour < 12 ? 'Bom dia' : ( $hour < 18 ? 'Boa tarde' : 'Boa noite' );
 $name  = wp_get_current_user()->first_name ? wp_get_current_user()->first_name : wp_get_current_user()->display_name;
@@ -53,23 +103,46 @@ $mail_fail = lk_is_admin() ? get_option( 'lk_2fa_mail_fail' ) : '';
 	<a class="news-banner" href="<?php echo esc_url( lk_panel_url( 'novidades' ) ); ?>"><span>✨</span><strong>Novidades da versão <?php echo esc_html( LK_VERSION ); ?></strong><small><?php echo esc_html( lk_changelog()[ LK_VERSION ]['title'] ?? '' ); ?></small><em>ver o que mudou →</em></a>
 <?php endif; ?>
 <p class="dash-stamp muted small" data-dash-stamp aria-live="polite"></p>
-<section class="stats stats--4" data-dash="stats">
-	<a class="stat stat--dark" href="<?php echo esc_url( lk_panel_url( 'conteudo', 0, array( 'meus' => 1, 'ver' => 'lista' ) ) ); ?>"><span class="stat-label">Comigo agora</span><strong><?php echo count( $mine ); ?></strong><small>posts na minha etapa</small></a>
-	<div class="stat"><span class="stat-label">Aguardando cliente</span><strong><?php echo count( $wait ); ?></strong><small>em aprovação</small></div>
-	<div class="stat"><span class="stat-label">Atrasados</span><strong class="<?php echo $late ? 'text-late' : ''; ?>"><?php echo count( $late ); ?></strong><small>passou da data e não está agendado</small></div>
-	<?php if ( $fin ) : ?>
-		<a class="stat" href="<?php echo esc_url( lk_panel_url( 'cobrancas' ) ); ?>"><span class="stat-label">Recorrente</span><strong class="money"><?php echo esc_html( lk_money( lk_billing_mrr() ) ); ?></strong><small><?php echo count( $pend ); ?> cobrança(s) pendente(s)</small></a>
-	<?php else : ?>
-		<div class="stat"><span class="stat-label">Hoje</span><strong><?php echo count( $today_posts ); ?></strong><small>publicações</small></div>
-	<?php endif; ?>
-</section>
+<div class="dsh">
+<div class="dsh-main">
+	<section class="dsh-hero" data-dash="hero">
+		<div class="dsh-hero-txt">
+			<h2><?php echo esc_html( $hello . ', ' . $name ); ?>! 👋</h2>
+			<p><?php echo $todo_n ? 'Você tem <strong>' . (int) $todo_n . ' ' . ( 1 === $todo_n ? 'item' : 'itens' ) . '</strong> na sua fila' . ( $today_posts ? ' e <strong>' . count( $today_posts ) . '</strong> publicação(ões) hoje' : '' ) . '.' : 'Nada pendente com você agora' . ( $today_posts ? ', e <strong>' . count( $today_posts ) . '</strong> publicação(ões) hoje' : '' ) . '. ✨'; // phpcs:ignore ?></p>
+			<div class="dsh-prog"><span>Mês de <?php echo esc_html( lk_month_label( substr( $today, 0, 7 ) ) ); ?>: <strong><?php echo (int) $month_pct; ?>%</strong> publicado (<?php echo (int) $month_done; ?>/<?php echo count( $month_posts ); ?>)</span><i><b style="width:<?php echo (int) $month_pct; ?>%"></b></i></div>
+		</div>
+		<svg class="dsh-hero-art" viewBox="0 0 220 150" aria-hidden="true"><rect x="22" y="30" width="130" height="86" rx="12" class="a1"/><rect x="34" y="44" width="62" height="8" rx="4" class="a2"/><rect x="34" y="60" width="96" height="6" rx="3" class="a3"/><rect x="34" y="72" width="80" height="6" rx="3" class="a3"/><path d="M34 104 L58 88 L76 98 L102 78 L128 92" class="a4" fill="none"/><circle cx="170" cy="52" r="26" class="a5"/><path d="M158 52 l9 9 l16 -18" class="a6" fill="none"/><rect x="150" y="86" width="52" height="30" rx="10" class="a2"/><circle cx="164" cy="101" r="5" class="a1"/><rect x="174" y="97" width="22" height="5" rx="2.5" class="a3"/></svg>
+	</section>
 
-<section class="card" data-dash="esteira">
-	<div class="card-head"><h3>Esteira</h3><a class="small" href="<?php echo esc_url( lk_panel_url( 'conteudo', 0, array( 'ver' => 'kanban' ) ) ); ?>">abrir Kanban</a></div>
-	<div class="pipe">
-		<?php foreach ( $stages as $s => $n ) : ?><div class="pipe-step"><strong><?php echo (int) $by[ $s ]; ?></strong><span><?php echo esc_html( $n ); ?></span></div><?php endforeach; ?>
+	<section class="dsh-stats" data-dash="stats">
+		<a class="dsh-stat dsh-stat--a" href="<?php echo esc_url( lk_panel_url( 'conteudo', 0, array( 'meus' => 1, 'ver' => 'lista' ) ) ); ?>"><span class="dsh-ic"><?php echo lk_icon( 'alvo', 20 ); // phpcs:ignore ?></span><strong><?php echo count( $mine ); ?></strong><span>Comigo agora</span><small>posts na minha etapa</small></a>
+		<div class="dsh-stat dsh-stat--b"><span class="dsh-ic"><?php echo lk_icon( 'relogio', 20 ); // phpcs:ignore ?></span><strong><?php echo count( $wait ); ?></strong><span>Aguardando cliente</span><small>em aprovação</small></div>
+		<div class="dsh-stat dsh-stat--c<?php echo $late ? ' is-alert' : ''; ?>"><span class="dsh-ic"><?php echo lk_icon( 'sino', 20 ); // phpcs:ignore ?></span><strong><?php echo count( $late ); ?></strong><span>Atrasados</span><small>passou da data e não está agendado</small></div>
+		<?php if ( $fin ) : ?>
+			<a class="dsh-stat dsh-stat--d" href="<?php echo esc_url( lk_panel_url( 'cobrancas' ) ); ?>"><span class="dsh-ic"><?php echo lk_icon( 'financeiro', 20 ); // phpcs:ignore ?></span><strong class="money"><?php echo esc_html( lk_money( lk_billing_mrr() ) ); ?></strong><span>Recorrente</span><small><?php echo count( $pend ); ?> cobrança(s) pendente(s)</small></a>
+		<?php else : ?>
+			<div class="dsh-stat dsh-stat--d"><span class="dsh-ic"><?php echo lk_icon( 'check', 20 ); // phpcs:ignore ?></span><strong><?php echo count( $today_posts ); ?></strong><span>Hoje</span><small>publicações</small></div>
+		<?php endif; ?>
+	</section>
+
+	<section class="dsh-card" data-dash="chart">
+		<div class="dsh-card-head"><h3>Publicações</h3><span class="dsh-legend"><i class="a"></i> publicados <i class="b"></i> planejados/agendados</span><span class="dsh-range">14 dias atrás → 14 dias à frente</span></div>
+		<?php echo lk_dash_line( array( array( 'name' => 'Publicados', 'values' => $ser_done, 'class' => 'a' ), array( 'name' => 'Planejados', 'values' => $ser_plan, 'class' => 'b' ) ), $labels, 14 ); // phpcs:ignore ?>
+	</section>
+
+	<div class="dsh-row" data-dash="mini">
+		<section class="dsh-card">
+			<div class="dsh-card-head"><h3>Posts por etapa</h3><a class="small" href="<?php echo esc_url( lk_panel_url( 'conteudo', 0, array( 'ver' => 'kanban' ) ) ); ?>">Kanban</a></div>
+			<div class="dsh-donut-wrap">
+				<?php echo lk_dash_donut( $slices, 'em aberto' ); // phpcs:ignore ?>
+				<ul class="dsh-keys"><?php foreach ( $slices as $sl ) : ?><li><i class="seg-<?php echo esc_attr( $sl[2] ); ?>"></i><span><?php echo esc_html( $sl[0] ); ?></span><b><?php echo (int) $sl[1]; ?></b></li><?php endforeach; ?></ul>
+			</div>
+		</section>
+		<section class="dsh-card">
+			<div class="dsh-card-head"><h3>Minhas tarefas</h3><span class="dsh-range">concluídas nos últimos 7 dias</span></div>
+			<?php echo lk_dash_bars( array_values( $done_week ), 'a' ); // phpcs:ignore ?>
+		</section>
 	</div>
-</section>
 
 <div class="grid-2 dash-grid" data-dash-grid>
 	<section class="card">
@@ -132,6 +205,38 @@ $mail_fail = lk_is_admin() ? get_option( 'lk_2fa_mail_fail' ) : '';
 		<div class="chat-list chat-list--mini" data-chat-list></div>
 		<form class="chat-form"><textarea rows="1" placeholder="Mensagem para a equipe…"></textarea><button type="submit" class="btn btn--primary btn--sm">Enviar</button></form>
 	</section>
+</div>
+</div>
+<aside class="dsh-side" data-dash="side">
+	<section class="dsh-card dsh-profile">
+		<div class="dsh-av"><?php echo esc_html( lk_initials( $me_user->display_name ) ); ?></div>
+		<h3><?php echo esc_html( $me_user->display_name ); ?></h3>
+		<p class="muted small"><?php echo esc_html( lk_user_role_label( $me ) ); ?></p>
+		<?php if ( $game_on && $glv ) : ?>
+			<a class="dsh-level" href="<?php echo esc_url( lk_panel_url( 'ranking' ) ); ?>"><span><b><?php echo esc_html( $glv['name'] ); ?></b> · <?php echo (int) $earned; ?> pts</span><i><b style="width:<?php echo (int) $gpct; ?>%"></b></i><small><?php echo $gnext ? 'faltam ' . (int) ( $gnext['min'] - $earned ) . ' para ' . esc_html( $gnext['name'] ) : 'nível máximo 👑'; ?></small></a>
+		<?php endif; ?>
+		<div class="dsh-quick"><a href="<?php echo esc_url( lk_panel_url( 'tarefas' ) ); ?>">Tarefas</a><a href="<?php echo esc_url( lk_panel_url( 'agenda' ) ); ?>">Agenda</a><a href="<?php echo esc_url( lk_panel_url( 'conta' ) ); ?>">Minha conta</a></div>
+	</section>
+	<section class="dsh-card">
+		<div class="dsh-card-head"><h3>Em andamento comigo</h3><a class="small" href="<?php echo esc_url( lk_panel_url( 'conteudo', 0, array( 'meus' => 1, 'ver' => 'lista' ) ) ); ?>">ver todos</a></div>
+		<?php if ( ! $mine ) : ?><p class="muted small">Nada na sua etapa agora. ✨</p><?php endif; ?>
+		<div class="dsh-cards">
+			<?php $keys = array_keys( $stages ); foreach ( array_slice( $mine, 0, 2 ) as $mp ) : $pc = (int) round( 100 * ( 1 + (int) array_search( $mp->stage, $keys, true ) ) / max( 1, count( $keys ) ) ); $mc = lk_get( 'clients', $mp->client_id ); ?>
+				<a class="dsh-pcard" style="--c:<?php echo esc_attr( $mc && $mc->color ? $mc->color : '#6c5ce7' ); ?>" href="<?php echo esc_url( lk_panel_url( 'post', $mp->id ) ); ?>"><strong><?php echo esc_html( wp_trim_words( $mp->title, 5, '…' ) ); ?></strong><small><?php echo esc_html( lk_post_client_label( $mp ) ); ?></small><em><?php echo (int) $pc; ?>%</em></a>
+			<?php endforeach; ?>
+		</div>
+	</section>
+	<?php if ( $last_cli ) : ?>
+	<section class="dsh-card">
+		<div class="dsh-card-head"><h3>Últimos clientes</h3><a class="small" href="<?php echo esc_url( lk_panel_url( 'clientes' ) ); ?>">ver todos</a></div>
+		<ul class="dsh-clients">
+			<?php foreach ( $last_cli as $lc ) : $ig = lk_social_account( $lc->id, 'instagram' ); ?>
+				<li><a href="<?php echo esc_url( lk_panel_url( 'cliente', $lc->id ) ); ?>"><span class="dsh-cav" style="--c:<?php echo esc_attr( $lc->color ?: '#6c5ce7' ); ?>"><?php echo esc_html( lk_initials( lk_client_label( $lc ) ) ); ?><?php if ( $ig && $ig->avatar ) : ?><img src="<?php echo esc_url( $ig->avatar ); ?>" alt="" onerror="this.remove()"><?php endif; ?></span><span><strong><?php echo esc_html( lk_client_label( $lc ) ); ?></strong><small><?php echo esc_html( $lc->company && $lc->name ? $lc->name : ( $lc->email ?: '' ) ); ?></small></span></a><?php if ( $lc->whatsapp ) : ?><a class="dsh-wa" href="<?php echo esc_url( lk_wa_link( $lc->whatsapp, '' ) ); ?>" target="_blank" rel="noopener" title="WhatsApp"><?php echo lk_icon( 'whatsapp', 16 ); // phpcs:ignore ?></a><?php endif; ?></li>
+			<?php endforeach; ?>
+		</ul>
+	</section>
+	<?php endif; ?>
+</aside>
 </div>
 <script src="<?php echo esc_url( LK_URL . 'assets/dash.js?ver=' . LK_VERSION ); ?>"></script>
 <?php

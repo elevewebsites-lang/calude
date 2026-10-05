@@ -13,6 +13,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.8.0' => array(
+			'date'  => '2026-10-05',
+			'title' => 'Dashboard novo, gamificação, vídeo com play e apontamentos',
+			'items' => array(
+				array( '📈', 'Dashboard moderno', 'Boas-vindas com progresso do mês, gráfico de publicações (14 dias antes e depois), posts por etapa, suas tarefas da semana, seu nível e os últimos clientes.' ),
+				array( '🏆', 'Ranking e prêmios', 'Pontos por tarefa concluída e post publicado, níveis, conquistas, ranking e loja de prêmios. O admin configura tudo em Gamificação.' ),
+				array( '🎬', 'Limites do Instagram e vídeo com play', 'Imagem JPG até 8 MB (converte sozinho), vídeo MP4/MOV até 300 MB, Story até 100 MB/60 s e carrossel até 10. Você vê o vídeo e as regras antes de enviar e dá play no post.' ),
+				array( '📌', 'Apontamentos nos posts', 'Botão Fazer apontamento: para quem é, sobre o quê e em que segundo do vídeo. A equipe aponta só para dentro antes de chegar no cliente; o cliente aponta pela página de aprovação. O admin decide quem pode.' ),
+				array( '🔴', 'Feriados e datas no planejamento', 'Feriados nacionais (com Carnaval, Páscoa e Corpus Christi) em destaque, datas comemorativas, calendário colorido, ideia de cada conteúdo e aviso ao social media 7 dias e 1 dia antes de cada feriado.' ),
+				array( '📊', 'Planejamento no Drive', 'Cada planejamento vira uma planilha na pasta do cliente (Clientes/<cliente>/Planejamentos) e se atualiza sozinha.' ),
+				array( '🔗', 'Link para o cliente conectar as redes', 'Instagram, Facebook, LinkedIn e YouTube pelo link, sem senha e sem login no CRM, com aviso quando uma conta cair.' ),
+				array( '✂️', 'Recorte automático das fotos', 'Feed 4:5, quadrado, paisagem e Story/Reels 9:16, com arrastar e zoom.' ),
+			),
+		),
 		'1.5.0' => array(
 			'date'  => '2026-09-30',
 			'title' => 'Planejamento com cara de proposta, contrato online e mais',

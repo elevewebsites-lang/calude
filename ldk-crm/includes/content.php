@@ -301,6 +301,7 @@ function lk_do_post_save() {
 		'atendimento_id' => lk_in( 'atendimento_id', 'int' ) ? lk_in( 'atendimento_id', 'int' ) : (int) $client->atendimento_id,
 		'revisor_id'     => lk_in( 'revisor_id', 'int' ) ? lk_in( 'revisor_id', 'int' ) : (int) $client->revisor_id,
 		'notes'          => lk_in( 'notes', 'textarea' ),
+		'idea'           => lk_in( 'idea', 'textarea' ),
 	);
 	$data['deadlines'] = lk_prazos_from_form( $data['scheduled_at'] );
 	$check = $data['scheduled_at'] && ( ! $old || substr( (string) $old->scheduled_at, 0, 7 ) !== substr( $data['scheduled_at'], 0, 7 ) );
@@ -321,6 +322,7 @@ function lk_do_post_save() {
 		}
 	}
 	lk_sheet_sync( $id );
+	do_action( 'lk_post_saved', $id );
 	$warn = $check ? lk_quota_check( $client, $data['scheduled_at'] ) : '';
 	lk_back( 'Post salvo.' . $warn, $warn ? 'warn' : 'ok', lk_in( 'volta_url', 'url' ) ? lk_in( 'volta_url', 'url' ) : lk_panel_url( 'post', $id ) );
 }
@@ -706,6 +708,7 @@ function lk_post_form( $p = null, $client_id = 0, $back = '' ) {
 			<?php lk_select( 'format', 'Formato', lk_formats(), $p ? $p->format : 'arte' ); ?>
 		</div>
 		<?php lk_input( 'title', 'Título (interno)', $p ? $p->title : '', 'text', 'required placeholder="Ex.: Dia das Mães · oferta"' ); ?>
+		<?php lk_input( 'idea', 'Ideia do conteúdo (o cliente vê no planejamento)', $p ? $p->idea : '', 'textarea', 'rows="3" placeholder="Em 1–2 frases: o que vai ser esse post, o objetivo e a ideia visual…"' ); ?>
 		<?php lk_input( 'caption', 'Legenda', $p ? $p->caption : '', 'textarea', 'rows="6" placeholder="A legenda que vai ser publicada…" data-caption' ); ?>
 		<small class="muted" data-caption-count></small>
 		<div class="grid-2">
