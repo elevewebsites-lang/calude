@@ -150,6 +150,7 @@ function lk_route() {
 			'ajuda'       => array( 'ajuda', '' ),
 			'ranking'     => array( 'ranking', '' ),
 			'metas'       => array( 'metas', 'admin' ),
+			'contratos'   => array( 'contratos', 'clientes' ),
 			'prospeccao'  => array( 'prospeccao', 'leads' ),
 			'gamificacao' => array( 'gamificacao', 'admin' ),
 		);
@@ -176,7 +177,7 @@ function lk_route() {
 			wp_safe_redirect( lk_home_for( get_current_user_id() ) );
 			exit;
 		}
-		$views = array( '' => 'inicio', 'perfil' => 'perfil', 'aprovacoes' => 'aprovacoes', 'conteudos' => 'conteudos', 'briefing' => 'briefing', 'relatorios' => 'relatorios', 'mensagens' => 'mensagens', 'projeto' => 'projeto' );
+		$views = array( '' => 'inicio', 'perfil' => 'perfil', 'aprovacoes' => 'aprovacoes', 'conteudos' => 'conteudos', 'briefing' => 'briefing', 'relatorios' => 'relatorios', 'mensagens' => 'mensagens', 'projeto' => 'projeto', 'contratos' => 'contratos' );
 		$view  = isset( $views[ $section ] ) ? $views[ $section ] : 'inicio';
 		lk_render( 'client/' . $view, array( 'id' => $id, 'client' => $client ) );
 	}

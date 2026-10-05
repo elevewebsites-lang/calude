@@ -13,6 +13,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.14.0' => array(
+			'date'  => '2026-10-05',
+			'title' => 'Contratos: gerar, assinar e guardar tudo num só lugar',
+			'items' => array(
+				array( '📄', 'Gerar contrato', 'No lead que aceitou o serviço (e na lista de contratos), o botão Gerar contrato monta tudo com os dados do cliente e da agência. A tela mostra as partes e as condições lado a lado e avisa o que falta preencher.' ),
+				array( '✍️', 'Novas cláusulas', 'Campo de observações com novas cláusulas: uma por linha, entram numeradas no contrato como cláusulas adicionais, sem perder o resto do texto.' ),
+				array( '📧', 'Cópia por e-mail e no Drive', 'Quando o cliente assina, ele e a agência recebem o contrato completo por e-mail com o arquivo em anexo, e uma cópia vai para Clientes/<cliente>/Contratos no Drive. Ao assinar a agência, sai a versão final para os dois.' ),
+				array( '🗂️', 'Contratos no perfil e na área do cliente', 'O contrato assinado fica na ficha do cliente (com link do Drive) e na nova aba Contratos da área do cliente, para abrir ou salvar em PDF.' ),
+				array( '📚', 'Menu Contratos', 'Nova página na coluna da esquerda com todos os contratos: rascunhos, aguardando o cliente, falta a agência e assinados, com busca e total das mensalidades em contrato.' ),
+				array( '📋', 'Briefing salvo', 'O briefing respondido fica salvo na área do cliente (com impressão em PDF) e uma cópia vai para Clientes/<cliente>/Briefing no Drive.' ),
+			),
+		),
 		'1.13.1' => array(
 			'date'  => '2026-10-05',
 			'title' => 'Contraste revisado em todo o sistema',

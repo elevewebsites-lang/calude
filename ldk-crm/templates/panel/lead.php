@@ -50,6 +50,9 @@ lk_panel_start( $label, 'leads', $actions );
 		<?php else : ?>
 			<?php lk_action_button( 'lead_to_client', array( 'lead_id' => $l->id ), 'Virar cliente', 'btn btn--ghost btn--sm' ); ?>
 		<?php endif; ?>
+		<?php if ( lk_can( 'clientes' ) ) : ?>
+			<?php lk_action_button( 'lead_to_contract', array( 'lead_id' => $l->id ), '📄 Gerar contrato', 'btn btn--' . ( lk_funnel_won() === $l->stage ? 'primary' : 'ghost' ) . ' btn--sm' ); ?>
+		<?php endif; ?>
 		<?php if ( lk_can( 'orcamentos' ) ) : ?>
 			<?php lk_action_button( 'lead_to_quote', array( 'lead_id' => $l->id ), 'Fazer orçamento', 'btn btn--primary btn--sm' ); ?>
 		<?php endif; ?>

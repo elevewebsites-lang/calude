@@ -64,6 +64,7 @@ function lk_briefing_store( $c ) {
 	}
 	$first = ! $c->briefing_at;
 	lk_update( 'clients', $c->id, array( 'briefing' => wp_json_encode( $out ), 'briefing_at' => lk_now() ) );
+	do_action( 'lk_briefing_saved', $c->id ); // cópia no Drive
 	if ( ! lk_is_team() ) {
 		foreach ( array_unique( array_filter( array( (int) $c->atendimento_id, (int) $c->social_id ) ) ) as $uid ) {
 			lk_notify( $uid, '📋 ' . lk_client_label( $c ) . ( $first ? ' respondeu o briefing.' : ' atualizou o briefing.' ), lk_panel_url( 'cliente', $c->id ) . '#briefing' );

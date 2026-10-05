@@ -40,6 +40,20 @@ lk_panel_start( 'Contrato · ' . lk_client_label( $client ), 'clientes', $acoes 
 	</div>
 </section>
 
+<?php echo lk_contract_parties_html( $k, $client ); // phpcs:ignore ?>
+<?php if ( 'rascunho' === $k->status ) : ?>
+<section class="card" id="clausulas">
+	<div class="card-head"><h3>Observações e novas cláusulas</h3><span class="muted small">entram no contrato como cláusulas adicionais</span></div>
+	<?php lk_form( 'contract_clauses', 'stack' ); ?>
+		<input type="hidden" name="id" value="<?php echo (int) $k->id; ?>">
+		<?php lk_input( 'clauses', 'Uma cláusula por linha', (string) $k->clauses, 'textarea', 'rows="4" placeholder="Ex.: O cliente se compromete a enviar os acessos em até 5 dias úteis.&#10;Ex.: Reunião mensal de alinhamento de 30 minutos."' ); ?>
+		<div class="form-actions"><button type="submit" class="btn btn--primary btn--sm">Incluir no contrato</button></div>
+	</form>
+</section>
+<?php elseif ( trim( (string) $k->clauses ) ) : ?>
+<section class="card"><div class="card-head"><h3>Cláusulas adicionais</h3></div><ul class="mini-list"><?php foreach ( array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', (string) $k->clauses ) ) ) as $cl ) : ?><li><span><?php echo esc_html( $cl ); ?></span></li><?php endforeach; ?></ul></section>
+<?php endif; ?>
+<?php if ( $k->drive_url ) : ?><p class="muted small">📁 Cópia assinada guardada no Google Drive: <a href="<?php echo esc_url( $k->drive_url ); ?>" target="_blank" rel="noopener">abrir</a> · também na área do cliente e enviada por e-mail para as duas partes.</p><?php endif; ?>
 <div class="contract-grid">
 	<section class="card contract-doc">
 		<?php if ( 'rascunho' === $k->status ) : ?>

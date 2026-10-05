@@ -116,6 +116,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 		),
 		'Clientes' => array(
 			'clientes'   => array( 'Clientes', 'clientes', 'clientes' ),
+			'contratos'  => array( 'Contratos', 'proposta', 'clientes' ),
 			'redes'      => array( 'Redes conectadas', 'globo', 'clientes' ),
 			'mensagens'  => array( 'Mensagens', 'chat', 'clientes' ),
 			'agenda'     => array( 'Agenda', 'relogio', 'clientes' ),
@@ -261,6 +262,7 @@ function lk_client_start( $title, $client ) {
 			<a href="<?php echo esc_url( lk_client_link( 'conteudos' ) ); ?>">Conteúdos</a>
 			<a href="<?php echo esc_url( lk_client_link( 'aprovacoes' ) ); ?>">Aprovações</a>
 			<a href="<?php echo esc_url( lk_client_link( 'briefing' ) ); ?>">Briefing</a>
+			<a href="<?php echo esc_url( lk_client_link( 'contratos' ) ); ?>">Contratos</a>
 			<a href="<?php echo esc_url( lk_client_link( 'relatorios' ) ); ?>">Relatórios</a>
 			<a href="<?php echo esc_url( lk_client_link( 'mensagens' ) ); ?>">Mensagens</a>
 			<a href="<?php echo esc_url( lk_client_link( 'perfil' ) ); ?>">Meus dados</a>

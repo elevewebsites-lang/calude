@@ -109,6 +109,8 @@ Qualquer das partes pode encerrar este contrato com aviso prévio de 30 (trinta)
 ## CLÁUSULA 11ª · DA ASSINATURA ELETRÔNICA E DO FORO
 As partes reconhecem como válida a assinatura eletrônica deste contrato, nos termos do art. 10, § 2º, da MP 2.200-2/2001 e da Lei 14.063/2020, com identificação por e-mail confirmado por código, registro de data, hora e IP. Fica eleito o foro da comarca de {cidade} para dirimir quaisquer questões oriundas deste contrato.
 
+{clausulas_adicionais}
+
 {cidade}, {data}.
 TXT;
 }
@@ -194,10 +196,15 @@ function lk_contract_compose( $k ) {
 		'{fim}'                    => lk_date( $fim ),
 		'{dia_vencimento}'         => (string) (int) $k->due_day,
 		'{condicoes}'              => trim( (string) $k->extra ) ? trim( (string) $k->extra ) : 'Não há.',
+		'{clausulas_adicionais}'   => function_exists( 'lk_contract_clauses_block' ) ? lk_contract_clauses_block( $k->clauses ) : '',
 		'{data}'                   => current_time( 'j' ) . ' de ' . lk_month_name( (int) current_time( 'n' ) ) . ' de ' . current_time( 'Y' ),
 		'{cidade}'                 => lk_setting( 'empresa_cidade' ) ? lk_setting( 'empresa_cidade' ) : $blank,
 	);
-	return strtr( $model, $map );
+	$text = strtr( $model, $map );
+	if ( false === strpos( $model, '{clausulas_adicionais}' ) && function_exists( 'lk_contract_apply_clauses' ) && trim( (string) $k->clauses ) ) {
+		$text = lk_contract_apply_clauses( $text, $k->clauses ); // modelo antigo sem a tag: entra antes da data
+	}
+	return $text;
 }
 
 /**
@@ -257,6 +264,7 @@ function lk_do_contract_save() {
 		'due_day'       => min( 28, max( 1, lk_in( 'due_day', 'int' ) ? lk_in( 'due_day', 'int' ) : 10 ) ),
 		'posts_quota'   => lk_in( 'posts_quota', 'int' ),
 		'extra'         => lk_in( 'extra', 'textarea' ),
+		'clauses'       => lk_in( 'clauses', 'textarea' ),
 	);
 	if ( $old ) {
 		lk_update( 'contracts', $old->id, $data );
@@ -353,7 +361,7 @@ function lk_do_contract_agency_sign() {
 	);
 	$k = lk_get( 'contracts', $k->id );
 	if ( 'concluido' === $k->status ) {
-		lk_contract_done_mail( $k );
+		lk_contract_archive( $k, true );
 	}
 	lk_back( 'concluido' === $k->status ? 'Contrato assinado pelas duas partes. A cópia foi para os dois e-mails.' : 'Assinatura da ' . lk_setting( 'empresa' ) . ' registrada. Falta a cliente.' );
 }
@@ -486,9 +494,7 @@ function lk_contract_sign( $k ) {
 	foreach ( get_users( array( 'role' => 'administrator', 'fields' => 'ID' ) ) as $admin ) {
 		lk_notify( (int) $admin, '✍️ ' . lk_client_label( $client ) . ' assinou o contrato.' . ( 'concluido' === $k->status ? '' : ' Falta a assinatura da ' . lk_setting( 'empresa' ) . '.' ), lk_panel_url( 'contrato', $k->id ) );
 	}
-	if ( 'concluido' === $k->status ) {
-		lk_contract_done_mail( $k );
-	}
+	lk_contract_archive( $k, 'concluido' === $k->status ); // e-mail com a cópia, Drive e perfil do cliente
 	return 'Contrato assinado ✓ Obrigado! ' . ( 'concluido' === $k->status ? 'A cópia assinada foi para o seu e-mail.' : 'Assim que a ' . lk_setting( 'empresa' ) . ' assinar, você recebe a cópia no e-mail.' );
 }
 
@@ -515,6 +521,7 @@ function lk_contract_form( $client, $k = null ) {
 		<?php lk_input( 'due_day', 'Dia do vencimento', $k ? $k->due_day : ( $client->due_day ? $client->due_day : 10 ), 'number', 'min="1" max="28"' ); ?>
 		<?php lk_input( 'posts_quota', 'Artes por mês', $k ? $k->posts_quota : $client->posts_quota, 'number', 'min="0"' ); ?>
 	</div>
+	<?php lk_input( 'clauses', 'Observações / novas cláusulas (uma por linha; entram no contrato como cláusulas adicionais)', $k ? (string) $k->clauses : '', 'textarea', 'rows="3" placeholder="Ex.: O cliente fornece os acessos em até 5 dias úteis."' ); ?>
 	<?php lk_input( 'extra', 'Condições especiais (opcional)', $k ? $k->extra : '', 'textarea', 'rows="3" placeholder="Ex.: 1º mês com 50% de desconto; inclui 2 vídeos por mês"' ); ?>
 	<p class="muted small">Ao salvar, o texto é montado com o modelo de Configurações → Contrato e os dados da ficha da cliente. Quando ela assinar, a mensalidade, o dia e o pacote de artes da ficha são atualizados sozinhos.</p>
 	<div class="form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button type="submit" class="btn btn--primary">Salvar e ver o contrato</button></div>
@@ -550,7 +557,7 @@ function lk_client_contracts_html( $client ) {
 		<?php else : ?>
 			<ul class="mini-list">
 				<?php foreach ( $rows as $k ) : ?>
-					<li><a href="<?php echo esc_url( lk_panel_url( 'contrato', $k->id ) ); ?>"><strong><?php echo esc_html( $k->title ); ?></strong><small><?php echo esc_html( lk_money( $k->monthly_value ) . '/mês · ' . (int) $k->months . ' meses · ' . lk_contract_status_label( $k->status ) ); ?></small></a></li>
+					<li><a href="<?php echo esc_url( lk_panel_url( 'contrato', $k->id ) ); ?>"><strong><?php echo esc_html( $k->title ); ?></strong><small><?php echo esc_html( lk_money( $k->monthly_value ) . '/mês · ' . (int) $k->months . ' meses · ' . lk_contract_status_label( $k->status ) ); ?><?php echo 'concluido' === $k->status ? ' ✓' : ''; ?></small></a><?php if ( $k->drive_url ) : ?> <a class="small" href="<?php echo esc_url( $k->drive_url ); ?>" target="_blank" rel="noopener">Drive</a><?php endif; ?></li>
 				<?php endforeach; ?>
 			</ul>
 		<?php endif; ?>

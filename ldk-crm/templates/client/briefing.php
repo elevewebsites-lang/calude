@@ -5,6 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 lk_client_start( 'Briefing', $client );
 ?>
 <section class="chello"><span class="eyebrow">Briefing</span><h1>Sobre a sua marca</h1><p class="muted">Quanto mais a gente souber, mais certeiros ficam os conteúdos. Dá para editar quando quiser.<?php echo $client->briefing_at ? ' Última atualização: ' . esc_html( lk_date( $client->briefing_at, 'd/m/Y' ) ) . '.' : ''; ?></p></section>
+<?php if ( $client->briefing_at ) : ?>
+<section class="card card--accent ctr-saved"><div><strong>✓ Suas respostas estão salvas aqui na sua área</strong><br><span class="muted small">Última atualização em <?php echo esc_html( lk_date( $client->briefing_at, 'd/m/Y H:i' ) ); ?>. Você pode editar quando quiser.</span></div><button type="button" class="btn btn--ghost btn--sm" onclick="window.print()">Imprimir / salvar em PDF</button></section>
+<?php endif; ?>
 <section class="card">
 	<?php lk_form( 'briefing_save', 'stack brf-form' ); ?>
 		<input type="hidden" name="id" value="<?php echo (int) $client->id; ?>">
