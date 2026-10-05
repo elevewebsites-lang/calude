@@ -27,6 +27,11 @@ function lk_avatar_emoji( $user_id ) {
 	return '';
 }
 
+/** Foto enviada pela própria pessoa (ou ''). */
+function lk_user_photo( $user_id ) {
+	return esc_url_raw( (string) get_user_meta( (int) $user_id, 'lk_photo', true ) );
+}
+
 /** Texto para o círculo do avatar: o emoji escolhido ou as iniciais. */
 function lk_user_badge( $user ) {
 	$u = is_object( $user ) ? $user : get_userdata( (int) $user );
@@ -43,6 +48,10 @@ function lk_avatar_circle( $user, $class = 'avatar' ) {
 	if ( ! $u ) {
 		return '';
 	}
+	$photo = lk_user_photo( $u->ID );
+	if ( $photo ) {
+		return '<span class="' . esc_attr( $class ) . ' avatar--photo" title="' . esc_attr( $u->display_name ) . '"><img src="' . esc_url( $photo ) . '" alt="" loading="lazy"></span>';
+	}
 	$e = lk_avatar_emoji( $u->ID );
 	return '<span class="' . esc_attr( $class ) . ( $e ? ' avatar--emoji' : '' ) . '" title="' . esc_attr( $u->display_name ) . '">' . esc_html( $e ? $e : lk_initials( $u->display_name ) ) . '</span>';
 }
@@ -52,6 +61,19 @@ function lk_do_avatar_save() {
 		wp_die( 'Sem permissão.' );
 	}
 	$uid = get_current_user_id();
+	if ( ! empty( $_FILES['photo_file']['name'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		$url = lk_upload_image( 'photo_file' );
+		if ( is_wp_error( $url ) ) {
+			lk_back( $url->get_error_message(), 'erro' );
+		}
+		update_user_meta( $uid, 'lk_photo', esc_url_raw( $url ) );
+		update_user_meta( $uid, 'lk_avatar_seen', 1 );
+		lk_back( 'Foto atualizada. Ela aparece no seu cartão de acesso e para a equipe.' );
+	}
+	if ( lk_in( 'remover_foto', 'bool' ) ) {
+		delete_user_meta( $uid, 'lk_photo' );
+		lk_back( 'Foto removida.' );
+	}
 	$e   = (string) lk_in( 'avatar', 'raw' );
 	if ( '' === $e || 'iniciais' === $e ) {
 		delete_user_meta( $uid, 'lk_avatar' );
@@ -104,7 +126,8 @@ function lk_avatar_picker_html() {
 	$cur = lk_avatar_emoji( $me );
 	ob_start();
 	lk_modal_start( 'avatar-pick', 'Escolha o seu avatar' );
-	lk_form( 'avatar_save', 'stack avpick' );
+	lk_form( 'avatar_save', 'stack avpick', true );
+	echo '<div class="avpick-photo"><strong>Ou use uma foto</strong><label class="field"><span>Enviar minha foto (PNG, JPG ou WebP, até 3 MB). Ela aparece no cartão de acesso do login.</span><input type="file" name="photo_file" accept="image/png,image/jpeg,image/webp"></label>' . ( lk_user_photo( $me ) ? '<button type="submit" name="remover_foto" value="1" class="btn btn--link btn--sm" formnovalidate>Remover a minha foto</button>' : '' ) . '</div>';
 	echo '<p class="muted small">Todo mundo da equipe vai ver você assim: no chat, nas tarefas, no ranking e nas menções. Dá para trocar quando quiser.</p>';
 	foreach ( lk_avatar_choices() as $group => $list ) {
 		echo '<h4 class="dc-zone">' . esc_html( $group ) . '</h4><div class="avpick-grid">';

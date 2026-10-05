@@ -8,6 +8,7 @@
 	var form = document.querySelector('[data-login-form]');
 	if (!gate || !form || !window.fetch) return;
 	var q = function (s) { return gate.querySelector(s); };
+	var scene = gate;
 	var el = { av: q('[data-g-av]'), name: q('[data-g-name]'), func: q('[data-g-func]'), num: q('[data-g-num]'), screen: q('[data-g-screen]'), hello: q('[data-g-hello]'), role: q('[data-g-role]') };
 	var email = form.querySelector('[name="email"]');
 	var pass = form.querySelector('[name="senha"]');
@@ -21,7 +22,12 @@
 		if (!d || !d.name) {
 			el.av.textContent = '?'; el.name.textContent = 'Identifique-se'; el.func.textContent = 'Digite o seu e-mail'; el.num.textContent = 'LDK · ····'; gate.removeAttribute('data-kind'); return;
 		}
-		el.av.textContent = d.emoji || initials(d.name);
+		el.av.textContent = ''; el.av.classList.remove('is-photo', 'is-logo');
+		if (d.photo) {
+			var im = document.createElement('img'); im.alt = ''; im.src = d.photo;
+			im.onerror = function () { el.av.classList.remove('is-photo', 'is-logo'); el.av.textContent = d.emoji || initials(d.name); };
+			el.av.appendChild(im); el.av.classList.add(d.photo_is_logo ? 'is-logo' : 'is-photo');
+		} else { el.av.textContent = d.emoji || initials(d.name); }
 		el.name.textContent = d.name; el.func.textContent = d.role || '';
 		el.num.textContent = 'LDK · ' + (d.num || '····');
 		gate.setAttribute('data-kind', d.kind || '');
@@ -69,7 +75,9 @@
 			state('ok', 'ACESSO AUTORIZADO');
 			if (d.need_code) { el.hello.textContent = 'Senha confirmada ✓'; el.role.textContent = 'Falta só o código enviado ao seu e-mail'; }
 			else { el.hello.textContent = 'Seja bem-vindo(a), ' + (d.first || d.name || '') + '!'; el.role.textContent = d.role || ''; }
-			setTimeout(function () { location.href = d.redirect; }, reduce ? 700 : (d.need_code ? 2000 : 2800));
+			var wait2 = reduce ? 700 : (d.need_code ? 2200 : 3800);
+			setTimeout(function () { gate.classList.add('is-leaving'); }, Math.max(0, wait2 - 550));
+			setTimeout(function () { location.href = d.redirect; }, wait2);
 		} else {
 			state('deny', 'ACESSO NEGADO');
 			showError((d && d.msg) || 'E-mail ou senha incorretos.');

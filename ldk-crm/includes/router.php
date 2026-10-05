@@ -246,7 +246,12 @@ function lk_login_card_data( $user ) {
 			$role = $c->company ? 'Cliente · ' . $c->company : 'Cliente';
 		}
 	}
-	return array( 'kind' => $kind, 'name' => $name, 'first' => strtok( $name, ' ' ), 'role' => $role, 'emoji' => function_exists( 'lk_avatar_emoji' ) ? lk_avatar_emoji( $user->ID ) : '', 'num' => str_pad( (string) $user->ID, 4, '0', STR_PAD_LEFT ) );
+	$photo = 'equipe' === $kind && function_exists( 'lk_user_photo' ) ? lk_user_photo( $user->ID ) : '';
+	$logo  = '';
+	if ( 'cliente' === $kind && ! empty( $c ) ) {
+		$logo = esc_url_raw( (string) $c->logo );
+	}
+	return array( 'photo' => $photo ? $photo : $logo, 'photo_is_logo' => (bool) $logo, 'kind' => $kind, 'name' => $name, 'first' => strtok( $name, ' ' ), 'role' => $role, 'emoji' => function_exists( 'lk_avatar_emoji' ) ? lk_avatar_emoji( $user->ID ) : '', 'num' => str_pad( (string) $user->ID, 4, '0', STR_PAD_LEFT ) );
 }
 
 /** GET lk/v1/login-card?e=email → { found, ... } (com limite de consultas por IP). */
