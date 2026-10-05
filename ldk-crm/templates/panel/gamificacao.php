@@ -9,7 +9,7 @@ $team    = array();
 foreach ( lk_team_users() as $u ) {
 	$team[ $u->ID ] = $u->display_name;
 }
-lk_panel_start( 'Gamificação', 'gamificacao', '<a class="btn btn--ghost" href="' . esc_url( lk_panel_url( 'ranking' ) ) . '">Ver ranking</a>' );
+lk_panel_start( 'Gamificação', 'gamificacao', '<button type="button" class="btn btn--ghost" data-cel-test="level">▶ Ver animação de nível</button><a class="btn btn--ghost" href="' . esc_url( lk_panel_url( 'ranking' ) ) . '">Ver ranking</a>' );
 ?>
 <div class="split">
 	<div class="split-main">

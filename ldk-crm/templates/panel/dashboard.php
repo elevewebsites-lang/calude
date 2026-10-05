@@ -217,6 +217,14 @@ $mail_fail = lk_is_admin() ? get_option( 'lk_2fa_mail_fail' ) : '';
 		<?php endif; ?>
 		<div class="dsh-quick"><a href="<?php echo esc_url( lk_panel_url( 'tarefas' ) ); ?>">Tarefas</a><a href="<?php echo esc_url( lk_panel_url( 'agenda' ) ); ?>">Agenda</a><a href="<?php echo esc_url( lk_panel_url( 'conta' ) ); ?>">Minha conta</a></div>
 	</section>
+	<?php if ( lk_is_admin() && lk_goals() ) : ?>
+	<section class="dsh-card">
+		<div class="dsh-card-head"><h3>Metas</h3><a class="small" href="<?php echo esc_url( lk_panel_url( 'metas' ) ); ?>">ver todas</a></div>
+		<?php foreach ( array_slice( lk_goals(), 0, 4 ) as $gg ) : $gp = lk_goal_progress( $gg ); ?>
+			<div class="dsh-goal<?php echo $gp['pct'] >= 100 ? ' is-hit' : ''; ?>"><span><b><?php echo esc_html( $gg['name'] ); ?></b><em><?php echo (int) $gp['pct']; ?>%</em></span><i><b style="width:<?php echo (int) $gp['pct']; ?>%"></b></i><small><?php echo esc_html( lk_goal_fmt( $gg, $gp['value'] ) . ' de ' . lk_goal_fmt( $gg, $gp['target'] ) ); ?></small></div>
+		<?php endforeach; ?>
+	</section>
+	<?php endif; ?>
 	<section class="dsh-card">
 		<div class="dsh-card-head"><h3>Em andamento comigo</h3><a class="small" href="<?php echo esc_url( lk_panel_url( 'conteudo', 0, array( 'meus' => 1, 'ver' => 'lista' ) ) ); ?>">ver todos</a></div>
 		<?php if ( ! $mine ) : ?><p class="muted small">Nada na sua etapa agora. ✨</p><?php endif; ?>

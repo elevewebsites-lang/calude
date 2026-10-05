@@ -149,6 +149,7 @@ function lk_route() {
 			'novidades'   => array( 'novidades', '' ),
 			'ajuda'       => array( 'ajuda', '' ),
 			'ranking'     => array( 'ranking', '' ),
+			'metas'       => array( 'metas', 'admin' ),
 			'prospeccao'  => array( 'prospeccao', 'leads' ),
 			'gamificacao' => array( 'gamificacao', 'admin' ),
 		);

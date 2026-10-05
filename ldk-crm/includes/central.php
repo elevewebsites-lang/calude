@@ -13,6 +13,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.12.0' => array(
+			'date'  => '2026-10-05',
+			'title' => 'Metas da agência e comemorações',
+			'items' => array(
+				array( '🎯', 'Metas', 'Só administradores: receita do mês, recorrente (MRR), clientes novos, total de clientes, leads e posts publicados, por mês, ano ou acumulado. Aparecem no dashboard com o progresso.' ),
+				array( '🏆', 'Animação de meta batida', 'Quando uma meta chega a 100%, a dona vê confete, troféu e som no painel (uma vez por meta e período).' ),
+				array( '🚀', 'Animação de subir de nível', 'Quem sobe de nível na gamificação vê uma explosão de estrelas no próximo acesso ao painel.' ),
+			),
+		),
 		'1.11.0' => array(
 			'date'  => '2026-10-05',
 			'title' => 'Aprovação com cara de Instagram e logo do cliente',

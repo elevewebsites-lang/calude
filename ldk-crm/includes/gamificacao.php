@@ -119,8 +119,11 @@ function lk_game_award( $user_id, $points, $kind, $ref, $note ) {
 	}
 	$before = lk_game_level( lk_game_earned( $user_id ) );
 	lk_insert( 'game_log', array( 'user_id' => $user_id, 'points' => $points, 'kind' => $kind, 'ref' => $ref, 'note' => mb_substr( $note, 0, 250 ) ) );
+	$after = lk_game_level( lk_game_earned( $user_id ) );
+	if ( $after['name'] !== $before['name'] && function_exists( 'lk_levelup_mark' ) ) {
+		lk_levelup_mark( $user_id, $before['name'], $after['name'], lk_game_earned( $user_id ) ); // a pessoa vê a animação no próximo acesso
+	}
 	if ( get_current_user_id() === $user_id ) {
-		$after = lk_game_level( lk_game_earned( $user_id ) );
 		// Aviso próprio (não some quando a tela mostra "Tarefa salva.").
 		$q   = (array) get_transient( 'lk_gtoast_' . $user_id );
 		$q[] = '+' . $points . ' pontos! ' . ( $after['name'] !== $before['name'] ? '🎉 Você subiu para ' . $after['name'] . '!' : '' );
@@ -301,7 +304,12 @@ function lk_do_game_bonus() {
 		lk_back( 'Escolha a pessoa e os pontos.', 'erro' );
 	}
 	$note = lk_in( 'note' ) ?: 'Ajuste da agência';
+	$lv0  = lk_game_level( lk_game_earned( $uid ) );
 	lk_insert( 'game_log', array( 'user_id' => $uid, 'points' => $pts, 'kind' => 'bonus', 'note' => $note ) );
+	$lv1  = lk_game_level( lk_game_earned( $uid ) );
+	if ( $pts > 0 && $lv1['name'] !== $lv0['name'] && function_exists( 'lk_levelup_mark' ) ) {
+		lk_levelup_mark( $uid, $lv0['name'], $lv1['name'], lk_game_earned( $uid ) );
+	}
 	lk_notify( $uid, ( $pts > 0 ? '+' : '' ) . $pts . ' pontos: ' . $note, lk_panel_url( 'ranking' ) );
 	lk_back( 'Pontos lançados.' );
 }
