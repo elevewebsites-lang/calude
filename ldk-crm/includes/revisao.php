@@ -88,10 +88,6 @@ function lk_caption_rules( $caption, $hashtags = '' ) {
  * IA
  * -------------------------------------------------------------------- */
 
-function lk_ai_ready() {
-	return (bool) lk_decrypt( lk_setting( 'anthropic_key' ) );
-}
-
 /** Contexto do cliente para a IA. */
 function lk_review_context( $client, $date = '' ) {
 	$ctx = array();
@@ -120,27 +116,9 @@ function lk_ai_review( $caption, $hashtags, $client, $date ) {
 		. "Responda SOMENTE JSON neste formato: {\"erros\":[{\"tipo\":\"ortografia|gramatica|pontuacao|contexto|tom\",\"trecho\":\"trecho exato\",\"problema\":\"o que está errado\",\"sugestao\":\"como ficar\"}],\"texto_corrigido\":\"a legenda inteira já corrigida\",\"hashtags_sugeridas\":[\"#...\"]}. "
 		. "Sugira até 10 hashtags relevantes (sem hífen, sem repetir as já usadas). Se estiver tudo certo: erros vazio e texto_corrigido igual ao original.\n\n"
 		. "LEGENDA:\n" . $caption . "\n\nHASHTAGS JÁ USADAS: " . ( $hashtags ? $hashtags : '(nenhuma)' );
-	$res = wp_remote_post(
-		'https://api.anthropic.com/v1/messages',
-		array(
-			'timeout' => 60,
-			'headers' => array( 'x-api-key' => lk_decrypt( lk_setting( 'anthropic_key' ) ), 'anthropic-version' => '2023-06-01', 'content-type' => 'application/json' ),
-			'body'    => wp_json_encode( array( 'model' => lk_setting( 'ai_model' ), 'max_tokens' => 2000, 'messages' => array( array( 'role' => 'user', 'content' => $ask ) ) ) ),
-		)
-	);
-	if ( is_wp_error( $res ) ) {
-		return $res;
-	}
-	$json = json_decode( wp_remote_retrieve_body( $res ), true );
-	if ( empty( $json['content'][0]['text'] ) ) {
-		return new WP_Error( 'lk', $json['error']['message'] ?? 'A IA não respondeu.' );
-	}
-	if ( ! preg_match( '/\{.*\}/s', $json['content'][0]['text'], $m ) ) {
-		return new WP_Error( 'lk', 'Resposta da IA fora do formato.' );
-	}
-	$d = json_decode( $m[0], true );
-	if ( ! is_array( $d ) ) {
-		return new WP_Error( 'lk', 'Resposta da IA fora do formato.' );
+	$d = lk_ai_json( $ask, array( 'system' => LK_AI_SYSTEM, 'temperature' => 0.3 ) );
+	if ( is_wp_error( $d ) ) {
+		return $d;
 	}
 	$issues = array();
 	foreach ( (array) ( $d['erros'] ?? array() ) as $e ) {

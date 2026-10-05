@@ -89,7 +89,7 @@ function lk_do_idea_generate() {
 		$pieces[] = array( 'uma peça personalizada', 0, 0 );
 	}
 	$made = 0;
-	if ( lk_in( 'ia', 'bool' ) && lk_decrypt( lk_setting( 'anthropic_key' ) ) ) {
+	if ( lk_in( 'ia', 'bool' ) && lk_ai_ready() ) {
 		$made = lk_idea_ai( $pieces );
 	}
 	if ( ! $made ) {
@@ -115,25 +115,13 @@ function lk_do_idea_generate() {
 
 function lk_idea_ai( $pieces ) {
 	$list = implode( ', ', array_unique( array_map( function ( $p ) { return $p[0]; }, $pieces ) ) );
-	$ask  = 'Você é social media de um estúdio de impressão 3D em Taubaté/SP (' . lk_setting( 'empresa' ) . '). Peças recentes: ' . $list . '. Sugira 5 ideias de conteúdo para Instagram, variando entre reels, carrossel, post e stories, com gancho forte e CTA para orçamento. Responda SOMENTE JSON: [{"format":"reels|carrossel|post|stories","title":"...","body":"roteiro curto"}].';
-	$res  = wp_remote_post(
-		'https://api.anthropic.com/v1/messages',
-		array(
-			'timeout' => 60,
-			'headers' => array( 'x-api-key' => lk_decrypt( lk_setting( 'anthropic_key' ) ), 'anthropic-version' => '2023-06-01', 'content-type' => 'application/json' ),
-			'body'    => wp_json_encode( array( 'model' => lk_setting( 'ai_model' ), 'max_tokens' => 1500, 'messages' => array( array( 'role' => 'user', 'content' => $ask ) ) ) ),
-		)
-	);
-	if ( is_wp_error( $res ) ) {
-		return 0;
-	}
-	$json = json_decode( wp_remote_retrieve_body( $res ), true );
-	$text = $json['content'][0]['text'] ?? '';
-	if ( ! preg_match( '/\[.*\]/s', $text, $m ) ) {
+	$ask  = 'Você é social media da empresa ' . lk_setting( 'empresa' ) . '. Peças/assuntos recentes: ' . $list . '. Sugira 5 ideias de conteúdo para Instagram, variando entre reels, carrossel, post e stories, com gancho forte e CTA para orçamento. Responda SOMENTE JSON: [{"format":"reels|carrossel|post|stories","title":"...","body":"roteiro curto"}].';
+	$items = lk_ai_json( $ask, array( 'system' => LK_AI_SYSTEM ) );
+	if ( is_wp_error( $items ) ) {
 		return 0;
 	}
 	$made = 0;
-	foreach ( (array) json_decode( $m[0], true ) as $it ) {
+	foreach ( (array) $items as $it ) {
 		if ( empty( $it['title'] ) ) {
 			continue;
 		}

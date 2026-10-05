@@ -2875,3 +2875,16 @@ input::selection, textarea::selection { background: var(--accent); color: var(--
 .ctr-saved { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
 @media (max-width: 1100px) { .ctr-parties { grid-template-columns: minmax(0, 1fr); } }
 @media print { .ctr-saved .btn, .ctop, .cfoot, .wa-float { display: none !important; } }
+
+/* IA */
+.ai-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 6px; } .ai-tools select { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--card); }
+.ai-tag { background: linear-gradient(135deg, #6c5ce7, #ff7a90); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.ai-out:empty { display: none; } .ai-out { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.ai-opt { border: 1px solid var(--line-2); border-radius: 12px; padding: 12px 14px; background: var(--accent-soft); } .ai-opt p { margin: 6px 0 10px; font-size: 14px; }
+.ai-plan-form { display: grid; grid-template-columns: 120px 1fr auto; gap: 12px; align-items: end; }
+.ai-plan-out { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.ai-idea { border: 1px solid var(--line-2); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.ai-idea-h { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; } .ai-idea-h .ai-title { flex: 1; min-width: 180px; } .ai-day { width: 64px; }
+.ai-idea input[type=text], .ai-idea input[type=number], .ai-idea select, .ai-idea textarea { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--card); width: 100%; box-sizing: border-box; } .ai-idea .ai-day, .ai-idea select { width: auto; }
+.ai-pitch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; } .ai-pitch .ai-out { flex-basis: 100%; } .ai-pitch textarea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--card); box-sizing: border-box; }
+@media (max-width: 720px) { .ai-plan-form { grid-template-columns: minmax(0, 1fr); } }

@@ -6,7 +6,7 @@ $ideas  = lk_rows( 'ideas', "status <> 'publicado'", array(), "FIELD(status,'age
 $done   = lk_rows( 'ideas', "status = 'publicado'", array(), 'id DESC LIMIT 12' );
 $fmts   = lk_idea_formats();
 $sts    = lk_idea_statuses();
-$ai     = (bool) lk_decrypt( lk_setting( 'anthropic_key' ) );
+$ai     = lk_ai_ready();
 ob_start();
 lk_form( 'idea_generate', 'inline-form' );
 echo '<input type="hidden" name="ia" value="' . ( $ai ? 1 : 0 ) . '"><button type="submit" class="btn btn--ghost">' . lk_icon( 'lampada', 16 ) . '<span>' . ( $ai ? 'Gerar ideias com IA' : 'Sugerir ideias' ) . '</span></button></form>';

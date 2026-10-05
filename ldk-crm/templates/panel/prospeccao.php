@@ -32,6 +32,12 @@ lk_panel_start( 'Prospecção', 'prospeccao', '<a class="btn btn--ghost" href="'
 			<button type="button" class="btn btn--primary btn--sm" data-pros-add>➕ Adicionar ao funil</button>
 		</span>
 	</div>
+	<?php if ( lk_ai_ready() ) : ?>
+	<div class="ai-pitch"><span class="ai-tag">✨ IA</span> Mensagem de abordagem para a empresa marcada:
+		<select data-pros-channel><option value="whatsapp">WhatsApp</option><option value="email">E-mail</option></select>
+		<button type="button" class="btn btn--ghost btn--sm" data-pros-pitch>Gerar mensagem</button>
+		<div class="ai-out" data-pros-pitch-out></div></div>
+	<?php endif; ?>
 	<div class="pros-wrap"><table class="pros-table"><thead><tr><th></th><th>Empresa</th><th>Nicho</th><th>Telefone</th><th>E-mail</th><th>Instagram</th><th>Site</th><th>Nota</th><th>Endereço</th></tr></thead><tbody data-pros-body></tbody></table></div>
 	<p><button type="button" class="btn btn--ghost" data-pros-more hidden>Carregar mais resultados</button></p>
 </section>

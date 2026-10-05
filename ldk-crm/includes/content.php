@@ -730,6 +730,15 @@ function lk_post_form( $p = null, $client_id = 0, $back = '' ) {
 			<small class="muted" data-tag-count></small>
 		</div>
 		<div class="rev-out" data-review-out><?php echo $p ? lk_review_summary_html( $p ) : ''; // phpcs:ignore ?></div>
+		<?php if ( lk_ai_ready() ) : ?>
+		<div class="ai-tools"><span class="ai-tag">✨ IA</span>
+			<select data-ai-tone><?php foreach ( lk_ai_tones() as $tk => $tl ) : ?><option value="<?php echo esc_attr( $tk ); ?>"><?php echo esc_html( $tl ); ?></option><?php endforeach; ?></select>
+			<button type="button" class="btn btn--ghost btn--sm" data-ai="sugerir">Sugerir legendas</button>
+			<button type="button" class="btn btn--ghost btn--sm" data-ai="melhorar">Melhorar o texto</button>
+			<button type="button" class="btn btn--ghost btn--sm" data-ai="hashtags">Hashtags</button>
+		</div>
+		<div class="ai-out" data-ai-out></div>
+		<?php else : ?><p class="muted small">✨ Quer ajuda da IA para legendas e ideias? Coloque a chave do Gemini em Configurações → IA.</p><?php endif; ?>
 		<?php
 		$tagmap = array();
 		foreach ( lk_clients() as $tc ) {
@@ -757,6 +766,7 @@ function lk_post_form( $p = null, $client_id = 0, $back = '' ) {
 				<?php lk_select( 'revisor_id', 'Revisão', $team, $p ? $p->revisor_id : '' ); ?>
 			</div>
 			<?php lk_input( 'notes', 'Briefing para o design (interno)', $p ? $p->notes : '', 'textarea', 'rows="3" placeholder="Referências, cores, texto da arte…"' ); ?>
+			<?php if ( lk_ai_ready() ) : ?><button type="button" class="btn btn--ghost btn--sm" data-ai="briefing_arte">✨ Gerar briefing da arte</button><?php endif; ?>
 		</details>
 		<?php if ( ! $p ) : ?><?php lk_check( 'direto_design', 'Pular o planejamento e já mandar para o design', false ); ?><?php endif; ?>
 		<div class="form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button type="submit" class="btn btn--primary"><?php echo $p ? 'Salvar' : 'Criar post'; ?></button></div>

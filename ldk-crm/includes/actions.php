@@ -670,7 +670,7 @@ function lk_do_settings_save() {
 			continue;
 		}
 		// Segredos: guardados criptografados; campo em branco mantém o que já estava salvo.
-		if ( in_array( $key, array( 'google_client_secret', 'smtp_pass', 'anthropic_key', 'places_key', 'melhorenvio_token', 'ml_secret', 'shopee_key', 'ig_app_secret', 'meta_app_secret', 'meta_ads_token', 'voz_turn_pass', 'linkedin_client_secret' ), true ) ) {
+		if ( in_array( $key, array( 'google_client_secret', 'smtp_pass', 'anthropic_key', 'gemini_key', 'places_key', 'melhorenvio_token', 'ml_secret', 'shopee_key', 'ig_app_secret', 'meta_app_secret', 'meta_ads_token', 'voz_turn_pass', 'linkedin_client_secret' ), true ) ) {
 			$sec         = 'smtp_pass' === $key ? (string) lk_in( $key, 'raw' ) : trim( (string) lk_in( $key, 'raw' ) );
 			$out[ $key ] = '' === $sec ? $current[ $key ] : lk_encrypt( $sec );
 			continue;

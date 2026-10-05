@@ -139,6 +139,17 @@ lk_panel_start( 'Configurações', 'config' );
 	</section>
 
 
+	<section class="card step" id="ia">
+		<div class="card-head"><h3>IA (Gemini)</h3><span class="muted small">legendas, ideias do mês, revisão de texto e mensagens de prospecção</span></div>
+		<p class="muted small">Use a chave da API do Gemini que a agência já tem (Google AI Studio → Obter chave de API). O uso é cobrado pelo Google conforme o plano da conta.</p>
+		<div class="grid-3">
+			<?php lk_input( 'gemini_key', 'Chave da API do Gemini', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'gemini_key' ) ) . '"' ); ?>
+			<?php lk_input( 'gemini_model', 'Modelo', $s['gemini_model'], 'text', 'placeholder="gemini-2.5-flash"' ); ?>
+			<div class="field"><span>&nbsp;</span><?php lk_action_button( 'ai_test', array(), 'Testar a IA', 'btn btn--ghost' ); ?></div>
+		</div>
+		<p class="muted small">Dica: modelos "flash" são rápidos e baratos (ótimos para legendas); modelos "pro" pensam mais e custam mais. Salve a chave antes de testar.</p>
+	</section>
+
 	<section class="card step" id="seguranca">
 		<div class="step-head"><span class="step-n">07</span><div><h3>Segurança</h3></div></div>
 		<?php lk_select( 'seg_2fa', 'Verificação em duas etapas (código por e-mail no login da equipe)', array( '1' => 'Ligada (recomendado)', '0' => 'Desligada' ), $s['seg_2fa'] ); ?>

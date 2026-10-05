@@ -90,6 +90,7 @@ function lk_scripts() {
 			if ( get_query_var( 'lk_route' ) === 'panel' ) {
 				echo '<script src="' . esc_url( LK_URL . 'assets/hub.js?ver=' . LK_VERSION ) . '"></script>';
 				echo '<script src="' . esc_url( LK_URL . 'assets/revisao.js?ver=' . LK_VERSION ) . '"></script>';
+				echo '<script src="' . esc_url( LK_URL . 'assets/ia.js?ver=' . LK_VERSION ) . '"></script>';
 			}
 		}
 	}

@@ -13,6 +13,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.15.0' => array(
+			'date'  => '2026-10-05',
+			'title' => 'IA do Gemini no CRM',
+			'items' => array(
+				array( '✨', 'Ajuda na publicação', 'No post: sugerir 3 legendas (com tom de voz à escolha), melhorar o texto, sugerir hashtags e gerar o briefing da arte para o designer.' ),
+				array( '🗓️', 'Ideias do mês no planejamento', 'A IA monta as ideias do mês com o briefing do cliente, feriados e datas, e o que já foi postado. Você edita e adiciona as escolhidas direto ao planejamento.' ),
+				array( '💬', 'Mensagem de abordagem', 'Na prospecção, gera a primeira mensagem (WhatsApp ou e-mail) para a empresa marcada, pronta para copiar ou abrir no WhatsApp.' ),
+				array( '🔎', 'Revisão e ideias com Gemini', 'A revisão de texto e as ideias de conteúdo passam a usar o Gemini. Chave e modelo em Configurações → IA, com botão de teste.' ),
+			),
+		),
 		'1.14.0' => array(
 			'date'  => '2026-10-05',
 			'title' => 'Contratos: gerar, assinar e guardar tudo num só lugar',

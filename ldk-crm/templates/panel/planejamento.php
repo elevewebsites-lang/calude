@@ -127,6 +127,17 @@ if ( $hol_list ) :
 		<?php if ( $on_hol ) : ?><br><strong>Posts marcados em feriado — confira se vale publicar ou mudar o dia:</strong> <?php echo esc_html( implode( '; ', $on_hol ) ); ?>.<?php else : ?> Nenhum post cai em feriado.<?php endif; ?>
 	</div>
 <?php endif; ?>
+<?php if ( lk_ai_ready() && in_array( $status, array( 'rascunho', 'ajustes' ), true ) ) : ?>
+<section class="card ai-plan" data-ai-plan data-client="<?php echo (int) $client->id; ?>" data-ym="<?php echo esc_attr( $ym ); ?>">
+	<div class="card-head"><h3>✨ Ideias do mês com IA</h3><span class="muted small">usa o briefing, os feriados e o que já foi postado</span></div>
+	<div class="ai-plan-form">
+		<label class="field"><span>Quantas ideias</span><input type="number" min="1" max="20" value="<?php echo (int) ( $client->posts_quota > 0 ? min( 20, $client->posts_quota ) : 8 ); ?>" data-ai-qty></label>
+		<label class="field"><span>Foco do mês (opcional)</span><input type="text" placeholder="Ex.: promover o plano novo, mais Reels, Dia das Mães" data-ai-focus></label>
+		<button type="button" class="btn btn--primary" data-ai-plan-go>Gerar ideias</button>
+	</div>
+	<div class="ai-plan-out" data-ai-plan-out></div>
+</section>
+<?php endif; ?>
 <?php $sheet_url = lk_plan_sheet_url( $plan ); ?>
 <p class="muted small"><?php if ( $sheet_url ) : ?>📊 <a href="<?php echo esc_url( $sheet_url ); ?>" target="_blank" rel="noopener">Abrir a planilha do planejamento no Drive</a> (atualiza sozinha; abre e baixa como Excel)<?php elseif ( function_exists( 'lk_google_connected' ) && lk_google_connected() ) : ?>📊 A planilha deste planejamento no Drive é criada em instantes.<?php else : ?>Conecte o Google Drive em Configurações para guardar o planejamento numa planilha.<?php endif; ?> <?php $fl = lk_drive_folder_link( array( 'Clientes', lk_client_label( $client ) ) ); if ( $fl ) : ?> · <a href="<?php echo esc_url( $fl ); ?>" target="_blank" rel="noopener">Pasta do cliente no Drive</a><?php endif; ?></p>
 <?php if ( $plan->review_note && 'rascunho' === $status ) : ?><div class="flash flash--warn"><strong>Voltou da revisão:</strong> <?php echo nl2br( esc_html( $plan->review_note ) ); ?></div><?php endif; ?>

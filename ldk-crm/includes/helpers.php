@@ -73,6 +73,8 @@ function lk_default_settings() {
 		'places_key'     => '',
 		'google_client_secret' => '',
 		'google_pasta'   => '',
+		'gemini_key'    => '',
+		'gemini_model'  => 'gemini-2.5-flash',
 		'anthropic_key'  => '',
 		'ai_model'       => 'claude-sonnet-5',
 		'ml_app_id'      => '',

@@ -63,6 +63,18 @@
 			.then(function (r) { list.forEach(function (p) { p.known = 'lead'; p.cb.checked = false; p.cb.disabled = true; }); msg.innerHTML = ''; msg.appendChild(document.createTextNode('✅ ' + r.added + ' adicionada(s) ao funil' + (r.skipped ? ' (' + r.skipped + ' já existiam)' : '') + '. ')); msg.appendChild(link(r.funnel, 'Abrir o funil')); })
 			.catch(function (e) { msg.textContent = e.message; });
 	});
+	var pitchBtn = document.querySelector('[data-pros-pitch]');
+	if (pitchBtn) pitchBtn.addEventListener('click', function () {
+		var p = selected()[0] || rows.filter(function (x) { return x.cb && x.cb.checked; })[0], out = document.querySelector('[data-pros-pitch-out]');
+		if (!p) { alert('Marque uma empresa na lista.'); return; }
+		pitchBtn.disabled = true; out.textContent = 'Escrevendo…';
+		api('prospect/pitch'.replace('prospect/', 'ai/'), { name: p.name, niche: p.niche, website: p.website, city: (new FormData(form)).get('city'), channel: document.querySelector('[data-pros-channel]').value })
+			.then(function (r) {
+				out.innerHTML = ''; var ta = document.createElement('textarea'); ta.rows = 7; ta.value = r.text; out.appendChild(ta);
+				var cp = document.createElement('button'); cp.type = 'button'; cp.className = 'btn btn--ghost btn--sm'; cp.textContent = 'Copiar'; cp.onclick = function () { navigator.clipboard.writeText(ta.value); cp.textContent = 'Copiado ✓'; }; out.appendChild(cp);
+				if (p.phone && document.querySelector('[data-pros-channel]').value === 'whatsapp') { var wa = document.createElement('a'); wa.className = 'btn btn--wa btn--sm'; wa.target = '_blank'; wa.rel = 'noopener'; wa.textContent = 'Abrir no WhatsApp'; wa.href = 'https://wa.me/55' + p.phone.replace(/\D/g, '').replace(/^55/, '') + '?text=' + encodeURIComponent(ta.value); out.appendChild(wa); }
+			}).catch(function (e) { out.textContent = e.message; }).then(function () { pitchBtn.disabled = false; });
+	});
 	document.querySelector('[data-pros-csv]').addEventListener('click', function () {
 		if (!rows.length) return;
 		var q = function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
