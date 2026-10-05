@@ -103,7 +103,7 @@ $mail_fail = lk_is_admin() ? get_option( 'lk_2fa_mail_fail' ) : '';
 	<a class="news-banner" href="<?php echo esc_url( lk_panel_url( 'novidades' ) ); ?>"><span>✨</span><strong>Novidades da versão <?php echo esc_html( LK_VERSION ); ?></strong><small><?php echo esc_html( lk_changelog()[ LK_VERSION ]['title'] ?? '' ); ?></small><em>ver o que mudou →</em></a>
 <?php endif; ?>
 <p class="dash-stamp muted small" data-dash-stamp aria-live="polite"></p>
-<div class="dsh">
+<div class="dsh-ct"><div class="dsh">
 <div class="dsh-main">
 	<section class="dsh-hero" data-dash="hero">
 		<div class="dsh-hero-txt">
@@ -237,7 +237,7 @@ $mail_fail = lk_is_admin() ? get_option( 'lk_2fa_mail_fail' ) : '';
 	</section>
 	<?php endif; ?>
 </aside>
-</div>
+</div></div>
 <script src="<?php echo esc_url( LK_URL . 'assets/dash.js?ver=' . LK_VERSION ); ?>"></script>
 <?php
 lk_panel_end();

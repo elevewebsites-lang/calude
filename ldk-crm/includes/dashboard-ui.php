@@ -32,30 +32,31 @@ function lk_dash_path( $pts, $ymin = null, $ymax = null ) {
 /**
  * Gráfico de linhas com área. $series = array( array( 'name', 'values'[], 'class' ) ), $labels = rótulos do eixo X.
  * $marker = índice do ponto de "hoje" (linha vertical).
+ * O SVG só desenha as linhas (estica à vontade); números e datas são HTML por cima, para não esticar o texto.
  */
 function lk_dash_line( $series, $labels, $marker = -1 ) {
-	$w = 640; $h = 220; $pl = 30; $pr = 10; $pt = 14; $pb = 28;
-	$max = 1;
+	$w = 640; $h = 220; $pt = 10; $pb = 10;
+	$maxv = 2;
 	foreach ( $series as $s ) {
-		$max = max( $max, max( $s['values'] ) );
+		$maxv = max( $maxv, max( $s['values'] ) );
 	}
-	$max = (int) ceil( $max / 2 ) * 2 ?: 2;
-	$n   = count( $labels );
-	$x   = function ( $i ) use ( $n, $w, $pl, $pr ) { return $pl + ( $w - $pl - $pr ) * ( $n > 1 ? $i / ( $n - 1 ) : 0 ); };
-	$y   = function ( $v ) use ( $max, $h, $pt, $pb ) { return $pt + ( $h - $pt - $pb ) * ( 1 - $v / $max ); };
-	$o   = '<svg class="dsh-line" viewBox="0 0 ' . $w . ' ' . $h . '" role="img" aria-label="Publicações por dia" preserveAspectRatio="none"><defs>';
+	$step = max( 1, (int) ceil( $maxv / 4 ) ); // eixo com números inteiros e sem repetir
+	$top  = $step * 4;
+	$n    = count( $labels );
+	$x    = function ( $i ) use ( $n, $w ) { return $w * ( $n > 1 ? $i / ( $n - 1 ) : 0 ); };
+	$y    = function ( $v ) use ( $top, $h, $pt, $pb ) { return $pt + ( $h - $pt - $pb ) * ( 1 - $v / $top ); };
+	$o    = '<div class="dsh-chart"><div class="dsh-y">';
+	for ( $g = 0; $g <= 4; $g++ ) {
+		$o .= '<span style="top:' . round( ( $pt + ( $h - $pt - $pb ) * $g / 4 ) / $h * 100, 2 ) . '%">' . ( $top - $g * $step ) . '</span>';
+	}
+	$o .= '</div><div class="dsh-plot"><div class="dsh-plotbox"><svg class="dsh-line" viewBox="0 0 ' . $w . ' ' . $h . '" role="img" aria-label="Publicações por dia" preserveAspectRatio="none"><defs>';
 	foreach ( $series as $k => $s ) {
 		$o .= '<linearGradient id="dg' . $k . '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" class="dsh-stop dsh-stop--' . esc_attr( $s['class'] ) . '"/><stop offset="100%" class="dsh-stop dsh-stop--' . esc_attr( $s['class'] ) . ' is-end"/></linearGradient>';
 	}
 	$o .= '</defs>';
 	for ( $g = 0; $g <= 4; $g++ ) {
-		$gy  = $pt + ( $h - $pt - $pb ) * $g / 4;
-		$o  .= '<line class="dsh-grid" x1="' . $pl . '" x2="' . ( $w - $pr ) . '" y1="' . round( $gy, 1 ) . '" y2="' . round( $gy, 1 ) . '"/><text class="dsh-axis" x="' . ( $pl - 6 ) . '" y="' . round( $gy + 4, 1 ) . '" text-anchor="end">' . round( $max * ( 1 - $g / 4 ) ) . '</text>';
-	}
-	foreach ( $labels as $i => $lab ) {
-		if ( '' !== $lab ) {
-			$o .= '<text class="dsh-axis" x="' . round( $x( $i ), 1 ) . '" y="' . ( $h - 8 ) . '" text-anchor="' . ( $i >= $n - 3 ? 'end' : 'middle' ) . '">' . esc_html( $lab ) . '</text>';
-		}
+		$gy = $pt + ( $h - $pt - $pb ) * $g / 4;
+		$o .= '<line class="dsh-grid" x1="0" x2="' . $w . '" y1="' . round( $gy, 1 ) . '" y2="' . round( $gy, 1 ) . '"/>';
 	}
 	if ( $marker >= 0 ) {
 		$o .= '<line class="dsh-today" x1="' . round( $x( $marker ), 1 ) . '" x2="' . round( $x( $marker ), 1 ) . '" y1="' . $pt . '" y2="' . ( $h - $pb ) . '"/>';
@@ -66,10 +67,16 @@ function lk_dash_line( $series, $labels, $marker = -1 ) {
 			$pts[] = array( $x( $i ), $y( $v ) );
 		}
 		$line = lk_dash_path( $pts, $pt, $h - $pb );
-		$o   .= '<path d="' . $line . ' L' . round( $x( $n - 1 ), 1 ) . ',' . ( $h - $pb ) . ' L' . round( $x( 0 ), 1 ) . ',' . ( $h - $pb ) . ' Z" fill="url(#dg' . $k . ')" class="dsh-area"/>';
+		$o   .= '<path d="' . $line . ' L' . round( $x( $n - 1 ), 1 ) . ',' . ( $h - $pb ) . ' L0,' . ( $h - $pb ) . ' Z" fill="url(#dg' . $k . ')" class="dsh-area"/>';
 		$o   .= '<path d="' . $line . '" class="dsh-stroke dsh-stroke--' . esc_attr( $s['class'] ) . '" fill="none"/>';
 	}
-	return $o . '</svg>';
+	$o .= '</svg></div><div class="dsh-x">';
+	foreach ( $labels as $i => $lab ) {
+		if ( '' !== $lab ) {
+			$o .= '<span class="' . ( 0 === $i ? 'is-first' : ( $i >= $n - 3 ? 'is-last' : '' ) ) . '" style="left:' . round( 100 * $i / max( 1, $n - 1 ), 2 ) . '%">' . esc_html( $lab ) . '</span>';
+		}
+	}
+	return $o . '</div></div></div>';
 }
 
 /** Rosca: $slices = array( array( label, value, class ) ). Centro: total. */
