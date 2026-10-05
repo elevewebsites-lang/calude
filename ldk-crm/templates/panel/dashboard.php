@@ -92,7 +92,7 @@ $todo_n    = count( $mine ) + count( $tasks );
 $hour  = (int) current_time( 'G' );
 $hello = $hour < 12 ? 'Bom dia' : ( $hour < 18 ? 'Boa tarde' : 'Boa noite' );
 $name  = wp_get_current_user()->first_name ? wp_get_current_user()->first_name : wp_get_current_user()->display_name;
-$refresh = '<button type="button" class="btn btn--ghost" data-board-toggle title="Mover e redimensionar os blocos do dashboard">' . lk_icon( 'editar', 16 ) . '<span>Organizar</span></button><button type="button" class="btn btn--ghost" data-open="dash-custom" title="Escolher o que aparece no dashboard">' . lk_icon( 'config', 16 ) . '<span>Personalizar</span></button><button type="button" class="btn btn--ghost dash-refresh" data-dash-refresh title="Atualizar os números e as listas do dashboard (também atualiza sozinho a cada 3 minutos)">' . lk_icon( 'atualizar', 16 ) . '<span>Atualizar</span></button>';
+$refresh = '<button type="button" class="btn btn--ghost" data-board-toggle title="Mover, redimensionar, adicionar e remover os cartões do dashboard">' . lk_icon( 'config', 16 ) . '<span>Personalizar</span></button><button type="button" class="btn btn--ghost dash-refresh" data-dash-refresh title="Atualizar os números e as listas do dashboard (também atualiza sozinho a cada 3 minutos)">' . lk_icon( 'atualizar', 16 ) . '<span>Atualizar</span></button>';
 lk_panel_start( $hello . ', ' . $name, 'dashboard', $refresh . '<a class="btn btn--primary" href="' . esc_url( lk_panel_url( 'conteudo', 0, array( 'abrir' => 'novo-post' ) ) ) . '">' . lk_icon( 'mais', 16 ) . '<span>Post</span></a>' );
 $mail_fail = lk_is_admin() ? get_option( 'lk_2fa_mail_fail' ) : '';
 ?>
@@ -274,6 +274,39 @@ foreach ( array_keys( lk_dash_zones() ) as $zn ) {
 	<?php endif; ?>
 <?php $W['clientes_ult'] = ob_get_clean(); endif; ?>
 
+<?php if ( isset( $vis['formularios'] ) ) : ob_start(); ?>
+<?php
+$fpend = lk_rows( 'form_sends', "status = 'pendente'", array(), 'id DESC LIMIT 6' );
+$fres  = lk_form_results( 0 );
+$fnps  = lk_form_nps( $fres );
+$fans  = count( lk_rows( 'form_sends', "kind = 'pesquisa' AND status = 'respondido'", array() ) );
+?>
+<section class="card">
+	<div class="card-head"><h3>🧩 Briefings e pesquisas</h3><a class="small" href="<?php echo esc_url( lk_panel_url( 'formularios' ) ); ?>">abrir</a></div>
+	<div class="stats stats--2"><div class="stat"><span class="stat-label">Pesquisas respondidas</span><strong><?php echo (int) $fans; ?></strong></div><div class="stat"><span class="stat-label">NPS</span><strong><?php echo null === $fnps ? '—' : (int) $fnps; ?></strong></div></div>
+	<?php if ( ! $fpend ) : ?><p class="muted small">Nenhum briefing ou pesquisa esperando resposta.</p><?php else : ?><ul class="mini-list"><?php foreach ( $fpend as $fp ) : $fc = lk_get( 'clients', $fp->client_id ); ?><li><a href="<?php echo esc_url( lk_panel_url( 'cliente', $fp->client_id ) ); ?>#formularios"><strong><?php echo esc_html( $fp->title ); ?></strong><small><?php echo esc_html( ( $fc ? lk_client_label( $fc ) : '' ) . ' · aguardando' ); ?></small></a></li><?php endforeach; ?></ul><?php endif; ?>
+</section>
+<?php $W['formularios'] = ob_get_clean(); endif; ?>
+
+<?php if ( isset( $vis['trafego_resumo'] ) ) : ob_start(); ?>
+<?php
+list( $tf, $tt ) = lk_month_range( current_time( 'Y-m' ) );
+$tsp = 0;
+$tn  = 0;
+foreach ( lk_clients() as $tc ) {
+	$ta = $tc->meta_ad_account ? get_transient( 'lk_adsov_' . $tc->id . '_' . $tf . '_' . $tt ) : false;
+	if ( $ta && ! empty( $ta['meta']['spend'] ) ) {
+		$tsp += (float) $ta['meta']['spend'];
+		$tn++;
+	}
+}
+?>
+<section class="card">
+	<div class="card-head"><h3>📈 Tráfego pago do mês</h3><a class="small" href="<?php echo esc_url( lk_panel_url( 'trafego' ) ); ?>">abrir</a></div>
+	<?php if ( $tn ) : ?><div class="stats stats--2"><div class="stat"><span class="stat-label">Investido</span><strong class="money"><?php echo esc_html( lk_money( $tsp ) ); ?></strong><small><?php echo (int) $tn; ?> clientes</small></div></div><?php else : ?><p class="muted small">Abra o <a href="<?php echo esc_url( lk_panel_url( 'trafego' ) ); ?>">Tráfego pago</a> uma vez para carregar os números do mês. Depois eles aparecem aqui.</p><?php endif; ?>
+</section>
+<?php $W['trafego_resumo'] = ob_get_clean(); endif; ?>
+
 <?php if ( isset( $vis['reunioes'] ) ) : ob_start(); ?>
 <?php echo lk_meetings_widget_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 <?php $W['reunioes'] = ob_get_clean(); endif; ?>
@@ -327,17 +360,27 @@ $fmax = max( 1, max( array_merge( array( 0 ), array_values( $fcnt ) ) ) );
 <?php $W['funil'] = ob_get_clean(); endif; ?>
 
 
-<div class="dw-hint" data-board-hint hidden><span><strong>Organizando o dashboard.</strong> Arraste pelo <b>⠿</b> para mover e pelo canto de baixo para redimensionar. Cada bloco tem um tamanho mínimo, para as informações não ficarem cortadas. As mudanças salvam sozinhas.</span><?php lk_action_button( 'dash_reset', array(), 'Restaurar o padrão', 'btn btn--link btn--sm', 'Voltar o dashboard ao padrão (posição, tamanho e quais blocos aparecem)?' ); ?></div>
+<div class="dw-hint" data-board-hint hidden><span><strong>Organizando o dashboard.</strong> Arraste pelo <b>⠿</b> para mover, pelo canto de baixo para redimensionar e use o <b>×</b> para remover. Cada cartão tem um tamanho mínimo, para as informações não ficarem cortadas. Tudo salva sozinho.</span><button type="button" class="btn btn--primary btn--sm" data-add-open>+ Adicionar cartão</button><?php lk_action_button( 'dash_reset', array(), 'Restaurar o padrão', 'btn btn--link btn--sm', 'Voltar o dashboard ao padrão (posição, tamanho e quais blocos aparecem)?' ); ?></div>
 <div class="dsh-ct"><div class="dsh-board" data-board data-dash-grid>
 <?php foreach ( lk_dash_board_ids() as $bid ) : if ( empty( $W[ $bid ] ) ) { continue; } list( $bw, $bh, $bmin ) = lk_dash_size( $bid ); ?>
 <div class="dw <?php echo $bw > 6 ? 'dw--l' : 'dw--s'; ?>" data-dw="<?php echo esc_attr( $bid ); ?>" data-w="<?php echo (int) $bw; ?>" data-h="<?php echo (int) $bh; ?>" data-min="<?php echo (int) $bmin; ?>" style="--w:<?php echo (int) $bw; ?>;--h:<?php echo (int) $bh; ?>">
-	<div class="dw-bar"><span class="dw-grip" title="Arraste para mover">⠿</span><span class="dw-name"><?php echo esc_html( lk_dash_widgets()[ $bid ][0] ); ?></span><span class="dw-btns"><button type="button" data-dw-step="-1" aria-label="Mais estreito">−</button><button type="button" data-dw-step="1" aria-label="Mais largo">+</button></span></div>
+	<div class="dw-bar"><span class="dw-grip" title="Arraste para mover">⠿</span><span class="dw-name"><?php echo esc_html( lk_dash_widgets()[ $bid ][0] ); ?></span><span class="dw-btns"><button type="button" data-dw-step="-1" aria-label="Mais estreito">−</button><button type="button" data-dw-step="1" aria-label="Mais largo">+</button><button type="button" data-dw-rm aria-label="Remover este cartão" title="Remover este cartão">×</button></span></div>
 	<?php echo $W[ $bid ]; // phpcs:ignore WordPress.Security.EscapeOutput -- HTML montado acima com esc_*. ?>
 	<span class="dw-rs" title="Arraste para redimensionar"></span>
 </div>
 <?php endforeach; ?>
 </div></div>
-<?php echo lk_dash_customize_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+<?php
+lk_modal_start( 'dash-add', 'Adicionar cartão ao dashboard' );
+echo '<p class="muted small">Escolha um cartão para colocar no dashboard. Depois arraste para o lugar que quiser. Só aparecem os cartões que o seu acesso permite.</p><div class="dw-addlist" data-add-list>';
+foreach ( lk_dash_widgets() as $aid => $aw ) {
+	if ( lk_dash_allowed( $aid ) && ! lk_dash_is_on( $aid ) ) {
+		echo '<button type="button" class="dw-add" data-add-id="' . esc_attr( $aid ) . '"><span>+</span>' . esc_html( $aw[0] ) . '</button>';
+	}
+}
+echo '<p class="muted small" data-add-empty hidden>Todos os cartões disponíveis já estão no dashboard.</p></div>';
+lk_modal_end();
+?>
 <script src="<?php echo esc_url( LK_URL . 'assets/dash.js?ver=' . LK_VERSION ); ?>"></script>
 <script src="<?php echo esc_url( LK_URL . 'assets/dash-board.js?ver=' . LK_VERSION ); ?>"></script>
 <?php

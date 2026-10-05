@@ -230,17 +230,103 @@ function lk_render( $view, $vars = array() ) {
  * Login
  * -------------------------------------------------------------------- */
 
+/** Dados do cartão de acesso (nome completo, função, tipo, avatar) de quem está entrando. */
+function lk_login_card_data( $user ) {
+	$kind = lk_is_team( $user->ID ) ? 'equipe' : 'cliente';
+	$name = trim( $user->first_name . ' ' . $user->last_name );
+	$name = $name ? $name : $user->display_name;
+	$role = 'Cliente';
+	if ( 'equipe' === $kind ) {
+		$role = lk_user_role_label( $user->ID );
+		$role = $role ? $role : 'Equipe';
+	} else {
+		$c = lk_client_by_user( $user->ID );
+		if ( $c ) {
+			$name = $c->name ? $c->name : $name;
+			$role = $c->company ? 'Cliente · ' . $c->company : 'Cliente';
+		}
+	}
+	return array( 'kind' => $kind, 'name' => $name, 'first' => strtok( $name, ' ' ), 'role' => $role, 'emoji' => function_exists( 'lk_avatar_emoji' ) ? lk_avatar_emoji( $user->ID ) : '', 'num' => str_pad( (string) $user->ID, 4, '0', STR_PAD_LEFT ) );
+}
+
+/** GET lk/v1/login-card?e=email → { found, ... } (com limite de consultas por IP). */
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_route(
+			'lk/v1',
+			'/login-card',
+			array(
+				'methods'             => 'GET',
+				'permission_callback' => '__return_true',
+				'callback'            => function ( WP_REST_Request $r ) {
+					if ( '1' !== (string) lk_setting( 'login_card' ) ) {
+						return array( 'found' => false );
+					}
+					$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'x'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+					$key = 'lk_lc_' . md5( $ip );
+					$n   = (int) get_transient( $key );
+					if ( $n >= 12 ) {
+						return new WP_Error( 'lk', 'Muitas consultas. Aguarde alguns minutos.', array( 'status' => 429 ) );
+					}
+					set_transient( $key, $n + 1, 10 * MINUTE_IN_SECONDS );
+					$e = sanitize_text_field( (string) $r->get_param( 'e' ) );
+					$u = is_email( $e ) ? get_user_by( 'email', $e ) : null;
+					if ( ! $u || ! ( lk_is_team( $u->ID ) || lk_is_client_user( $u->ID ) ) ) {
+						return array( 'found' => false );
+					}
+					return array( 'found' => true ) + lk_login_card_data( $u );
+				},
+			)
+		);
+	}
+);
+
+/** Login pelo cartão animado: o mesmo formulário, respondendo JSON em vez de redirecionar. */
+function lk_login_json( $data ) {
+	nocache_headers();
+	wp_send_json( $data );
+}
+
 function lk_handle_login() {
 	if ( 'POST' !== ( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : '' ) || ! isset( $_POST['lk_login_nonce'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 		return;
 	}
+	$ajax = ! empty( $_SERVER['HTTP_X_LK_LOGIN'] );
 	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['lk_login_nonce'] ) ), 'lk_login' ) ) {
-		$GLOBALS['lk_login_error'] = 'Sessão expirada. Tente de novo.';
+		$GLOBALS['lk_login_error'] = 'Sessão expirada. Recarregue a página e tente de novo.';
+		if ( $ajax ) {
+			lk_login_json( array( 'ok' => false, 'msg' => $GLOBALS['lk_login_error'] ) );
+		}
 		return;
+	}
+	$posted = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '';
+	if ( $ajax ) {
+		// Qualquer redirecionamento do login (painel, área do cliente ou código em duas etapas) vira JSON para a animação.
+		add_filter(
+			'wp_redirect',
+			function ( $loc ) use ( $posted ) {
+				$u = wp_get_current_user();
+				if ( ! $u || ! $u->ID ) {
+					$u = is_email( $posted ) ? get_user_by( 'email', $posted ) : get_user_by( 'login', $posted );
+				}
+				$q    = (string) wp_parse_url( $loc, PHP_URL_QUERY );
+				parse_str( $q, $qs );
+				$data = array( 'ok' => empty( $qs['aviso'] ), 'redirect' => $loc, 'need_code' => isset( $qs['codigo'] ), 'aviso' => $qs['aviso'] ?? '' );
+				if ( $u && $u->ID ) {
+					$data += lk_login_card_data( $u );
+				}
+				if ( ! $data['ok'] ) {
+					$data['msg'] = 'Não foi possível concluir o acesso. Atualize a página e tente de novo.';
+				}
+				lk_login_json( $data );
+			},
+			1
+		);
 	}
 	$user = wp_signon(
 		array(
-			'user_login'    => isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '',
+			'user_login'    => $posted,
 			'user_password' => isset( $_POST['senha'] ) ? wp_unslash( $_POST['senha'] ) : '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			'remember'      => ! empty( $_POST['lembrar'] ),
 		),
@@ -248,6 +334,9 @@ function lk_handle_login() {
 	);
 	if ( is_wp_error( $user ) ) {
 		$GLOBALS['lk_login_error'] = 'lk_locked' === $user->get_error_code() ? $user->get_error_message() : 'E-mail ou senha incorretos.';
+		if ( $ajax ) {
+			lk_login_json( array( 'ok' => false, 'msg' => $GLOBALS['lk_login_error'], 'locked' => 'lk_locked' === $user->get_error_code() ) );
+		}
 		return;
 	}
 	$back = isset( $_POST['volta'] ) ? esc_url_raw( wp_unslash( $_POST['volta'] ) ) : '';

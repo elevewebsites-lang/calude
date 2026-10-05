@@ -15,21 +15,50 @@
 		var t = document.createElement('div'); t.className = 'dash-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t);
 		setTimeout(function () { t.classList.add('is-out'); }, 1400); setTimeout(function () { t.remove(); }, 1900);
 	}
-	function save() {
+	function save(extra, done) {
 		clearTimeout(timer);
 		timer = setTimeout(function () {
 			var order = [], size = {};
 			items().forEach(function (el) { order.push(el.dataset.dw); size[el.dataset.dw] = { w: +el.dataset.w, h: +el.dataset.h }; });
-			fetch(window.LK.rest + 'dash-layout', { method: 'POST', credentials: 'same-origin', headers: { 'X-WP-Nonce': window.LK.nonce, 'Content-Type': 'application/json' }, body: JSON.stringify({ order: order, size: size }) })
-				.then(function (r) { if (!r.ok) throw new Error(); toast('Layout salvo ✓'); })
+			fetch(window.LK.rest + 'dash-layout', { method: 'POST', credentials: 'same-origin', headers: { 'X-WP-Nonce': window.LK.nonce, 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ order: order, size: size }, extra || {})) })
+				.then(function (r) { if (!r.ok) throw new Error(); toast('Layout salvo ✓'); if (done) done(); })
 				.catch(function () { toast('Não foi possível salvar o layout.'); });
 		}, 350);
 	}
 
 	tgl.addEventListener('click', function () {
 		var on = document.body.classList.toggle('is-arranging');
-		if (label) label.textContent = on ? 'Concluir' : 'Organizar';
+		if (label) label.textContent = on ? 'Concluir' : 'Personalizar';
+		try { sessionStorage.setItem('lk-arrange', on ? '1' : ''); } catch (x) {}
 		if (hint) hint.hidden = !on;
+	});
+
+	// Voltar no modo personalizar depois de adicionar um cartão (a página recarrega para desenhar o novo cartão).
+	try { if (sessionStorage.getItem('lk-arrange') === '1') tgl.click(); } catch (x) {}
+
+	// Remover cartão (ele vai para a lista "Adicionar cartão").
+	var addList = document.querySelector('[data-add-list]');
+	var addEmpty = addList && addList.querySelector('[data-add-empty]');
+	function syncEmpty() { if (addEmpty) addEmpty.hidden = !!addList.querySelector('[data-add-id]'); }
+	syncEmpty();
+	board.addEventListener('click', function (e) {
+		var rm = e.target.closest('[data-dw-rm]');
+		if (!rm) return;
+		var el = rm.closest('.dw'), id = el.dataset.dw, name = (el.querySelector('.dw-name') || {}).textContent || id;
+		if (!confirm('Remover o cartão "' + name + '" do dashboard? Você pode adicionar de novo quando quiser.')) return;
+		el.remove();
+		if (addList) { var b = document.createElement('button'); b.type = 'button'; b.className = 'dw-add'; b.setAttribute('data-add-id', id); b.innerHTML = '<span>+</span>'; b.appendChild(document.createTextNode(name)); addList.insertBefore(b, addEmpty || null); syncEmpty(); }
+		save({ remove: [id] });
+	});
+	// Adicionar cartão.
+	var addBtn = document.querySelector('[data-add-open]');
+	if (addBtn) addBtn.addEventListener('click', function () { var d = document.getElementById('dash-add'); if (d && d.showModal) d.showModal(); });
+	if (addList) addList.addEventListener('click', function (e) {
+		var b = e.target.closest('[data-add-id]');
+		if (!b) return;
+		b.disabled = true;
+		try { sessionStorage.setItem('lk-arrange', '1'); } catch (x) {}
+		save({ add: [b.getAttribute('data-add-id')] }, function () { location.reload(); });
 	});
 
 	// Arrastar para mudar a posição.

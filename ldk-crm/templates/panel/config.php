@@ -158,6 +158,7 @@ lk_panel_start( 'Configurações', 'config' );
 
 	<section class="card step" id="seguranca">
 		<div class="step-head"><span class="step-n">07</span><div><h3>Segurança</h3></div></div>
+		<?php lk_select( 'login_card', 'Tela de login: mostrar o cartão de identificação (nome e função) ao digitar o e-mail', array( '1' => 'Ligado', '0' => 'Desligado (mais privado: ninguém vê nome e função sem a senha)' ), $s['login_card'] ); ?>
 		<?php lk_select( 'seg_2fa', 'Verificação em duas etapas (código por e-mail no login da equipe)', array( '1' => 'Ligada (recomendado)', '0' => 'Desligada' ), $s['seg_2fa'] ); ?>
 		<p class="muted small">Se um dia ficar sem acesso ao e-mail, coloque <code>define( 'LK_DISABLE_2FA', true );</code> no wp-config.php pela hospedagem.</p>
 	</section>

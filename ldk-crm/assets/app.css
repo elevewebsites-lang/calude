@@ -3133,3 +3133,63 @@ html.zoom-open { overflow: hidden; }
 @media (max-width: 640px) { .ads-rep { padding: 18px; } .ads-camp { grid-template-columns: 1fr; } }
 .ads-table td, .ads-table th { padding: 11px 9px; font-size: 13px; }
 .ads-chart-w { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* Login: cartão de identificação, leitor e porta (identidade LDK: azul-marinho + ciano) */
+.gate { --g-navy: #05080B; --g-navy2: #071826; --g-cy: #14E9EC; --g-red: #ff4d5e; --g-green: #2ee59d; position: relative; margin: 0 0 22px; padding: 14px 14px 16px; border-radius: 22px; background: linear-gradient(160deg, var(--g-navy), var(--g-navy2)); color: #fff; box-shadow: 0 18px 40px rgba(5, 8, 11, .28); overflow: hidden; font-family: var(--font); }
+.gate::before { content: ''; position: absolute; inset: auto -20% -60% -20%; height: 80%; background: radial-gradient(closest-side, rgba(20, 233, 236, .22), transparent); pointer-events: none; }
+.gate-sign { display: flex; justify-content: center; margin-bottom: 10px; }
+.gate-sign img { height: 22px; width: auto; display: block; }
+.gate-sign b, .gc-brand b { font-weight: 800; letter-spacing: .24em; color: #fff; font-size: 13px; }
+.gate-stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 84px; grid-template-rows: 104px auto; gap: 12px; }
+.gate-door { position: relative; grid-column: 1 / -1; border-radius: 14px; overflow: hidden; background: radial-gradient(closest-side, #1b7f86, #09222e); border: 1px solid rgba(20, 233, 236, .25); }
+.gate-light { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; padding: 0 16px; color: #fff; opacity: 0; transition: opacity .5s ease .75s; }
+.gate-light strong { font-size: 18px; letter-spacing: -.01em; color: #fff; }
+.gate-light small { font-size: 12px; color: #d7f6f7; margin-top: 3px; }
+.gate-panel { position: absolute; top: 0; bottom: 0; width: 50.4%; background: linear-gradient(90deg, #0d2a3c, #12384f 50%, #0d2a3c); transition: transform 1s cubic-bezier(.7, 0, .2, 1) .25s; }
+.gate-panel::after { content: ''; position: absolute; top: 14%; bottom: 14%; width: 2px; background: var(--g-cy); box-shadow: 0 0 10px var(--g-cy); opacity: .85; }
+.gate-panel--l { left: 0; border-right: 1px solid #06141d; } .gate-panel--l::after { right: 8px; }
+.gate-panel--r { right: 0; border-left: 1px solid #06141d; } .gate-panel--r::after { left: 8px; }
+.gate-reader { position: relative; z-index: 3; align-self: end; height: 128px; border-radius: 16px; background: linear-gradient(180deg, #0f2a3d, #091a27); border: 1px solid rgba(20, 233, 236, .35); display: grid; grid-template-rows: auto 1fr auto; justify-items: center; padding: 10px 6px; gap: 8px; box-shadow: -10px 0 22px rgba(0, 0, 0, .35); }
+.gate-led { width: 14px; height: 14px; border-radius: 50%; background: var(--g-cy); box-shadow: 0 0 10px var(--g-cy); transition: background .2s, box-shadow .2s; }
+.gate-screen { align-self: center; text-align: center; font: 700 9.5px/1.3 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .06em; text-transform: uppercase; color: var(--g-cy); background: #031018; border-radius: 8px; padding: 8px 4px; width: 100%; }
+.gate-slot { width: 100%; height: 6px; border-radius: 4px; background: #02070b; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); }
+.gate-card { position: relative; z-index: 2; grid-row: 2; grid-column: 1; height: 128px; border-radius: 16px; padding: 12px 14px 14px; display: grid; grid-template-columns: 56px 1fr; grid-template-rows: auto 1fr auto; column-gap: 12px; background: linear-gradient(135deg, #0c2c40 0%, #08202f 55%, #05131c 100%); border: 1px solid rgba(20, 233, 236, .35); box-shadow: 0 10px 24px rgba(0, 0, 0, .4); color: #fff; transition: border-color .3s, box-shadow .3s; overflow: hidden; }
+.gate-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--g-cy); }
+.gc-brand { grid-column: 1; grid-row: 1; display: flex; align-items: center; } .gc-brand img { height: 16px; width: auto; }
+.gc-title { grid-column: 2; grid-row: 1; justify-self: end; font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--g-cy); font-weight: 700; }
+.gc-av { grid-column: 1; grid-row: 2; align-self: center; width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font-size: 26px; font-weight: 700; background: rgba(20, 233, 236, .14); border: 1px solid rgba(20, 233, 236, .45); color: #fff; }
+.gc-info { grid-column: 2; grid-row: 2; align-self: center; display: flex; flex-direction: column; min-width: 0; }
+.gc-info strong { font-size: 16px; line-height: 1.15; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gc-info small { font-size: 12px; color: #9fc4cc; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gc-chip { grid-column: 1; grid-row: 3; width: 26px; height: 18px; border-radius: 4px; background: linear-gradient(135deg, #f1d98a, #b18e34); }
+.gc-num { grid-column: 2; grid-row: 3; justify-self: end; align-self: center; font: 600 11px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .12em; color: #7fb4bd; }
+.gc-strip { display: none; }
+.gate[data-kind="cliente"] .gc-title::after { content: ' · cliente'; }
+.gate[data-kind="equipe"] .gc-title::after { content: ' · equipe'; }
+
+.gate[data-state="swipe"] .gate-led { background: #ffc24d; box-shadow: 0 0 12px #ffc24d; animation: gLed .45s infinite alternate; }
+.gate[data-state="swipe"] .gate-screen { color: #ffc24d; }
+.gate[data-state="swipe"] .gate-card { animation: gSwipe 1.15s cubic-bezier(.5, 0, .3, 1) forwards; }
+.gate[data-state="ok"] .gate-led { background: var(--g-green); box-shadow: 0 0 14px var(--g-green); }
+.gate[data-state="ok"] .gate-screen { color: var(--g-green); }
+.gate[data-state="ok"] .gate-card { border-color: var(--g-green); box-shadow: 0 0 0 2px rgba(46, 229, 157, .35), 0 10px 24px rgba(0, 0, 0, .4); }
+.gate[data-state="ok"] .gate-panel--l { transform: translateX(-102%); }
+.gate[data-state="ok"] .gate-panel--r { transform: translateX(102%); }
+.gate[data-state="ok"] .gate-light { opacity: 1; }
+.gate[data-state="deny"] .gate-led { background: var(--g-red); box-shadow: 0 0 14px var(--g-red); animation: gLed .3s 4 alternate; }
+.gate[data-state="deny"] .gate-screen { color: #fff; background: #7a1320; }
+.gate[data-state="deny"] .gate-card { border-color: var(--g-red); animation: gDeny .7s ease both; }
+.gate[data-state="deny"] .gate-door { animation: gShake .5s .15s both; border-color: var(--g-red); }
+.gate[data-state="deny"] .gate-panel::after { background: var(--g-red); box-shadow: 0 0 10px var(--g-red); }
+@keyframes gSwipe { 0% { transform: translateX(0); } 55% { transform: translateX(104px); } 100% { transform: translateX(0); } }
+@keyframes gLed { to { opacity: .35; } }
+@keyframes gDeny { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-9px); } 40% { transform: translateX(9px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(6px); } }
+@keyframes gShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) { .gate-panel { transition-duration: .01s; transition-delay: 0s; } .gate[data-state] .gate-card, .gate[data-state] .gate-door, .gate[data-state] .gate-led { animation: none; } }
+@media (max-width: 420px) { .gate-stage { grid-template-columns: minmax(0, 1fr) 70px; } .gc-info strong { font-size: 14px; } }
+.dw-addlist { display: grid; gap: 8px; }
+.dw-add { display: flex; align-items: center; gap: 10px; text-align: left; padding: 12px 14px; border: 1.5px dashed var(--line-2); border-radius: 12px; background: var(--card); color: var(--ink); font: inherit; cursor: pointer; }
+.dw-add span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.dw-add:hover { background: var(--accent-soft); border-style: solid; }
+.dw-btns button[data-dw-rm] { background: rgba(255, 77, 94, .85); }
+.gc-title { white-space: nowrap; letter-spacing: .12em; font-size: 8.5px; }

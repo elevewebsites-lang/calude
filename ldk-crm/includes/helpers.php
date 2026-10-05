@@ -106,6 +106,7 @@ function lk_default_settings() {
 		'empresa_representante' => '',
 		'contrato_modelo'       => '',
 		'pacotes'              => '',
+		'login_card'           => '1',
 		// Sala de voz: servidor TURN opcional (para redes muito fechadas).
 		'voz_turn_url'    => '',
 		'voz_turn_user'   => '',

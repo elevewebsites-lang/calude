@@ -22,6 +22,8 @@ function lk_dash_widgets() {
 		'cobrancas'      => array( 'Cobranças', 'grid', 'financeiro', true, false ),
 		'instagram'      => array( 'Instagram não vinculado', 'grid', 'clientes', true, false ),
 		'reunioes'       => array( 'Próximas reuniões', 'grid', '', true, false ),
+		'formularios'    => array( 'Briefings e pesquisas', 'grid', 'clientes', false, false ),
+		'trafego_resumo' => array( 'Tráfego pago (resumo do mês)', 'grid', 'trafego', false, false ),
 		'datas'          => array( 'Datas e feriados próximos', 'grid', 'conteudo', true, false ),
 		'ranking'        => array( 'Ranking do mês', 'grid', '', false, false ),
 		'contratos'      => array( 'Contratos pendentes', 'grid', 'clientes', false, false ),
@@ -94,7 +96,7 @@ function lk_dash_sizes() {
 		'hero' => array( 12, 6 ), 'stats' => array( 12, 6 ), 'chart' => array( 12, 6 ), 'etapas' => array( 6, 4 ), 'tarefas_semana' => array( 6, 4 ),
 		'comigo' => array( 6, 4 ), 'hoje' => array( 6, 4 ), 'atrasados' => array( 6, 4 ), 'aguardando' => array( 6, 4 ), 'cobrancas' => array( 6, 4 ),
 		'instagram' => array( 6, 4 ), 'reunioes' => array( 6, 4 ), 'datas' => array( 6, 4 ), 'ranking' => array( 6, 4 ), 'contratos' => array( 6, 4 ),
-		'funil' => array( 6, 4 ), 'chat' => array( 6, 5 ),
+		'funil' => array( 6, 4 ), 'chat' => array( 6, 5 ), 'formularios' => array( 6, 4 ), 'trafego_resumo' => array( 6, 4 ),
 		'perfil' => array( 4, 3 ), 'metas' => array( 4, 3 ), 'andamento' => array( 4, 3 ), 'clientes_ult' => array( 4, 3 ),
 	);
 }
@@ -155,6 +157,20 @@ function lk_api_dash_layout( WP_REST_Request $r ) {
 		$size[ $id ] = array( 'w' => max( $min, min( 12, (int) ( $v['w'] ?? 0 ) ) ), 'h' => max( 0, min( 40, (int) ( $v['h'] ?? 0 ) ) ) );
 	}
 	update_user_meta( get_current_user_id(), 'lk_dash_layout', array( 'order' => $order, 'size' => $size ) );
+	// Remover / adicionar cartões (sem mexer nos outros que já estão ligados).
+	$rm  = array_values( array_intersect( array_map( 'sanitize_key', (array) $r->get_param( 'remove' ) ), $all ) );
+	$add = array_values( array_intersect( array_map( 'sanitize_key', (array) $r->get_param( 'add' ) ), $all ) );
+	if ( $rm || $add ) {
+		$p  = lk_dash_prefs();
+		$on = is_array( $p['on'] ) ? $p['on'] : array_values( array_filter( array_keys( lk_dash_widgets() ), function ( $id ) { return lk_dash_allowed( $id ) && lk_dash_widgets()[ $id ][3]; } ) );
+		$on = array_values( array_unique( array_merge( array_diff( $on, $rm ), $add ) ) );
+		update_user_meta( get_current_user_id(), 'lk_dash', array( 'order' => $p['order'], 'on' => $on ) );
+		if ( $add ) { // o cartão novo entra no fim do quadro
+			$lay          = lk_dash_layout();
+			$lay['order'] = array_values( array_unique( array_merge( array_diff( $lay['order'] ? $lay['order'] : $order, $rm ), $add ) ) );
+			update_user_meta( get_current_user_id(), 'lk_dash_layout', $lay );
+		}
+	}
 	return array( 'ok' => true );
 }
 

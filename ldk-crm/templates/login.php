@@ -28,7 +28,20 @@ lk_head( 'Entrar' );
 		<span class="auth-copy">© <?php echo esc_html( gmdate( 'Y' ) . ' ' . lk_setting( 'empresa' ) ); ?> <?php echo lk_credit_html( 'dark' ); // phpcs:ignore ?></span>
 	</div>
 	<div class="auth-main">
-		<form method="post" class="auth-form">
+		<form method="post" class="auth-form" data-login-form>
+			<div class="gate" data-gate data-endpoint="<?php echo esc_url( rest_url( 'lk/v1/login-card' ) ); ?>" data-preview="<?php echo '1' === (string) lk_setting( 'login_card' ) ? 1 : 0; ?>" aria-live="polite">
+				<div class="gate-sign"><?php if ( lk_setting( 'logo' ) ) : ?><img src="<?php echo esc_url( lk_setting( 'logo' ) ); ?>" alt="<?php echo esc_attr( lk_setting( 'empresa' ) ); ?>"><?php else : ?><b>LDK</b><?php endif; ?></div>
+				<div class="gate-stage">
+					<div class="gate-door"><div class="gate-light"><strong data-g-hello></strong><small data-g-role></small></div><i class="gate-panel gate-panel--l"></i><i class="gate-panel gate-panel--r"></i></div>
+					<div class="gate-reader"><span class="gate-led" data-g-led></span><span class="gate-screen" data-g-screen>Aproxime o cartão</span><span class="gate-slot"></span></div>
+					<div class="gate-card" data-g-card>
+						<span class="gc-brand"><?php echo lk_setting( 'logo' ) ? '<img src="' . esc_url( lk_setting( 'logo' ) ) . '" alt="">' : '<b>LDK</b>'; // phpcs:ignore ?></span><span class="gc-title">Cartão de acesso</span>
+						<span class="gc-av" data-g-av>?</span>
+						<span class="gc-info"><strong data-g-name>Identifique-se</strong><small data-g-func>Digite o seu e-mail</small></span>
+						<span class="gc-chip"></span><span class="gc-num" data-g-num>LDK · ····</span><span class="gc-strip"></span>
+					</div>
+				</div>
+			</div>
 			<h1>Entrar</h1>
 			<p class="muted">Use o e-mail e a senha que você cadastrou.</p>
 			<?php if ( $error ) : ?><div class="flash flash--erro"><?php echo esc_html( $error ); ?></div><?php endif; ?>
@@ -44,5 +57,6 @@ lk_head( 'Entrar' );
 		</form>
 	</div>
 </div>
+<script src="<?php echo esc_url( LK_URL . 'assets/login-card.js?ver=' . LK_VERSION ); ?>"></script>
 </body>
 </html>
