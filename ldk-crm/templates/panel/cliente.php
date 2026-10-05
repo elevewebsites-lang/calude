@@ -59,6 +59,11 @@ lk_panel_start( $label, 'clientes', $actions );
 			<?php foreach ( $more as $pn => $opts ) : ?>
 				<?php lk_form( 'social_pick', 'inline-form' ); ?><input type="hidden" name="client_id" value="<?php echo (int) $c->id; ?>"><input type="hidden" name="net" value="<?php echo esc_attr( $pn ); ?>"><span class="small"><?php echo esc_html( lk_networks()[ $pn ] ); ?>:</span><select name="choice"><?php foreach ( $opts as $o ) : ?><option value="<?php echo esc_attr( $o['id'] ); ?>"><?php echo esc_html( $o['name'] ); ?></option><?php endforeach; ?></select><button class="btn btn--primary btn--sm">Usar este</button></form>
 			<?php endforeach; ?>
+			<div class="pay-row">
+				<span><strong>Link para o cliente conectar sozinho</strong><small>Manda no WhatsApp: ele entra no Instagram/Facebook dele e autoriza. Sem senha, sem login no CRM.</small></span>
+				<button type="button" class="btn btn--primary btn--sm" data-copy="<?php echo esc_attr( lk_connect_url( $c->id ) ); ?>">Copiar link</button>
+				<?php lk_action_button( 'connect_reset', array( 'client_id' => $c->id ), 'Trocar link', 'btn btn--link btn--sm', 'Gerar um link novo? O atual deixa de funcionar.' ); ?>
+			</div>
 			<p class="muted small">LinkedIn sem Página conectada: o sistema avisa na hora de postar (manual).</p>
 		</section>
 

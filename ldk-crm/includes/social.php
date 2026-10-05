@@ -38,30 +38,18 @@ function lk_social_accounts( $client_id ) {
  * Conectar (OAuth)
  * -------------------------------------------------------------------- */
 
-add_action( 'admin_post_lk_social_go', 'lk_social_go' );
-function lk_social_go() {
-	if ( ! lk_can( 'clientes' ) ) {
-		wp_die( 'Sem permissão.' );
-	}
-	check_admin_referer( 'lk_social_go' );
-	$net = sanitize_key( $_POST['net'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification
-	$cid = absint( $_POST['client_id'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification
-	$st  = wp_generate_password( 20, false );
-	set_transient( 'lk_soc_' . $st, array( 'client' => $cid, 'user' => get_current_user_id(), 'net' => $net ), 900 );
+/**
+ * Endereço do login da rede (Instagram, Facebook, LinkedIn, Google). Serve ao painel e ao link do cliente.
+ */
+function lk_social_auth_url( $net, $st ) {
 	if ( in_array( $net, lk_social_more_nets(), true ) ) {
-		$url = lk_social_more_auth_url( $net, $st );
-		if ( is_wp_error( $url ) ) {
-			lk_flash( $url->get_error_message(), 'erro' );
-			wp_safe_redirect( lk_panel_url( 'cliente', $cid ) . '#redes' );
-			exit;
-		}
-	} elseif ( 'instagram' === $net ) {
+		return lk_social_more_auth_url( $net, $st );
+	}
+	if ( 'instagram' === $net ) {
 		if ( ! lk_setting( 'ig_app_id' ) ) {
-			lk_flash( 'Preencha o Instagram App ID e o Secret em Configurações → Instagram, Facebook e Meta Ads.', 'erro' );
-			wp_safe_redirect( lk_panel_url( 'cliente', $cid ) );
-			exit;
+			return new WP_Error( 'lk', 'Preencha o Instagram App ID e o Secret em Configurações → Instagram, Facebook e Meta Ads.' );
 		}
-		$url = add_query_arg(
+		return add_query_arg(
 			array(
 				'client_id'     => lk_setting( 'ig_app_id' ),
 				'redirect_uri'  => rawurlencode( lk_social_redirect( 'instagram' ) ),
@@ -72,35 +60,58 @@ function lk_social_go() {
 			),
 			'https://www.instagram.com/oauth/authorize'
 		);
-	} else {
-		if ( ! lk_setting( 'meta_app_id' ) ) {
-			lk_flash( 'Preencha o Meta App ID e o Secret em Configurações → Instagram, Facebook e Meta Ads.', 'erro' );
-			wp_safe_redirect( lk_panel_url( 'cliente', $cid ) );
-			exit;
-		}
-		$url = add_query_arg(
-			array(
-				'client_id'    => lk_setting( 'meta_app_id' ),
-				'redirect_uri' => rawurlencode( lk_social_redirect( 'facebook' ) ),
-				'scope'        => 'pages_show_list,pages_manage_posts,pages_read_engagement,read_insights,business_management',
-				'state'        => $st,
-				'auth_type'    => 'rerequest',
-			),
-			'https://www.facebook.com/' . LK_GRAPH . '/dialog/oauth'
-		);
+	}
+	if ( ! lk_setting( 'meta_app_id' ) ) {
+		return new WP_Error( 'lk', 'Preencha o Meta App ID e o Secret em Configurações → Instagram, Facebook e Meta Ads.' );
+	}
+	return add_query_arg(
+		array(
+			'client_id'    => lk_setting( 'meta_app_id' ),
+			'redirect_uri' => rawurlencode( lk_social_redirect( 'facebook' ) ),
+			'scope'        => 'pages_show_list,pages_manage_posts,pages_read_engagement,read_insights,business_management',
+			'state'        => $st,
+			'auth_type'    => 'rerequest',
+		),
+		'https://www.facebook.com/' . LK_GRAPH . '/dialog/oauth'
+	);
+}
+
+add_action( 'admin_post_lk_social_go', 'lk_social_go' );
+function lk_social_go() {
+	if ( ! lk_can( 'clientes' ) ) {
+		wp_die( 'Sem permissão.' );
+	}
+	check_admin_referer( 'lk_social_go' );
+	$net = sanitize_key( $_POST['net'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification
+	$cid = absint( $_POST['client_id'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification
+	$st  = wp_generate_password( 20, false );
+	set_transient( 'lk_soc_' . $st, array( 'client' => $cid, 'user' => get_current_user_id(), 'net' => $net ), 900 );
+	$url = lk_social_auth_url( $net, $st );
+	if ( is_wp_error( $url ) ) {
+		lk_flash( $url->get_error_message(), 'erro' );
+		wp_safe_redirect( lk_panel_url( 'cliente', $cid ) . '#redes' );
+		exit;
 	}
 	wp_redirect( $url ); // phpcs:ignore WordPress.Security.SafeRedirect -- login da Meta.
 	exit;
 }
 
 add_action( 'admin_post_lk_social_cb', 'lk_social_cb' );
+add_action( 'admin_post_nopriv_lk_social_cb', 'lk_social_cb' ); // cliente conectando pelo link (sem login no CRM)
 function lk_social_cb() {
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- conferido pelo "state".
 	$net  = sanitize_key( $_GET['net'] ?? '' );
 	$code = sanitize_text_field( wp_unslash( $_GET['code'] ?? '' ) );
 	$st   = get_transient( 'lk_soc_' . sanitize_text_field( wp_unslash( $_GET['state'] ?? '' ) ) );
 	// phpcs:enable
-	if ( ! $st || (int) $st['user'] !== get_current_user_id() || ! $code ) {
+	$pub = $st && ! empty( $st['public'] );
+	if ( $pub ) {
+		// Fluxo do link do cliente: o "state" sorteado já prova a origem; só vale uma vez.
+		delete_transient( 'lk_soc_' . sanitize_text_field( wp_unslash( $_GET['state'] ?? '' ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! $code ) {
+			lk_connect_done( (int) $st['client'], 'Conexão cancelada. Você pode tentar de novo.', 'erro' );
+		}
+	} elseif ( ! $st || (int) $st['user'] !== get_current_user_id() || ! $code ) {
 		lk_flash( 'Conexão cancelada ou expirada. Tente de novo.', 'erro' );
 		wp_safe_redirect( lk_panel_url( 'clientes' ) );
 		exit;
@@ -110,6 +121,12 @@ function lk_social_cb() {
 		$res = lk_social_more_connect( $st['net'] ?? $net, $cid, $code );
 	} else {
 		$res = 'instagram' === $net ? lk_ig_connect( $cid, $code ) : lk_fb_connect( $cid, $code );
+	}
+	if ( $pub ) {
+		if ( ! is_wp_error( $res ) && get_transient( 'lk_fbpages_' . $cid ) ) {
+			$res = 'Quase lá: escolha abaixo qual é a Página da sua empresa.';
+		}
+		lk_connect_done( $cid, is_wp_error( $res ) ? $res->get_error_message() : $res, is_wp_error( $res ) ? 'erro' : 'ok' );
 	}
 	lk_flash( is_wp_error( $res ) ? $res->get_error_message() : $res, is_wp_error( $res ) ? 'erro' : 'ok' );
 	wp_safe_redirect( lk_panel_url( 'cliente', $cid ) . '#redes' );
