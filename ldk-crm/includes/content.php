@@ -738,7 +738,7 @@ function lk_post_form( $p = null, $client_id = 0, $back = '' ) {
 			<button type="button" class="btn btn--ghost btn--sm" data-ai="hashtags">Hashtags</button>
 		</div>
 		<div class="ai-out" data-ai-out></div>
-		<?php else : ?><p class="muted small">✨ Quer ajuda da IA para legendas e ideias? Coloque a chave do Gemini em Configurações → IA.</p><?php endif; ?>
+		<?php else : ?><p class="muted small">✨ Quer ajuda da IA para legendas e ideias? Coloque a chave de uma IA (Groq é grátis) em Configurações → IA.</p><?php endif; ?>
 		<?php
 		$tagmap = array();
 		foreach ( lk_clients() as $tc ) {
