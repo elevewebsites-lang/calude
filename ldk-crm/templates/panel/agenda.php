@@ -6,6 +6,7 @@ $connected = lk_google_connected();
 $actions   = '<button type="button" class="btn btn--primary" data-open="nova-reuniao">' . lk_icon( 'mais', 16 ) . '<span>Marcar reunião</span></button>';
 lk_panel_start( 'Agenda', 'agenda', $actions );
 ?>
+<?php echo lk_meetings_card_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 
 <?php if ( ! $connected ) : ?>
 	<div class="empty empty--big">

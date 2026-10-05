@@ -21,6 +21,7 @@ function lk_dash_widgets() {
 		'aguardando'     => array( 'Aguardando o cliente', 'grid', 'conteudo', true, false ),
 		'cobrancas'      => array( 'Cobranças', 'grid', 'financeiro', true, false ),
 		'instagram'      => array( 'Instagram não vinculado', 'grid', 'clientes', true, false ),
+		'reunioes'       => array( 'Próximas reuniões', 'grid', '', true, false ),
 		'datas'          => array( 'Datas e feriados próximos', 'grid', 'conteudo', true, false ),
 		'ranking'        => array( 'Ranking do mês', 'grid', '', false, false ),
 		'contratos'      => array( 'Contratos pendentes', 'grid', 'clientes', false, false ),

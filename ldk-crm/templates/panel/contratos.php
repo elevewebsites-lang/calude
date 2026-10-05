@@ -37,7 +37,7 @@ foreach ( $all as $k ) {
 		$mrr += (float) $k->monthly_value;
 	}
 }
-lk_panel_start( 'Contratos', 'contratos', '<button type="button" class="btn btn--primary" data-open="novo-contrato-central">+ Novo contrato</button>' );
+lk_panel_start( 'Contratos', 'contratos', '<button type="button" class="btn btn--ghost" data-open="contrato-assinado-central">Subir contrato assinado</button> <button type="button" class="btn btn--primary" data-open="novo-contrato-central">+ Novo contrato</button>' );
 ?>
 <section class="stats stats--4">
 	<div class="stat"><span class="stat-label">Assinados</span><strong><?php echo (int) $count['concluido']; ?></strong><small>pelas duas partes</small></div>
@@ -77,5 +77,6 @@ lk_panel_start( 'Contratos', 'contratos', '<button type="button" class="btn btn-
 		<div class="form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button type="submit" class="btn btn--primary">Criar contrato</button></div>
 	</form>
 <?php lk_modal_end(); ?>
+<?php lk_modal_start( 'contrato-assinado-central', 'Subir contrato já assinado' ); lk_contract_upload_form( null ); lk_modal_end(); ?>
 <?php
 lk_panel_end();

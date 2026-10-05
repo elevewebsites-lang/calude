@@ -134,6 +134,13 @@ function lk_do_client_save() {
 		if ( ! empty( $data['logo'] ) ) {
 			do_action( 'lk_client_logo_saved', $id, $data['logo'] );
 		}
+		if ( lk_in( 'package' ) ) {
+			$pk = lk_packages();
+			if ( isset( $pk[ lk_in( 'package' ) ] ) ) {
+				lk_update( 'clients', $id, array( 'monthly_fee' => $pk[ lk_in( 'package' ) ]['value'], 'posts_quota' => $pk[ lk_in( 'package' ) ]['arts'], 'notes' => trim( 'Pacote: ' . lk_in( 'package' ) . "\n" . $data['notes'] ) ) );
+			}
+		}
+		do_action( 'lk_client_created', $id );
 		lk_back( 'Cliente criado. Copie o link de cadastro (ou mande pelo WhatsApp): ele preenche os dados e cria a senha.', 'ok', lk_panel_url( 'cliente', $id ) );
 	}
 
@@ -675,7 +682,7 @@ function lk_do_settings_save() {
 			$out[ $key ] = '' === $sec ? $current[ $key ] : lk_encrypt( $sec );
 			continue;
 		}
-		$out[ $key ] = in_array( $key, array( 'colunas', 'categorias_in', 'categorias_out', 'metodos', 'funil', 'origens', 'tipos_preco', 'dificuldades', 'descontos_qtd', 'revenda_descontos', 'caixas', 'taxas_canais', 'retirada_texto', 'empresa_nota', 'etapas_conteudo', 'briefing_perguntas', 'contrato_modelo' ), true )
+		$out[ $key ] = in_array( $key, array( 'colunas', 'categorias_in', 'categorias_out', 'metodos', 'funil', 'origens', 'tipos_preco', 'dificuldades', 'descontos_qtd', 'revenda_descontos', 'caixas', 'taxas_canais', 'retirada_texto', 'empresa_nota', 'etapas_conteudo', 'briefing_perguntas', 'contrato_modelo', 'pacotes' ), true )
 			? lk_in( $key, 'textarea' )
 			: ( in_array( $key, array( 'logo', 'logo_icone', 'favicon', 'site' ), true ) ? lk_in( $key, 'url' ) : lk_in( $key ) );
 	}

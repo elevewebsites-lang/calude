@@ -67,6 +67,7 @@ lk_panel_start( 'Contrato · ' . lk_client_label( $client ), 'clientes', $acoes 
 				</form>
 			</details>
 		<?php endif; ?>
+		<?php if ( ! empty( $k->imported ) && $k->file_url ) : ?><p><a class="btn btn--primary" href="<?php echo esc_url( $k->file_url ); ?>" target="_blank" rel="noopener">Abrir arquivo</a> <?php echo $k->package ? '<span class="muted small">Pacote: ' . esc_html( $k->package ) . '</span>' : ''; ?></p><?php endif; ?>
 		<div class="contract-text"><?php echo lk_contract_html( $k->body ); // phpcs:ignore ?></div>
 	</section>
 	<aside class="contract-side">

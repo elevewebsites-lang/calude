@@ -51,6 +51,8 @@ lk_panel_start( 'Clientes', 'clientes', $actions );
 			<?php lk_input( 'email', 'E-mail', '', 'email' ); ?>
 		</div>
 		<label class="field"><span>Logo do cliente (PNG, JPG ou WebP) — aparece na lista</span><input type="file" name="logo_file" accept="image/png,image/jpeg,image/webp"></label>
+		<?php lk_package_picker( '', 'Pacote contratado' ); ?>
+		<label class="field"><span>Já tem contrato assinado? Anexe aqui (PDF, JPG ou PNG) — fica na área do cliente e no Drive</span><input type="file" name="contract_file" accept=".pdf,image/png,image/jpeg"></label>
 		<?php lk_input( 'projeto', 'Projeto / serviço contratado', '', 'text', 'placeholder="Ex.: Gestão de redes · plano Essencial"' ); ?>
 		<div class="form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button type="submit" class="btn btn--primary">Criar e gerar convite</button></div>
 	</form>

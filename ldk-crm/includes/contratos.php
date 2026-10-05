@@ -25,6 +25,9 @@ add_action(
 );
 
 function lk_contract_url( $k ) {
+	if ( ! empty( $k->imported ) && ! empty( $k->file_url ) ) {
+		return $k->file_url; // contrato assinado fora da plataforma: abre o arquivo
+	}
 	return lk_url( 'contrato/' . $k->token );
 }
 
@@ -51,6 +54,7 @@ function lk_contract_tags() {
 		'{cliente_endereco}'       => 'Endereço da cliente',
 		'{cliente_email}'          => 'E-mail da cliente',
 		'{cliente_whatsapp}'       => 'WhatsApp da cliente',
+		'{pacote}'                 => 'Nome do pacote escolhido',
 		'{servicos}'               => 'Serviços contratados (lista)',
 		'{pacote_artes}'           => 'Artes por mês',
 		'{valor_mensal}'           => 'Valor mensal',
@@ -186,6 +190,7 @@ function lk_contract_compose( $k ) {
 		'{cliente_endereco}'       => $client && $client->address ? trim( $client->address . ( $client->city ? ', ' . $client->city : '' ) . ( $client->cep ? ', CEP ' . $client->cep : '' ) ) : $blank,
 		'{cliente_email}'          => $client && $client->email ? $client->email : $blank,
 		'{cliente_whatsapp}'       => $client && $client->whatsapp ? $client->whatsapp : $blank,
+		'{pacote}'                 => trim( (string) $k->package ) ? $k->package : 'Personalizado',
 		'{servicos}'               => $srv ? '- ' . implode( "\n- ", $srv ) : '- Conforme proposta comercial aceita.',
 		'{pacote_artes}'           => (int) $k->posts_quota ? (string) (int) $k->posts_quota : 'a combinar',
 		'{valor_mensal}'           => lk_money( $k->monthly_value ),
@@ -257,6 +262,7 @@ function lk_do_contract_save() {
 		'client_id'     => $client->id,
 		'title'         => lk_in( 'title' ) ? lk_in( 'title' ) : 'Contrato de prestação de serviços',
 		'services'      => lk_in( 'services', 'textarea' ),
+		'package'       => lk_in( 'package' ),
 		'monthly_value' => lk_in( 'monthly_value', 'money' ),
 		'setup_value'   => lk_in( 'setup_value', 'money' ),
 		'months'        => max( 1, lk_in( 'months', 'int' ) ),
@@ -512,6 +518,7 @@ function lk_contract_form( $client, $k = null ) {
 	<input type="hidden" name="client_id" value="<?php echo (int) $client->id; ?>">
 	<?php if ( $k ) : ?><input type="hidden" name="regerar" value="1"><?php endif; ?>
 	<?php lk_input( 'title', 'Título', $k ? $k->title : 'Contrato de prestação de serviços de marketing digital' ); ?>
+	<?php lk_package_picker( $k ? (string) $k->package : '' ); ?>
 	<?php lk_input( 'services', 'Serviços contratados (um por linha)', $k ? $k->services : "Planejamento mensal de conteúdo\nCriação de artes e legendas\nProgramação das postagens\nRelatório mensal de resultados", 'textarea', 'rows="5"' ); ?>
 	<div class="grid-3">
 		<?php lk_input( 'monthly_value', 'Valor mensal (R$)', number_format( (float) ( $k ? $k->monthly_value : $client->monthly_fee ), 2, ',', '.' ), 'text', 'inputmode="decimal" data-money required' ); ?>
@@ -551,7 +558,7 @@ function lk_client_contracts_html( $client ) {
 	ob_start();
 	?>
 	<section class="card" id="contratos">
-		<div class="card-head"><h3>Contratos</h3><button type="button" class="btn btn--primary btn--sm" data-open="novo-contrato">+ Novo contrato</button></div>
+		<div class="card-head"><h3>Contratos</h3><span class="row-btns"><button type="button" class="btn btn--ghost btn--sm" data-open="contrato-assinado">Subir contrato assinado</button><button type="button" class="btn btn--primary btn--sm" data-open="novo-contrato">+ Novo contrato</button></span></div>
 		<?php if ( ! $rows ) : ?>
 			<p class="muted small">Nenhum contrato ainda. Monte com os serviços, o valor e a duração, e mande para a cliente assinar online.</p>
 		<?php else : ?>
@@ -565,6 +572,9 @@ function lk_client_contracts_html( $client ) {
 	<?php
 	lk_modal_start( 'novo-contrato', 'Novo contrato · ' . lk_client_label( $client ) );
 	lk_contract_form( $client );
+	lk_modal_end();
+	lk_modal_start( 'contrato-assinado', 'Contrato já assinado · ' . lk_client_label( $client ) );
+	lk_contract_upload_form( $client );
 	lk_modal_end();
 	return ob_get_clean();
 }

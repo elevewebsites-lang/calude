@@ -42,6 +42,7 @@ lk_panel_start( $label, 'clientes', $actions );
 		$more  = lk_social_pick_pending( $c->id );
 		?>
 		<?php echo lk_client_contracts_html( $c ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+		<?php echo lk_client_meetings_html( $c ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		<?php if ( function_exists( 'lk_google_connected' ) && lk_google_connected() ) : $fl = lk_drive_folder_link( array( 'Clientes', lk_client_label( $c ) ) ); ?>
 		<section class="card"><div class="pay-row"><span><strong>Pasta do cliente no Google Drive</strong><small>Fotos, artes, vídeos e as planilhas de conteúdo e planejamento ficam guardados aqui.</small></span>
 			<?php if ( $fl ) : ?><a class="btn btn--primary btn--sm" href="<?php echo esc_url( $fl ); ?>" target="_blank" rel="noopener">Abrir pasta</a><?php else : ?><?php lk_action_button( 'client_folder', array( 'client_id' => $c->id ), 'Criar pasta no Drive', 'btn btn--primary btn--sm' ); ?><?php endif; ?></div></section>

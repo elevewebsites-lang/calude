@@ -182,6 +182,8 @@ lk_panel_start( 'Configurações', 'config' );
 		</div>
 		<details class="howto">
 			<summary>Modelo do contrato (texto)</summary>
+			<?php lk_input( 'pacotes', 'Pacotes (um por linha: Nome | valor mensal | artes por mês | serviço 1; serviço 2)', $s['pacotes'] ? $s['pacotes'] : lk_default_packages(), 'textarea', 'rows="6" class="mono"' ); ?>
+			<p class="muted small">Os pacotes aparecem como botão de seleção no contrato, no cadastro do cliente e no contrato já assinado. Ao escolher, serviços, valor e artes são preenchidos (dá para ajustar). Os valores acima são exemplos: troque pelos da agência.</p>
 			<?php lk_input( 'contrato_modelo', 'Texto (em branco = modelo padrão)', $s['contrato_modelo'] ? $s['contrato_modelo'] : lk_default_contract(), 'textarea', 'rows="20" class="mono"' ); ?>
 			<p class="muted small">Marcadores: <?php echo esc_html( implode( ' ', array_keys( lk_contract_tags() ) ) ); ?></p>
 		</details>

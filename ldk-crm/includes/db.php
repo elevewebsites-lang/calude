@@ -734,6 +734,10 @@ function lk_install_tables() {
 			clauses text NULL,
 			drive_url varchar(255) NOT NULL DEFAULT '',
 			lead_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			package varchar(120) NOT NULL DEFAULT '',
+			file_url varchar(255) NOT NULL DEFAULT '',
+			file_att bigint(20) unsigned NOT NULL DEFAULT 0,
+			imported tinyint(1) NOT NULL DEFAULT 0,
 			body longtext NULL,
 			hash varchar(64) NOT NULL DEFAULT '',
 			token varchar(40) NOT NULL DEFAULT '',
@@ -761,6 +765,27 @@ function lk_install_tables() {
 			PRIMARY KEY  (id),
 			KEY client_id (client_id),
 			KEY token (token)
+		) $c;"
+	);
+
+	// Reuniões registradas no CRM (com ou sem Google Agenda).
+	dbDelta(
+		'CREATE TABLE ' . lk_table( 'meetings' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			client_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			title varchar(190) NOT NULL DEFAULT '',
+			starts_at datetime NOT NULL,
+			duration int(11) NOT NULL DEFAULT 60,
+			kind varchar(20) NOT NULL DEFAULT 'online',
+			place varchar(255) NOT NULL DEFAULT '',
+			guests varchar(255) NOT NULL DEFAULT '',
+			notes text NULL,
+			status varchar(20) NOT NULL DEFAULT 'agendada',
+			created_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY client_id (client_id),
+			KEY starts_at (starts_at)
 		) $c;"
 	);
 

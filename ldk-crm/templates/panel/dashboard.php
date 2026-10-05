@@ -274,6 +274,10 @@ foreach ( array_keys( lk_dash_zones() ) as $zn ) {
 	<?php endif; ?>
 <?php $W['clientes_ult'] = ob_get_clean(); endif; ?>
 
+<?php if ( isset( $vis['reunioes'] ) ) : ob_start(); ?>
+<?php echo lk_meetings_widget_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+<?php $W['reunioes'] = ob_get_clean(); endif; ?>
+
 <?php if ( isset( $vis['datas'] ) ) : ob_start(); ?>
 <?php
 $near = array();
