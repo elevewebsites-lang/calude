@@ -27,6 +27,7 @@ lk_head( 'Entrar' );
 				</div>
 				<div class="gate-reader"><span class="gate-led" data-g-led></span><span class="gate-screen" data-g-screen>Aproxime o cartão</span><span class="gate-slot"></span></div>
 			</div>
+			<div class="lobby-welcome"><strong data-g-hello></strong><small data-g-role></small><em>✓ Acesso autorizado</em></div>
 			<h1>Entrar</h1>
 			<p class="muted">Use o e-mail e a senha que você cadastrou.</p>
 			<?php if ( $error ) : ?><div class="flash flash--erro"><?php echo esc_html( $error ); ?></div><?php endif; ?>

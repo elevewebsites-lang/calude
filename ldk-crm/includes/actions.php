@@ -688,7 +688,7 @@ function lk_do_settings_save() {
 		}
 		$out[ $key ] = in_array( $key, array( 'colunas', 'categorias_in', 'categorias_out', 'metodos', 'funil', 'origens', 'tipos_preco', 'dificuldades', 'descontos_qtd', 'revenda_descontos', 'caixas', 'taxas_canais', 'retirada_texto', 'empresa_nota', 'etapas_conteudo', 'briefing_perguntas', 'contrato_modelo', 'pacotes' ), true )
 			? lk_in( $key, 'textarea' )
-			: ( in_array( $key, array( 'logo', 'logo_icone', 'favicon', 'site' ), true ) ? lk_in( $key, 'url' ) : lk_in( $key ) );
+			: ( in_array( $key, array( 'logo', 'logo_icone', 'favicon', 'site', 'login_bg' ), true ) ? lk_in( $key, 'url' ) : lk_in( $key ) );
 	}
 	if ( $new_ai ) {
 		$out['ai_choice'] = $new_ai;

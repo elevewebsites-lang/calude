@@ -19,6 +19,7 @@ lk_panel_start( 'Configurações', 'config' );
 			<?php lk_input( 'empresa', 'Nome', $s['empresa'] ); ?>
 			<?php lk_input( 'site', 'Site', $s['site'], 'url' ); ?>
 			<?php lk_input( 'logo', 'Logo branca (fundo escuro)', $s['logo'], 'url' ); ?>
+			<?php lk_input( 'login_bg', 'Imagem de fundo da tela de login (endereço da imagem)', $s['login_bg'], 'url' ); ?>
 			<?php lk_input( 'logo_icone', 'Ícone branco', $s['logo_icone'], 'url' ); ?>
 			<?php lk_input( 'favicon', 'Favicon', $s['favicon'], 'url' ); ?>
 			<?php lk_input( 'whatsapp', 'WhatsApp', $s['whatsapp'], 'tel', 'data-mask="phone"' ); ?>
