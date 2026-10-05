@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LDK CRM
  * Description: Modelo base de CRM (painel + área do cliente + orçamentos com pagamento + pedidos em Kanban + financeiro), com segurança, tema e módulos opcionais. Identidade em identity.php.
- * Version: 1.15.0
+ * Version: 1.16.0
  * Author: Eleve Websites
  * Author URI: https://elevewebsites.com.br
  * Text Domain: ldk-crm
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LK_VERSION', '1.15.0' );
+define( 'LK_VERSION', '1.16.0' );
 define( 'LK_FILE', __FILE__ );
 define( 'LK_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LK_URL', plugin_dir_url( __FILE__ ) );
@@ -41,7 +41,7 @@ require_once LK_DIR . 'includes/orders.php';
 require_once LK_DIR . 'includes/drive.php';
 require_once LK_DIR . 'includes/modules.php';
 lk_load_modules();
-foreach ( array( 'bigupload', 'chat', 'broadcast', 'content', 'planning', 'briefing', 'social', 'reports', 'ads', 'billing', 'focus', 'google', 'teamchat', 'feedback', 'propostas-painel', 'prazos', 'voz', 'social-mais', 'contratos', 'equipe-cadastro', 'central', 'ldk-ajustes', 'connect-link', 'gamificacao', 'midia', 'planejamento-plus', 'dashboard-ui', 'revisao', 'prospeccao', 'ig-preview', 'metas', 'extras', 'contratos-plus', 'ia' ) as $lk_f ) {
+foreach ( array( 'bigupload', 'chat', 'broadcast', 'content', 'planning', 'briefing', 'social', 'reports', 'ads', 'billing', 'focus', 'google', 'teamchat', 'feedback', 'propostas-painel', 'prazos', 'voz', 'social-mais', 'contratos', 'equipe-cadastro', 'central', 'ldk-ajustes', 'connect-link', 'gamificacao', 'midia', 'planejamento-plus', 'dashboard-ui', 'revisao', 'prospeccao', 'ig-preview', 'metas', 'extras', 'contratos-plus', 'ia', 'dash-widgets' ) as $lk_f ) {
 	require_once LK_DIR . 'includes/' . $lk_f . '.php';
 }
 // Propostas da LDK (plugin LDK Propostas embutido).

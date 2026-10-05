@@ -13,6 +13,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.16.0' => array(
+			'date'  => '2026-10-05',
+			'title' => 'Dashboard personalizável',
+			'items' => array(
+				array( '🧩', 'Escolha o que aparece', 'No botão Personalizar do dashboard, cada pessoa marca os blocos que quer ver e muda a ordem com as setas. Dá para voltar ao padrão quando quiser.' ),
+				array( '🔒', 'Respeita as permissões', 'Só aparecem as opções que o acesso da pessoa permite (financeiro, clientes, leads, metas…). Se a permissão mudar, o bloco some sozinho.' ),
+				array( '➕', 'Blocos novos', 'Datas e feriados próximos, ranking do mês, contratos pendentes e funil de leads.' ),
+			),
+		),
 		'1.15.0' => array(
 			'date'  => '2026-10-05',
 			'title' => 'IA do Gemini no CRM',
