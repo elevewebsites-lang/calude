@@ -53,7 +53,7 @@ $modal = function ( $u = null ) use ( $areas ) {
 		$perms    = (array) get_user_meta( $u->ID, 'lk_perms', true );
 		?>
 		<div class="table-row"<?php echo $is_admin ? '' : ' data-open="membro-' . (int) $u->ID . '" role="button" tabindex="0"'; ?>>
-			<span class="cell-main"><span class="avatar"><?php echo esc_html( lk_initials( $u->display_name ) ); ?></span><span><strong><?php echo esc_html( $u->display_name ); ?></strong><small><?php echo esc_html( $u->user_email ); ?></small></span></span>
+			<span class="cell-main"><?php echo lk_avatar_circle( $u ); // phpcs:ignore ?><span><strong><?php echo esc_html( $u->display_name ); ?></strong><?php echo lk_user_online( $u->ID ) ? ' <em class="online-dot" title="Online agora"></em>' : ''; ?><small><?php echo esc_html( $u->user_email ); ?></small></span></span>
 			<span data-label="Função"><?php echo $is_admin ? '<span class="pill pill--ok">Administração</span>' : '<span class="pill">' . esc_html( lk_user_role_label( $u->ID ) ? lk_user_role_label( $u->ID ) : 'Equipe' ) . '</span>'; ?></span>
 			<span data-label="Permissões" class="small"><?php echo $is_admin ? 'Tudo' : esc_html( implode( ', ', array_intersect_key( $areas, array_flip( $perms ) ) ) ); ?><?php echo ! $is_admin && get_user_meta( $u->ID, 'lk_only_own', true ) ? ' · <em>só as tarefas dela</em>' : ''; ?></span>
 			<span class="row-btns"><?php if ( ! $is_admin ) { lk_action_button( 'team_delete', array( 'user_id' => $u->ID ), lk_icon( 'lixo', 15 ), 'icon-btn', 'Remover o acesso desta pessoa? As tarefas dela continuam.' ); } ?></span>

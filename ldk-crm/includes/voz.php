@@ -46,7 +46,7 @@ function lk_voice_members() {
 			$out[] = array(
 				'id'   => (int) $u->ID,
 				'name' => $u->display_name,
-				'ini'  => lk_initials( $u->display_name ),
+				'ini'  => lk_user_badge( $u ),
 				'mic'  => (int) get_user_meta( $u->ID, 'lk_voice_mic', true ),
 				'since' => (int) get_user_meta( $u->ID, 'lk_voice_since', true ),
 			);
@@ -160,7 +160,7 @@ function lk_api_nudge( WP_REST_Request $r ) {
 		'id'   => $id,
 		'from' => $me,
 		'name' => wp_get_current_user()->display_name,
-		'ini'  => lk_initials( wp_get_current_user()->display_name ),
+		'ini'  => lk_user_badge( wp_get_current_user() ),
 		'msg'  => mb_substr( sanitize_text_field( (string) $r['msg'] ), 0, 200 ),
 		'at'   => time(),
 	);

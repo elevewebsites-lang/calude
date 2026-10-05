@@ -13,6 +13,9 @@ $first = $client->name ? strtok( $client->name, ' ' ) : lk_client_label( $client
 <?php foreach ( $plans as $pl ) : ?>
 	<a class="plan-cta" href="<?php echo esc_url( lk_plan_url( $pl ) ); ?>"><span><strong>📝 Planejamento de <?php echo esc_html( lk_month_label( $pl->period ) ); ?> pronto</strong><small>Veja os temas e as legendas do mês e aprove</small></span><em>Ver e aprovar →</em></a>
 <?php endforeach; ?>
+<?php foreach ( lk_client_pending_forms( $client ) as $pf ) : ?>
+	<a class="plan-cta" href="<?php echo esc_url( lk_form_url( $pf ) ); ?>"><span><strong><?php echo 'pesquisa' === $pf->kind ? '📊' : '🧩'; ?> <?php echo esc_html( $pf->title ); ?></strong><small><?php echo 'pesquisa' === $pf->kind ? 'Conte como está sendo trabalhar com a gente (leva uns 3 minutos)' : 'Responda em etapas rápidas, no seu ritmo'; ?></small></span><em>Responder →</em></a>
+<?php endforeach; ?>
 <?php if ( ! $client->briefing_at ) : ?>
 	<a class="plan-cta plan-cta--soft" href="<?php echo esc_url( lk_client_link( 'briefing' ) ); ?>"><span><strong>📋 Responda o briefing</strong><small>Conte sobre a sua marca para os conteúdos ficarem com a sua cara</small></span><em>Responder →</em></a>
 <?php endif; ?>

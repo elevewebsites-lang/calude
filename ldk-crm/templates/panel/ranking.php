@@ -30,7 +30,7 @@ lk_panel_start( 'Ranking e prêmios', 'ranking', lk_is_admin() ? '<a class="btn 
 			<div class="table">
 				<?php foreach ( $rank as $i => $r ) : $lv = lk_game_level( $r['total'] ); $medal = array( '🥇', '🥈', '🥉' ); ?>
 					<div class="table-row<?php echo $r['user']->ID === $uid ? ' is-me' : ''; ?>">
-						<span class="cell-main"><strong style="width:28px"><?php echo $r['points'] > 0 && $i < 3 ? esc_html( $medal[ $i ] ) : (int) ( $i + 1 ) . 'º'; ?></strong><span class="avatar"><?php echo esc_html( lk_initials( $r['user']->display_name ) ); ?></span><span><strong><?php echo esc_html( $r['user']->display_name ); ?></strong><small><?php echo esc_html( $lv['name'] ); ?></small></span></span>
+						<span class="cell-main"><strong style="width:28px"><?php echo $r['points'] > 0 && $i < 3 ? esc_html( $medal[ $i ] ) : (int) ( $i + 1 ) . 'º'; ?></strong><?php echo lk_avatar_circle( $r['user'] ); // phpcs:ignore ?><span><strong><?php echo esc_html( $r['user']->display_name ); ?></strong><small><?php echo esc_html( $lv['name'] ); ?></small></span></span>
 						<span><b><?php echo (int) $r['points']; ?></b> pts</span>
 					</div>
 				<?php endforeach; ?>

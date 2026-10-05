@@ -437,7 +437,7 @@ function lk_api_team_hub( WP_REST_Request $r ) {
 		$team[] = array(
 			'id'     => (int) $u->ID,
 			'name'   => $u->display_name,
-			'ini'    => lk_initials( $u->display_name ),
+			'ini'    => lk_user_badge( $u ),
 			'role'   => lk_user_role_label( $u->ID ),
 			'status' => $st,
 			'label'  => $labels[ $st ] . ( lk_presence_since( $u->ID, $st ) ? ' · ' . lk_presence_since( $u->ID, $st ) : '' ) . ( $note ? ' · ' . $note : '' ),

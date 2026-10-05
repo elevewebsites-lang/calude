@@ -6,6 +6,17 @@ $ym  = isset( $_GET['mes'] ) && preg_match( '/^\d{4}-\d{2}$/', $_GET['mes'] ) ? 
 list( $f, $t ) = lk_month_range( $ym );
 lk_panel_start( 'Tráfego pago', 'trafego' );
 ?>
+<?php
+$lk_demo = isset( $_GET['demo'] ); // phpcs:ignore WordPress.Security.NonceVerification
+$lk_ov   = $lk_demo ? lk_ads_demo_rows() : lk_ads_overview_rows( $f, $t );
+echo lk_ads_overview_html( $lk_ov, $lk_demo ); // phpcs:ignore WordPress.Security.EscapeOutput
+if ( $lk_demo && $lk_ov ) {
+	echo lk_ads_client_report_html( $lk_ov[0], lk_month_label( $ym ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+	lk_panel_end();
+	return;
+}
+?>
+<p class="muted small">Quer ver como fica com vários clientes? <a href="<?php echo esc_url( lk_panel_url( 'trafego', 0, array( 'demo' => 1 ) ) ); ?>">Ver simulação com clientes fictícios</a></p>
 <div class="toolbar"><form method="get" class="inline-form"><input type="month" name="mes" value="<?php echo esc_attr( $ym ); ?>" onchange="this.form.submit()"></form><span class="muted small">Meta Ads automático (token em Configurações). Google Ads: lance os números do mês até liberarem a API.</span></div>
 <?php foreach ( lk_clients() as $c ) : ?>
 	<?php if ( ! $c->meta_ad_account && ! $c->google_ads_id && ! $c->trafego_id ) { continue; } $a = lk_ads_period( $c->id, $f, $t ); $m = $a['meta']; $g = $a['google']; ?>

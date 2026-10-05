@@ -768,6 +768,41 @@ function lk_install_tables() {
 		) $c;"
 	);
 
+	// Briefings personalizados e pesquisas de satisfação: modelos e envios (com respostas).
+	dbDelta(
+		'CREATE TABLE ' . lk_table( 'forms' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			kind varchar(20) NOT NULL DEFAULT 'briefing',
+			title varchar(190) NOT NULL DEFAULT '',
+			intro text NULL,
+			qschema longtext NULL,
+			created_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id)
+		) $c;"
+	);
+	dbDelta(
+		'CREATE TABLE ' . lk_table( 'form_sends' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			client_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			kind varchar(20) NOT NULL DEFAULT 'briefing',
+			title varchar(190) NOT NULL DEFAULT '',
+			intro text NULL,
+			qschema longtext NULL,
+			answers longtext NULL,
+			status varchar(20) NOT NULL DEFAULT 'pendente',
+			token varchar(40) NOT NULL DEFAULT '',
+			drive_url varchar(255) NOT NULL DEFAULT '',
+			sent_at datetime NULL,
+			answered_at datetime NULL,
+			created_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY client_id (client_id),
+			KEY status (status)
+		) $c;"
+	);
+
 	// Reuniões registradas no CRM (com ou sem Google Agenda).
 	dbDelta(
 		'CREATE TABLE ' . lk_table( 'meetings' ) . " (

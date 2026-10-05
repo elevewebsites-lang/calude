@@ -120,6 +120,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 		'Clientes' => array(
 			'clientes'   => array( 'Clientes', 'clientes', 'clientes' ),
 			'contratos'  => array( 'Contratos', 'proposta', 'clientes' ),
+			'formularios' => array( 'Briefings e pesquisas', 'lista', 'clientes' ),
 			'redes'      => array( 'Redes conectadas', 'globo', 'clientes' ),
 			'mensagens'  => array( 'Mensagens', 'chat', 'clientes' ),
 			'agenda'     => array( 'Agenda', 'relogio', 'clientes' ),
@@ -205,7 +206,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 			<?php lk_theme_button(); ?>
 		</div>
 		<div class="side-user">
-			<span class="avatar"><?php echo esc_html( lk_initials( $user->display_name ) ); ?></span>
+			<button type="button" class="avatar-btn" data-open="avatar-pick" title="Escolher o meu avatar"><?php echo lk_avatar_circle( $user ); // phpcs:ignore ?></button>
 			<a class="side-user-name" href="<?php echo esc_url( lk_panel_url( 'conta' ) ); ?>" title="Minha conta e senha"><?php echo esc_html( $user->display_name ); ?><small><?php echo lk_is_admin() ? 'Administrador' : 'Equipe'; ?> · minha conta</small></a>
 			<a href="<?php echo esc_url( lk_url( 'sair' ) ); ?>" title="Sair" class="side-out"><?php echo lk_icon( 'sair', 17 ); // phpcs:ignore ?></a>
 		</div>
@@ -219,11 +220,13 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 			<div class="top-actions"><?php echo $actions; // phpcs:ignore -- HTML montado pelas telas com esc_*. ?><?php echo lk_team_bell_html(); // phpcs:ignore ?></div>
 		</header>
 		<div class="content">
+			<?php echo lk_welcome_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			<?php lk_flash_html(); ?>
 	<?php
 }
 
 function lk_panel_end() {
+	echo lk_avatar_picker_html(); // phpcs:ignore WordPress.Security.EscapeOutput
 	?>
 		</div>
 	</main>
@@ -405,7 +408,7 @@ function lk_avatar( $user_id, $size = 'sm' ) {
 	if ( ! $user ) {
 		return '';
 	}
-	return '<span class="avatar avatar--' . esc_attr( $size ) . '" title="' . esc_attr( $user->display_name ) . '">' . esc_html( lk_initials( $user->display_name ) ) . '</span>';
+	return lk_avatar_circle( $user, 'avatar avatar--' . $size );
 }
 
 function lk_progress_bar( $pct ) {

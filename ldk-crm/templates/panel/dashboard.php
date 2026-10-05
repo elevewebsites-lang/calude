@@ -231,7 +231,7 @@ foreach ( array_keys( lk_dash_zones() ) as $zn ) {
 <?php $W['chat'] = ob_get_clean(); endif; ?>
 <?php if ( isset( $vis['perfil'] ) ) : ob_start(); ?>
 	<section class="dsh-card dsh-profile">
-		<div class="dsh-av"><?php echo esc_html( lk_initials( $me_user->display_name ) ); ?></div>
+		<div class="dsh-av"><?php echo esc_html( lk_user_badge( $me_user ) ); ?></div>
 		<h3><?php echo esc_html( $me_user->display_name ); ?></h3>
 		<p class="muted small"><?php echo esc_html( lk_user_role_label( $me ) ); ?></p>
 		<?php if ( $game_on && $glv ) : ?>

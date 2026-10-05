@@ -11,7 +11,7 @@ lk_panel_start( 'Equipe e demandas', 'time', lk_is_admin() ? '<a class="btn btn-
 <div class="team-grid">
 	<?php foreach ( $load as $uid => $l ) : ?>
 		<a class="team-card<?php echo $l['late'] + $l['tasks_late'] ? ' is-late' : ''; ?><?php echo $sel === $uid ? ' is-active' : ''; ?>" href="<?php echo esc_url( lk_panel_url( 'time', 0, array( 'pessoa' => $uid ) ) ); ?>">
-			<span class="avatar"><?php echo esc_html( lk_initials( $l['user']->display_name ) ); ?></span>
+			<?php echo lk_avatar_circle( $l['user'] ); // phpcs:ignore ?>
 			<?php $st = lk_presence( $l['user']->ID ); ?>
 			<strong><i class="pres pres--<?php echo esc_attr( $st ); ?>" title="<?php echo esc_attr( lk_presence_labels()[ $st ] ); ?>"></i><?php echo esc_html( $l['user']->display_name ); ?></strong>
 			<span class="team-nums"><b><?php echo (int) $l['posts']; ?></b> posts · <b><?php echo (int) $l['tasks']; ?></b> tarefas</span>
