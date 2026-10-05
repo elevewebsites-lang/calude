@@ -376,6 +376,18 @@ function lk_status_badge( $status ) {
 	return '<span class="pill pill--' . esc_attr( $m[1] ) . '">' . esc_html( $m[0] ) . '</span>';
 }
 
+/**
+ * Avatar do cliente: a logo (se tiver) no lugar das iniciais. $fallback_url = foto alternativa (ex.: Instagram).
+ */
+function lk_client_avatar_html( $c, $class = 'avatar', $fallback_url = '' ) {
+	$logo = ! empty( $c->logo ) ? $c->logo : '';
+	if ( $logo ) {
+		return '<span class="' . esc_attr( $class ) . ' avatar--logo"><img src="' . esc_url( $logo ) . '" alt="Logo de ' . esc_attr( lk_client_label( $c ) ) . '" loading="lazy"></span>';
+	}
+	$ini = esc_html( lk_initials( lk_client_label( $c ) ) );
+	return '<span class="' . esc_attr( $class ) . '">' . $ini . ( $fallback_url ? '<img src="' . esc_url( $fallback_url ) . '" alt="" onerror="this.remove()">' : '' ) . '</span>';
+}
+
 function lk_avatar( $user_id, $size = 'sm' ) {
 	$user = $user_id ? get_userdata( $user_id ) : null;
 	if ( ! $user ) {

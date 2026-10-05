@@ -31,7 +31,7 @@ lk_panel_start( 'Clientes', 'clientes', $actions );
 		<?php foreach ( $clients as $c ) : ?>
 			<?php $n = isset( $counts[ $c->id ] ) ? $counts[ $c->id ] : null; ?>
 			<a class="table-row" href="<?php echo esc_url( lk_panel_url( 'cliente', $c->id ) ); ?>">
-				<span class="cell-main"><span class="avatar"><?php echo esc_html( lk_initials( lk_client_label( $c ) ) ); ?></span><span><strong><?php echo esc_html( lk_client_label( $c ) ); ?></strong><small><?php echo esc_html( $c->company && $c->name ? $c->name : $c->cnpj ); ?></small></span></span>
+				<span class="cell-main"><?php echo lk_client_avatar_html( $c ); // phpcs:ignore ?><span><strong><?php echo esc_html( lk_client_label( $c ) ); ?></strong><small><?php echo esc_html( $c->company && $c->name ? $c->name : $c->cnpj ); ?></small></span></span>
 				<span data-label="Contato"><?php echo esc_html( $c->whatsapp ? $c->whatsapp : $c->phone ); ?><small><?php echo esc_html( $c->email ); ?></small></span>
 				<span data-label="Projetos"><?php echo $n ? (int) $n->active . ' ativo' . ( 1 === (int) $n->active ? '' : 's' ) . ' <small>' . (int) $n->n . ' no total</small>' : '<span class="muted">—</span>'; // phpcs:ignore ?></span>
 				<span data-label="Acesso"><?php echo lk_status_badge( $c->user_id ? 'ativo' : 'convidado' ); // phpcs:ignore ?></span>
@@ -42,7 +42,7 @@ lk_panel_start( 'Clientes', 'clientes', $actions );
 <?php endif; ?>
 
 <?php lk_modal_start( 'novo-cliente', 'Novo cliente' ); ?>
-	<?php lk_form( 'client_save', 'stack' ); ?>
+	<?php lk_form( 'client_save', 'stack', true ); ?>
 		<p class="muted small">Só a empresa e o projeto já bastam: depois é só copiar o link e mandar. O cliente preenche os dados dele e cria a senha. Se preferir, preencha tudo você mesmo na ficha.</p>
 		<div class="grid-2">
 			<?php lk_input( 'company', 'Empresa', '', 'text', 'required' ); ?>
@@ -50,6 +50,7 @@ lk_panel_start( 'Clientes', 'clientes', $actions );
 			<?php lk_input( 'whatsapp', 'WhatsApp', '', 'tel', 'data-mask="phone"' ); ?>
 			<?php lk_input( 'email', 'E-mail', '', 'email' ); ?>
 		</div>
+		<label class="field"><span>Logo do cliente (PNG, JPG ou WebP) — aparece na lista</span><input type="file" name="logo_file" accept="image/png,image/jpeg,image/webp"></label>
 		<?php lk_input( 'projeto', 'Projeto / serviço contratado', '', 'text', 'placeholder="Ex.: Gestão de redes · plano Essencial"' ); ?>
 		<div class="form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button type="submit" class="btn btn--primary">Criar e gerar convite</button></div>
 	</form>
