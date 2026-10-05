@@ -2978,3 +2978,44 @@ input::selection, textarea::selection { background: var(--accent); color: var(--
 @media (max-width: 720px) { .rday { min-height: 78px; } .rm span { display: none; } .rm { justify-content: center; } }
 .rm--google { text-decoration: none; border-left-style: dashed; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-2); }
 .rm--google:hover { background: var(--accent-soft); }
+
+/* Dashboard em quadro: blocos que se movem e redimensionam (12 colunas) */
+.dsh-board { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-flow: row dense; gap: 18px; align-items: start; --dsh-a: #6c5ce7; --dsh-b: #ff7a90; --dsh-c: #14c8c8; --dsh-d: #f5b83d; --dsh-e: #4f8cff; --dsh-f: #8a94a6; }
+.dw { grid-column: span var(--w, 6); min-width: 0; position: relative; display: flex; flex-direction: column; min-height: calc(var(--h, 0) * 44px); container: dw / inline-size; }
+.dw > :not(.dw-bar):not(.dw-rs) { flex: 1; min-width: 0; box-sizing: border-box; }
+.dw .dsh-stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.dw-bar, .dw-rs { display: none; }
+@container dw (max-width: 620px) { .dsh-hero-art { display: none; } .dsh-hero { padding: 20px; } .dsh-card-head .dsh-range { margin-left: 0; width: 100%; } .dsh-donut-wrap { justify-content: center; } }
+@container dw (max-width: 400px) { .dsh-stat { padding: 14px; } .dsh-stat strong { font-size: 24px; } .dsh-card { padding: 14px; } }
+@container dshc (max-width: 1040px) { .dw--s { grid-column: span 6; } .dw--l { grid-column: 1 / -1; } }
+@container dshc (max-width: 700px) { .dw { grid-column: 1 / -1; } }
+.dw-hint { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin: 0 0 14px; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--ink); font-size: 14px; }
+.dw-hint[hidden] { display: none; }
+.is-arranging .dw { outline: 2px dashed var(--line-2); outline-offset: 4px; border-radius: 20px; }
+.is-arranging .dw-bar { display: flex; align-items: center; gap: 8px; position: absolute; top: -14px; left: 12px; right: 12px; z-index: 5; padding: 4px 8px; border-radius: 999px; background: var(--ink); color: var(--on-ink); font-size: 12px; }
+.dw-grip { cursor: grab; touch-action: none; font-size: 16px; line-height: 1; padding: 2px 6px; user-select: none; }
+.dw-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dw-btns { display: inline-flex; gap: 4px; }
+.dw-btns button { border: 0; background: rgba(255,255,255,.18); color: var(--on-ink); width: 22px; height: 22px; border-radius: 50%; cursor: pointer; line-height: 1; }
+.is-arranging .dw-rs { display: block; position: absolute; right: -6px; bottom: -6px; width: 22px; height: 22px; border-radius: 6px; background: var(--ink); cursor: nwse-resize; touch-action: none; z-index: 5; }
+.is-arranging .dw-rs::after { content: ''; position: absolute; inset: 6px; border-right: 2px solid var(--on-ink); border-bottom: 2px solid var(--on-ink); }
+.is-arranging .dw.is-drag { opacity: .55; outline-color: var(--accent); }
+.is-arranging .dw.is-resizing { outline: 2px solid var(--accent); }
+.is-arranging .dw > :not(.dw-bar):not(.dw-rs) { pointer-events: none; }
+
+/* Ver a arte grande */
+.media-item img, img[alt^="Arte "], [data-zoom] { cursor: zoom-in; }
+.zoom { position: fixed; inset: 0; z-index: 9999; background: rgba(5,8,11,.92); display: flex; flex-direction: column; }
+.zoom[hidden] { display: none; }
+.zoom-stage { flex: 1; min-height: 0; overflow: auto; display: grid; place-items: center; padding: 56px 64px 8px; }
+.zoom-stage img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; border-radius: 6px; box-shadow: 0 10px 50px rgba(0,0,0,.5); }
+.zoom.is-full .zoom-stage { place-items: start center; }
+.zoom.is-full .zoom-stage img { max-width: none; max-height: none; cursor: zoom-out; }
+.zoom-x { position: absolute; top: 12px; right: 16px; z-index: 2; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255,255,255,.16); color: #fff; font-size: 26px; line-height: 1; cursor: pointer; }
+.zoom-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 46px; height: 46px; border-radius: 50%; border: 0; background: rgba(255,255,255,.16); color: #fff; font-size: 30px; line-height: 1; cursor: pointer; display: none; }
+.zoom.has-nav .zoom-nav { display: block; }
+.zoom-prev { left: 12px; } .zoom-next { right: 12px; }
+.zoom-cap { display: flex; justify-content: center; gap: 16px; padding: 10px 16px 16px; color: #d6e0e7; font-size: 13px; }
+.zoom-cap a { color: #fff; }
+html.zoom-open { overflow: hidden; }
+@media (max-width: 640px) { .zoom-stage { padding: 56px 8px 8px; } .zoom-nav { width: 38px; height: 38px; } }

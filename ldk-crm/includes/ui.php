@@ -83,6 +83,7 @@ function lk_scripts() {
 	}
 	echo '<script>window.LK = ' . wp_json_encode( $data ) . ';</script>';
 	echo '<script src="' . esc_url( LK_URL . 'assets/app.js?ver=' . LK_VERSION ) . '"></script>';
+	echo '<script src="' . esc_url( LK_URL . 'assets/zoom.js?ver=' . LK_VERSION ) . '" defer></script>';
 	if ( is_user_logged_in() ) {
 		echo '<script src="' . esc_url( LK_URL . 'assets/chat.js?ver=' . LK_VERSION ) . '"></script>';
 		if ( lk_is_team() ) {

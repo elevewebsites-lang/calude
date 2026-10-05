@@ -92,7 +92,7 @@ $todo_n    = count( $mine ) + count( $tasks );
 $hour  = (int) current_time( 'G' );
 $hello = $hour < 12 ? 'Bom dia' : ( $hour < 18 ? 'Boa tarde' : 'Boa noite' );
 $name  = wp_get_current_user()->first_name ? wp_get_current_user()->first_name : wp_get_current_user()->display_name;
-$refresh = '<button type="button" class="btn btn--ghost" data-open="dash-custom" title="Escolher o que aparece no dashboard">' . lk_icon( 'config', 16 ) . '<span>Personalizar</span></button><button type="button" class="btn btn--ghost dash-refresh" data-dash-refresh title="Atualizar os números e as listas do dashboard (também atualiza sozinho a cada 3 minutos)">' . lk_icon( 'atualizar', 16 ) . '<span>Atualizar</span></button>';
+$refresh = '<button type="button" class="btn btn--ghost" data-board-toggle title="Mover e redimensionar os blocos do dashboard">' . lk_icon( 'editar', 16 ) . '<span>Organizar</span></button><button type="button" class="btn btn--ghost" data-open="dash-custom" title="Escolher o que aparece no dashboard">' . lk_icon( 'config', 16 ) . '<span>Personalizar</span></button><button type="button" class="btn btn--ghost dash-refresh" data-dash-refresh title="Atualizar os números e as listas do dashboard (também atualiza sozinho a cada 3 minutos)">' . lk_icon( 'atualizar', 16 ) . '<span>Atualizar</span></button>';
 lk_panel_start( $hello . ', ' . $name, 'dashboard', $refresh . '<a class="btn btn--primary" href="' . esc_url( lk_panel_url( 'conteudo', 0, array( 'abrir' => 'novo-post' ) ) ) . '">' . lk_icon( 'mais', 16 ) . '<span>Post</span></a>' );
 $mail_fail = lk_is_admin() ? get_option( 'lk_2fa_mail_fail' ) : '';
 ?>
@@ -327,34 +327,18 @@ $fmax = max( 1, max( array_merge( array( 0 ), array_values( $fcnt ) ) ) );
 <?php $W['funil'] = ob_get_clean(); endif; ?>
 
 
-<div class="dsh-ct"><div class="dsh">
-<div class="dsh-main">
-<?php
-$half = false;
-foreach ( lk_dash_zone( 'main' ) as $mid ) {
-	$is_half = lk_dash_widgets()[ $mid ][4];
-	if ( $is_half && ! $half ) {
-		echo '<div class="dsh-row">';
-		$half = true;
-	} elseif ( ! $is_half && $half ) {
-		echo '</div>';
-		$half = false;
-	}
-	echo $W[ $mid ] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput -- HTML montado acima com esc_*.
-}
-if ( $half ) {
-	echo '</div>';
-}
-?>
-<div class="grid-2 dash-grid" data-dash-grid>
-<?php foreach ( lk_dash_zone( 'grid' ) as $gid ) { echo $W[ $gid ] ?? ''; } // phpcs:ignore WordPress.Security.EscapeOutput ?>
+<div class="dw-hint" data-board-hint hidden><span><strong>Organizando o dashboard.</strong> Arraste pelo <b>⠿</b> para mover e pelo canto de baixo para redimensionar. Cada bloco tem um tamanho mínimo, para as informações não ficarem cortadas. As mudanças salvam sozinhas.</span><?php lk_action_button( 'dash_reset', array(), 'Restaurar o padrão', 'btn btn--link btn--sm', 'Voltar o dashboard ao padrão (posição, tamanho e quais blocos aparecem)?' ); ?></div>
+<div class="dsh-ct"><div class="dsh-board" data-board data-dash-grid>
+<?php foreach ( lk_dash_board_ids() as $bid ) : if ( empty( $W[ $bid ] ) ) { continue; } list( $bw, $bh, $bmin ) = lk_dash_size( $bid ); ?>
+<div class="dw <?php echo $bw > 6 ? 'dw--l' : 'dw--s'; ?>" data-dw="<?php echo esc_attr( $bid ); ?>" data-w="<?php echo (int) $bw; ?>" data-h="<?php echo (int) $bh; ?>" data-min="<?php echo (int) $bmin; ?>" style="--w:<?php echo (int) $bw; ?>;--h:<?php echo (int) $bh; ?>">
+	<div class="dw-bar"><span class="dw-grip" title="Arraste para mover">⠿</span><span class="dw-name"><?php echo esc_html( lk_dash_widgets()[ $bid ][0] ); ?></span><span class="dw-btns"><button type="button" data-dw-step="-1" aria-label="Mais estreito">−</button><button type="button" data-dw-step="1" aria-label="Mais largo">+</button></span></div>
+	<?php echo $W[ $bid ]; // phpcs:ignore WordPress.Security.EscapeOutput -- HTML montado acima com esc_*. ?>
+	<span class="dw-rs" title="Arraste para redimensionar"></span>
 </div>
-</div>
-<aside class="dsh-side" data-dash="side">
-<?php foreach ( lk_dash_zone( 'side' ) as $sid ) { echo $W[ $sid ] ?? ''; } // phpcs:ignore WordPress.Security.EscapeOutput ?>
-</aside>
+<?php endforeach; ?>
 </div></div>
 <?php echo lk_dash_customize_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 <script src="<?php echo esc_url( LK_URL . 'assets/dash.js?ver=' . LK_VERSION ); ?>"></script>
+<script src="<?php echo esc_url( LK_URL . 'assets/dash-board.js?ver=' . LK_VERSION ); ?>"></script>
 <?php
 lk_panel_end();

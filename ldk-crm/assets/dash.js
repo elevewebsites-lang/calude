@@ -13,7 +13,7 @@
 	mark('Atualizado às ' + hhmm(new Date()));
 
 	function refresh(manual) {
-		if (busy) return;
+		if (busy || document.body.classList.contains('is-arranging')) return;
 		busy = true;
 		btn.classList.add('is-loading');
 		btn.disabled = true;
@@ -29,10 +29,10 @@
 					if (fresh) el.replaceWith(document.importNode(fresh, true));
 				});
 				// Cartões: monta de novo na ordem nova, mas mantém o chat vivo.
-				var liveChat = grid.querySelector('[data-teamchat]');
+				var liveChat = grid.querySelector('[data-dw="chat"]');
 				var list = [];
 				Array.prototype.forEach.call(newGrid.children, function (c) {
-					list.push(c.hasAttribute('data-teamchat') && liveChat ? liveChat : document.importNode(c, true));
+					if (c.getAttribute('data-dw') === 'chat' && liveChat) { ['style', 'class', 'data-w', 'data-h'].forEach(function (a) { var v = c.getAttribute(a); if (v !== null) liveChat.setAttribute(a, v); }); list.push(liveChat); } else { list.push(document.importNode(c, true)); }
 				});
 				grid.replaceChildren.apply(grid, list);
 				last = Date.now();

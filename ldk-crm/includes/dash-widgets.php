@@ -88,6 +88,76 @@ function lk_dash_zone( $zone, $only_on = true ) {
 	return $ids;
 }
 
+/** id => array( largura padrão em colunas (de 12), largura MÍNIMA que não corta as informações ). */
+function lk_dash_sizes() {
+	return array(
+		'hero' => array( 12, 6 ), 'stats' => array( 12, 6 ), 'chart' => array( 12, 6 ), 'etapas' => array( 6, 4 ), 'tarefas_semana' => array( 6, 4 ),
+		'comigo' => array( 6, 4 ), 'hoje' => array( 6, 4 ), 'atrasados' => array( 6, 4 ), 'aguardando' => array( 6, 4 ), 'cobrancas' => array( 6, 4 ),
+		'instagram' => array( 6, 4 ), 'reunioes' => array( 6, 4 ), 'datas' => array( 6, 4 ), 'ranking' => array( 6, 4 ), 'contratos' => array( 6, 4 ),
+		'funil' => array( 6, 4 ), 'chat' => array( 6, 5 ),
+		'perfil' => array( 4, 3 ), 'metas' => array( 4, 3 ), 'andamento' => array( 4, 3 ), 'clientes_ult' => array( 4, 3 ),
+	);
+}
+
+/** Posição e tamanho que a pessoa deixou: order (ids) e size (id => w colunas, h linhas mínimas; 0 = altura automática). */
+function lk_dash_layout() {
+	$l = get_user_meta( get_current_user_id(), 'lk_dash_layout', true );
+	return is_array( $l ) ? $l + array( 'order' => array(), 'size' => array() ) : array( 'order' => array(), 'size' => array() );
+}
+
+/** Largura (colunas), altura mínima (linhas) e largura mínima do bloco. */
+function lk_dash_size( $id ) {
+	$d = lk_dash_sizes()[ $id ] ?? array( 6, 4 );
+	$s = lk_dash_layout()['size'][ $id ] ?? array();
+	$w = isset( $s['w'] ) ? (int) $s['w'] : $d[0];
+	return array( max( $d[1], min( 12, $w ) ), isset( $s['h'] ) ? max( 0, min( 40, (int) $s['h'] ) ) : 0, $d[1] );
+}
+
+/** Blocos visíveis na ordem do quadro: a que a pessoa arrumou; sem arrumação, principal → cartões → lateral. */
+function lk_dash_board_ids() {
+	$default = array();
+	foreach ( array( 'main', 'grid', 'side' ) as $z ) {
+		foreach ( lk_dash_zone( $z ) as $id ) {
+			$default[] = $id;
+		}
+	}
+	$order = lk_dash_layout()['order'];
+	if ( ! $order ) {
+		return $default;
+	}
+	$out = array_values( array_intersect( $order, $default ) );
+	foreach ( $default as $id ) {
+		if ( ! in_array( $id, $out, true ) ) {
+			$out[] = $id;
+		}
+	}
+	return $out;
+}
+
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_route( 'lk/v1', '/dash-layout', array( 'methods' => 'POST', 'callback' => 'lk_api_dash_layout', 'permission_callback' => function () { return lk_is_team(); } ) );
+	}
+);
+
+function lk_api_dash_layout( WP_REST_Request $r ) {
+	$all   = array_filter( array_keys( lk_dash_widgets() ), 'lk_dash_allowed' );
+	$order = array_values( array_intersect( array_map( 'sanitize_key', (array) $r->get_param( 'order' ) ), $all ) );
+	$sizes = lk_dash_sizes();
+	$size  = array();
+	foreach ( (array) $r->get_param( 'size' ) as $id => $v ) {
+		$id = sanitize_key( $id );
+		if ( ! in_array( $id, $all, true ) || ! is_array( $v ) ) {
+			continue;
+		}
+		$min        = $sizes[ $id ][1] ?? 3;
+		$size[ $id ] = array( 'w' => max( $min, min( 12, (int) ( $v['w'] ?? 0 ) ) ), 'h' => max( 0, min( 40, (int) ( $v['h'] ?? 0 ) ) ) );
+	}
+	update_user_meta( get_current_user_id(), 'lk_dash_layout', array( 'order' => $order, 'size' => $size ) );
+	return array( 'ok' => true );
+}
+
 function lk_do_dash_save() {
 	if ( ! lk_is_team() ) {
 		wp_die( 'Sem permissão.' );
@@ -96,6 +166,9 @@ function lk_do_dash_save() {
 	$order = array_values( array_intersect( array_map( 'sanitize_key', (array) ( $_POST['w'] ?? array() ) ), $all ) ); // phpcs:ignore WordPress.Security.NonceVerification
 	$on    = array_values( array_intersect( array_map( 'sanitize_key', (array) ( $_POST['on'] ?? array() ) ), $all ) ); // phpcs:ignore WordPress.Security.NonceVerification
 	update_user_meta( get_current_user_id(), 'lk_dash', array( 'order' => $order, 'on' => $on ) );
+	$lay          = lk_dash_layout();
+	$lay['order'] = array(); // a ordem do quadro volta a seguir esta lista; os tamanhos continuam
+	update_user_meta( get_current_user_id(), 'lk_dash_layout', $lay );
 	lk_back( 'Dashboard personalizado.' );
 }
 
@@ -104,6 +177,7 @@ function lk_do_dash_reset() {
 		wp_die( 'Sem permissão.' );
 	}
 	delete_user_meta( get_current_user_id(), 'lk_dash' );
+	delete_user_meta( get_current_user_id(), 'lk_dash_layout' );
 	lk_back( 'Dashboard voltou ao padrão.' );
 }
 
