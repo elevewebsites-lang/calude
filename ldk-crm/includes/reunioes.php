@@ -62,7 +62,7 @@ function lk_meetings_widget_html() {
 	ob_start();
 	?>
 	<section class="card">
-		<div class="card-head"><h3>📅 Próximas reuniões</h3><span class="row-btns"><button type="button" class="btn btn--ghost btn--sm" data-open="nova-reuniao-crm">+ Reunião</button><a class="small" href="<?php echo esc_url( lk_panel_url( 'agenda' ) ); ?>">agenda</a></span></div>
+		<div class="card-head"><h3>📅 Próximas reuniões</h3><span class="row-btns"><button type="button" class="btn btn--ghost btn--sm" data-open="nova-reuniao-crm">+ Marcar reunião</button><a class="small" href="<?php echo esc_url( lk_panel_url( 'agenda' ) ); ?>">agenda</a></span></div>
 		<?php if ( ! $items ) : ?><p class="muted small">Nenhuma reunião marcada. Use <strong>+ Reunião</strong> para registrar.</p><?php else : ?>
 			<ul class="meetings"><?php foreach ( $items as $it ) { echo $it[1]; // phpcs:ignore WordPress.Security.EscapeOutput ?><?php } ?></ul>
 		<?php endif; ?>
@@ -79,7 +79,7 @@ function lk_meetings_card_html() {
 	ob_start();
 	?>
 	<section class="card">
-		<div class="card-head"><h3>Reuniões registradas</h3><button type="button" class="btn btn--primary btn--sm" data-open="nova-reuniao-crm">+ Registrar reunião</button></div>
+		<div class="card-head"><h3>Reuniões registradas</h3><button type="button" class="btn btn--primary btn--sm" data-open="nova-reuniao-crm">+ Marcar reunião</button></div>
 		<?php if ( ! $up ) : ?><p class="muted small">Nenhuma reunião agendada.</p><?php else : ?><ul class="meetings"><?php foreach ( $up as $m ) { echo lk_meeting_row_html( $m ); // phpcs:ignore WordPress.Security.EscapeOutput ?><?php } ?></ul><?php endif; ?>
 		<?php if ( $past ) : ?><h4 class="muted small" style="margin:16px 0 6px">Anteriores</h4><ul class="meetings"><?php foreach ( $past as $m ) { echo lk_meeting_row_html( $m ); // phpcs:ignore WordPress.Security.EscapeOutput ?><?php } ?></ul><?php endif; ?>
 	</section>
@@ -94,7 +94,7 @@ function lk_client_meetings_html( $client ) {
 	ob_start();
 	?>
 	<section class="card" id="reunioes">
-		<div class="card-head"><h3>Reuniões</h3><button type="button" class="btn btn--primary btn--sm" data-open="nova-reuniao-crm" data-reuniao-client="<?php echo (int) $client->id; ?>">+ Registrar reunião</button></div>
+		<div class="card-head"><h3>Reuniões com este cliente</h3><button type="button" class="btn btn--primary btn--sm" data-open="nova-reuniao-crm" data-reuniao-client="<?php echo (int) $client->id; ?>">📅 Marcar reunião</button></div>
 		<?php if ( ! $rows ) : ?><p class="muted small">Nenhuma reunião registrada com este cliente.</p><?php else : ?><ul class="meetings"><?php foreach ( array_slice( $rows, 0, 10 ) as $m ) { echo lk_meeting_row_html( $m, false ); // phpcs:ignore WordPress.Security.EscapeOutput ?><?php } ?></ul><?php endif; ?>
 	</section>
 	<?php
@@ -110,7 +110,7 @@ function lk_meeting_modals_html( $client_id = 0 ) {
 	}
 	$done = true;
 	ob_start();
-	lk_modal_start( 'nova-reuniao-crm', 'Registrar reunião' );
+	lk_modal_start( 'nova-reuniao-crm', 'Marcar reunião' );
 	lk_meeting_form( $client_id );
 	lk_modal_end();
 	lk_modal_start( 'editar-reuniao-crm', 'Reunião' );
@@ -145,7 +145,8 @@ function lk_meeting_form( $client_id = 0, $edit = false ) {
 	lk_select( 'kind', 'Tipo', lk_meeting_kinds(), 'online' );
 	lk_input( 'place', 'Link ou local', '', 'text', 'placeholder="https://meet.google.com/… ou endereço"' );
 	lk_input( 'guests', 'Participantes', '', 'text', 'placeholder="Quem vai participar"' );
-	lk_input( 'notes', 'Pauta / ata (o que foi combinado)', '', 'textarea', 'rows="4"' );
+	lk_input( 'notes', 'Pauta / ata (uso interno: o cliente não vê)', '', 'textarea', 'rows="4"' );
+	echo '<label class="check"><input type="checkbox" name="avisar" value="1" checked><span>Avisar o cliente por e-mail agora (com link e convite de calendário) e lembrar 10 minutos antes</span></label>';
 	if ( $edit ) {
 		lk_select( 'status', 'Situação', lk_meeting_status_labels(), 'agendada' );
 	}
@@ -184,12 +185,131 @@ function lk_do_reuniao_save() {
 		'guests'    => lk_in( 'guests' ),
 		'notes'     => lk_in( 'notes', 'textarea' ),
 	);
+	$avisar = lk_in( 'avisar', 'bool' );
 	if ( $m ) {
 		$data['status'] = isset( $stat[ lk_in( 'status' ) ] ) ? lk_in( 'status' ) : $m->status;
+		$moved          = $data['starts_at'] !== $m->starts_at || $data['place'] !== $m->place;
+		if ( $moved ) {
+			$data['reminded'] = 0;
+		}
 		lk_update( 'meetings', $m->id, $data );
-		lk_back( 'Reunião atualizada.' );
+		$m   = lk_get( 'meetings', $m->id );
+		$msg = 'Reunião atualizada.';
+		if ( $avisar && $m->client_id ) {
+			$type = 'cancelada' === $m->status ? 'cancelada' : ( $moved ? 'remarcada' : '' );
+			if ( $type ) {
+				$msg .= lk_meeting_mail( $m, $type ) ? ' O cliente foi avisado por e-mail.' : ' (O cliente não tem e-mail válido na ficha.)';
+			}
+		}
+		lk_back( $msg );
 	}
 	$data['created_by'] = get_current_user_id();
-	lk_insert( 'meetings', $data );
-	lk_back( 'Reunião registrada. Ela aparece no dashboard e na Agenda.' );
+	$mid                = lk_insert( 'meetings', $data );
+	$msg                = 'Reunião marcada. Ela aparece no dashboard, na Agenda e na área do cliente.';
+	if ( $avisar && $data['client_id'] ) {
+		$msg .= lk_meeting_mail( lk_get( 'meetings', $mid ), 'novo' ) ? ' O cliente recebeu o e-mail com o link.' : ' (O cliente não tem e-mail válido na ficha, então não foi avisado.)';
+	}
+	lk_back( $msg );
+}
+
+/* -----------------------------------------------------------------------
+ * Avisos por e-mail ao cliente: ao marcar, ao remarcar/cancelar e 10 minutos antes
+ * -------------------------------------------------------------------- */
+
+/** "Agora" no horário do site, no mesmo formato de starts_at (como número). */
+function lk_meeting_now_ts() {
+	return time() + (int) round( (float) get_option( 'gmt_offset', 0 ) * HOUR_IN_SECONDS );
+}
+
+/** Convite de calendário (.ics) para o cliente adicionar ao Google Agenda/Outlook/Apple. */
+function lk_meeting_ics( $m, $client ) {
+	$start = strtotime( $m->starts_at ) - (int) round( (float) get_option( 'gmt_offset', 0 ) * HOUR_IN_SECONDS ); // → UTC
+	$end   = $start + max( 5, (int) $m->duration ) * MINUTE_IN_SECONDS;
+	$esc   = function ( $t ) { return str_replace( array( '\\', ';', ',', "\n" ), array( '\\\\', '\\;', '\\,', '\\n' ), (string) $t ); };
+	$loc   = $m->place ? $m->place : '';
+	$lines = array( 'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//LDK CRM//Reunioes//PT', 'METHOD:PUBLISH', 'BEGIN:VEVENT', 'UID:lk-reuniao-' . (int) $m->id . '@' . wp_parse_url( home_url(), PHP_URL_HOST ), 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ), 'DTSTART:' . gmdate( 'Ymd\THis\Z', $start ), 'DTEND:' . gmdate( 'Ymd\THis\Z', $end ), 'SUMMARY:' . $esc( $m->title . ' · ' . lk_setting( 'empresa' ) ), 'LOCATION:' . $esc( $loc ), 'DESCRIPTION:' . $esc( 'Reunião com a ' . lk_setting( 'empresa' ) . ( $loc ? '. Link/local: ' . $loc : '' ) ), 'BEGIN:VALARM', 'TRIGGER:-PT10M', 'ACTION:DISPLAY', 'DESCRIPTION:Reunião em 10 minutos', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR' );
+	return implode( "\r\n", $lines ) . "\r\n";
+}
+
+/**
+ * Envia o e-mail da reunião ao cliente. $type: novo | remarcada | cancelada | lembrete.
+ * Devolve true se havia e-mail válido.
+ */
+function lk_meeting_mail( $m, $type ) {
+	$client = $m && $m->client_id ? lk_get( 'clients', $m->client_id ) : null;
+	if ( ! $client || ! is_email( $client->email ) ) {
+		return false;
+	}
+	$ts    = strtotime( $m->starts_at );
+	$day   = gmdate( 'Y-m-d', $ts );
+	$when  = ucfirst( lk_date_long( $day ) ) . ' às ' . gmdate( 'H:i', $ts );
+	$kinds = lk_meeting_kinds();
+	$link  = $m->place && preg_match( '#^https?://#i', $m->place ) ? $m->place : '';
+	$rows  = array( array( 'Assunto', esc_html( $m->title ) ), array( 'Quando', esc_html( $when ) ), array( 'Duração', (int) $m->duration . ' min' ), array( 'Tipo', esc_html( $kinds[ $m->kind ] ?? '' ) ) );
+	if ( $m->place ) {
+		$rows[] = array( $link ? 'Link' : 'Local', $link ? '<a href="' . esc_url( $link ) . '">' . esc_html( $link ) . '</a>' : esc_html( $m->place ) );
+	}
+	if ( $m->guests ) {
+		$rows[] = array( 'Participantes', esc_html( $m->guests ) );
+	}
+	$first = $client->name ? strtok( $client->name, ' ' ) : lk_client_label( $client );
+	$cta   = $link ? 'Entrar na reunião' : 'Ver na minha área';
+	$url   = $link ? $link : lk_client_link();
+	$sub   = array(
+		'novo'      => array( 'Reunião marcada · ' . $when, 'Reunião marcada ✓', 'Marcamos uma reunião com você. Já deixamos o convite em anexo: abra o arquivo para adicionar ao seu calendário.' ),
+		'remarcada' => array( 'Reunião remarcada · ' . $when, 'Reunião remarcada', 'Atualizamos o horário da nossa reunião. Veja os novos dados abaixo.' ),
+		'cancelada' => array( 'Reunião cancelada · ' . $m->title, 'Reunião cancelada', 'A reunião abaixo foi cancelada. Entraremos em contato para combinar um novo horário.' ),
+		'lembrete'  => array( 'Sua reunião começa em 10 minutos', 'Daqui a pouco ⏰', 'Lembrete: a nossa reunião começa em 10 minutos.' ),
+	);
+	$s    = $sub[ $type ] ?? $sub['novo'];
+	$file = '';
+	if ( in_array( $type, array( 'novo', 'remarcada' ), true ) ) {
+		$up   = wp_upload_dir();
+		$file = trailingslashit( $up['basedir'] ) . 'convite-reuniao-' . (int) $m->id . '-' . wp_generate_password( 6, false ) . '.ics';
+		file_put_contents( $file, lk_meeting_ics( $m, $client ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$attach = function ( $args ) use ( $file ) {
+			$args['attachments'] = array_merge( (array) ( $args['attachments'] ?? array() ), array( $file ) );
+			return $args;
+		};
+		add_filter( 'wp_mail', $attach );
+	}
+	lk_mail( $client->email, $s[0] . ' · ' . lk_setting( 'empresa' ), $s[1], '<p>Olá, ' . esc_html( $first ) . '! ' . esc_html( $s[2] ) . '</p>', $rows, 'cancelada' === $type ? '' : $cta, 'cancelada' === $type ? '' : $url );
+	if ( $file ) {
+		remove_filter( 'wp_mail', $attach );
+		wp_delete_file( $file );
+	}
+	if ( 'lembrete' !== $type ) {
+		lk_update( 'meetings', $m->id, array( 'notified' => 1 ) );
+	}
+	return true;
+}
+
+/** A cada 5 minutos: lembrete 10 minutos antes (no máximo uma vez por reunião). */
+add_action( 'lk_publish_tick', 'lk_meetings_remind' );
+function lk_meetings_remind() {
+	$now = lk_meeting_now_ts();
+	$to  = gmdate( 'Y-m-d H:i:s', $now + 10 * MINUTE_IN_SECONDS );
+	$fr  = gmdate( 'Y-m-d H:i:s', $now );
+	foreach ( lk_rows( 'meetings', "status = 'agendada' AND reminded = 0 AND client_id > 0 AND starts_at > %s AND starts_at <= %s", array( $fr, $to ) ) as $m ) {
+		lk_update( 'meetings', $m->id, array( 'reminded' => 1 ) );
+		lk_meeting_mail( $m, 'lembrete' );
+	}
+}
+
+/** Área do cliente: próximas reuniões (sem a pauta/ata, que é interna). */
+function lk_client_meetings_area_html( $client ) {
+	$rows = lk_meetings_upcoming( 5, $client->id );
+	if ( ! $rows ) {
+		return '';
+	}
+	$soon = '';
+	$h    = '<section class="card" id="reunioes"><div class="card-head"><h3>📅 Suas próximas reuniões</h3></div><ul class="meetings">';
+	foreach ( $rows as $m ) {
+		$link = $m->place && preg_match( '#^https?://#i', $m->place ) ? '<a class="btn btn--primary btn--sm" href="' . esc_url( $m->place ) . '" target="_blank" rel="noopener">Entrar</a>' : '';
+		$h   .= '<li class="meet"><span class="meet-time">' . esc_html( lk_meeting_when( $m ) ) . '</span><span class="meet-main"><strong>' . esc_html( $m->title ) . '</strong><small>' . esc_html( ( lk_meeting_kinds()[ $m->kind ] ?? '' ) . ( $m->place && ! $link ? ' · ' . $m->place : '' ) . ' · ' . (int) $m->duration . ' min' ) . '</small></span><span class="meet-btns">' . $link . '</span></li>';
+		if ( ! $soon && strtotime( $m->starts_at ) - lk_meeting_now_ts() < DAY_IN_SECONDS ) {
+			$soon = '<a class="plan-cta" href="#reunioes"><span><strong>📅 Reunião ' . esc_html( 0 === lk_days_until( gmdate( 'Y-m-d', strtotime( $m->starts_at ) ) ) ? 'hoje' : 'amanhã' ) . ' às ' . esc_html( gmdate( 'H:i', strtotime( $m->starts_at ) ) ) . '</strong><small>' . esc_html( $m->title ) . '</small></span><em>Ver →</em></a>';
+		}
+	}
+	return $soon . $h . '</ul></section>';
 }

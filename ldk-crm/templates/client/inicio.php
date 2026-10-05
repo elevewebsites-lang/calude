@@ -16,6 +16,7 @@ $first = $client->name ? strtok( $client->name, ' ' ) : lk_client_label( $client
 <?php if ( ! $client->briefing_at ) : ?>
 	<a class="plan-cta plan-cta--soft" href="<?php echo esc_url( lk_client_link( 'briefing' ) ); ?>"><span><strong>📋 Responda o briefing</strong><small>Conte sobre a sua marca para os conteúdos ficarem com a sua cara</small></span><em>Responder →</em></a>
 <?php endif; ?>
+<?php echo lk_client_meetings_area_html( $client ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 <div class="quick-actions">
 	<a class="qa qa--main" href="<?php echo esc_url( lk_client_link( 'aprovacoes' ) ); ?>"><?php echo lk_icon( 'check', 22 ); // phpcs:ignore ?><span><strong><?php echo count( $pend ) + count( $plans ); ?> para aprovar</strong><small>arte e legenda</small></span></a>
 	<a class="qa" href="<?php echo esc_url( lk_client_link( 'conteudos' ) ); ?>"><?php echo lk_icon( 'calendario', 22 ); // phpcs:ignore ?><span><strong>Conteúdos do mês</strong><small>calendário e etapas</small></span></a>
