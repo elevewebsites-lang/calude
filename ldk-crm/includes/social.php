@@ -123,8 +123,8 @@ function lk_social_cb() {
 		$res = 'instagram' === $net ? lk_ig_connect( $cid, $code ) : lk_fb_connect( $cid, $code );
 	}
 	if ( $pub ) {
-		if ( ! is_wp_error( $res ) && get_transient( 'lk_fbpages_' . $cid ) ) {
-			$res = 'Quase lá: escolha abaixo qual é a Página da sua empresa.';
+		if ( ! is_wp_error( $res ) && ( get_transient( 'lk_fbpages_' . $cid ) || lk_social_pick_pending( $cid ) ) ) {
+			$res = 'Quase lá: escolha abaixo qual é a sua conta.';
 		}
 		lk_connect_done( $cid, is_wp_error( $res ) ? $res->get_error_message() : $res, is_wp_error( $res ) ? 'erro' : 'ok' );
 	}

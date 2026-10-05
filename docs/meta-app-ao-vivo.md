@@ -78,3 +78,11 @@ Leia o motivo, regrave só o vídeo da permissão reprovada (geralmente faltou m
 
 ## 8. Depois do ao vivo (30 clientes)
 Mandar o link de conexão de cada cliente (ficha do cliente → Redes sociais → Copiar link). Requisito dos clientes: Instagram **Comercial ou Criador**; Facebook: ser admin da Página.
+
+## 9. LinkedIn e YouTube pelo mesmo link (versão 1.5.4)
+A página do cliente agora tem Instagram, Facebook, LinkedIn e YouTube. As duas últimas não dependem da Meta:
+- **LinkedIn** (developer.linkedin.com): criar o app, pedir o produto **Community Management API** (precisa de aprovação do LinkedIn) e cadastrar o redirecionamento
+  `https://SEU-SITE/wp-admin/admin-post.php?action=lk_social_cb&net=linkedin`. Preencher Client ID/Secret em Configurações → Redes sociais. O cliente precisa ser administrador da Página da empresa.
+- **YouTube** (Google Cloud): ativar a **YouTube Data API v3**, criar o OAuth (o mesmo do Drive) e cadastrar o redirecionamento
+  `https://SEU-SITE/wp-admin/admin-post.php?action=lk_social_cb&net=google`.
+  Atenção: vídeos enviados por app não verificado pelo Google ficam **privados** até a verificação do app (tela de consentimento OAuth em produção).

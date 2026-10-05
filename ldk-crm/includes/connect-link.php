@@ -9,6 +9,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/** Redes que o cliente conecta pelo link => [rótulo, dica]. */
+function lk_connect_nets() {
+	return array(
+		'instagram' => array( 'Instagram', 'Conta Comercial ou Criador de conteúdo.' ),
+		'facebook'  => array( 'Facebook (Página)', 'Você precisa ser administrador da Página.' ),
+		'linkedin'  => array( 'LinkedIn (Página)', 'Você precisa ser administrador da Página da empresa.' ),
+		'youtube'   => array( 'YouTube', 'Entre com a conta Google dona do canal.' ),
+	);
+}
+
 function lk_connect_token( $cid, $reset = false ) {
 	$all = (array) get_option( 'lk_connect_tokens', array() );
 	if ( $reset || empty( $all[ $cid ] ) ) {
@@ -47,7 +57,7 @@ add_action( 'admin_post_lk_connect', 'lk_connect_page' );
 function lk_connect_page() {
 	$c = lk_connect_client();
 	$go = sanitize_key( $_GET['go'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification
-	if ( in_array( $go, array( 'instagram', 'facebook' ), true ) ) {
+	if ( isset( lk_connect_nets()[ $go ] ) ) {
 		$st = wp_generate_password( 24, false );
 		set_transient( 'lk_soc_' . $st, array( 'client' => (int) $c->id, 'user' => 0, 'net' => $go, 'public' => 1 ), 900 );
 		$url = lk_social_auth_url( $go, $st );
@@ -59,7 +69,14 @@ function lk_connect_page() {
 	}
 	$msg   = get_transient( 'lk_ccmsg_' . $c->id );
 	$accs  = lk_social_accounts( $c->id );
-	$picks = json_decode( (string) lk_decrypt( (string) get_transient( 'lk_fbpages_' . $c->id ) ), true );
+	$picks = array();
+	$fbp   = json_decode( (string) lk_decrypt( (string) get_transient( 'lk_fbpages_' . $c->id ) ), true );
+	if ( $fbp ) {
+		$picks['facebook'] = $fbp;
+	}
+	foreach ( lk_social_pick_pending( $c->id ) as $pn => $opts ) {
+		$picks[ $pn ] = $opts;
+	}
 	$base  = array( 'action' => 'lk_connect', 'c' => (int) $c->id, 't' => lk_connect_token( $c->id ) );
 	$nome  = lk_identity()['nome'] ?? get_bloginfo( 'name' );
 	nocache_headers();
@@ -72,15 +89,15 @@ function lk_connect_page() {
 <h1>Conectar suas redes sociais</h1>
 <p>Olá, <?php echo esc_html( lk_client_label( $c ) ); ?>! Para a <?php echo esc_html( $nome ); ?> postar por você, entre na sua conta e autorize. Você não nos passa a senha: o login é feito direto no Instagram/Facebook.</p>
 <?php if ( $msg ) : ?><div class="msg <?php echo 'erro' === $msg[1] ? 'erro' : ''; ?>"><?php echo esc_html( $msg[0] ); ?></div><?php endif; ?>
-<?php foreach ( array( 'instagram' => 'Instagram', 'facebook' => 'Facebook (Página)' ) as $n => $lab ) : $a = $accs[ $n ] ?? null; ?>
-	<div class="row"><span><strong><?php echo esc_html( $lab ); ?></strong><small class="<?php echo $a && 'ok' === $a->status ? 'ok' : ''; ?>"><?php echo $a && 'ok' === $a->status ? '✓ conectado' . ( $a->username ? ' · @' . esc_html( $a->username ) : ( $a->name ? ' · ' . esc_html( $a->name ) : '' ) ) : 'não conectado'; ?></small></span>
+<?php foreach ( lk_connect_nets() as $n => $info ) : $lab = $info[0]; $a = $accs[ $n ] ?? null; ?>
+	<div class="row"><span><strong><?php echo esc_html( $lab ); ?></strong><small><?php echo esc_html( $info[1] ); ?></small><small class="<?php echo $a && 'ok' === $a->status ? 'ok' : ''; ?>"><?php echo $a && 'ok' === $a->status ? '✓ conectado' . ( $a->username ? ' · @' . esc_html( $a->username ) : ( $a->name ? ' · ' . esc_html( $a->name ) : '' ) ) : 'não conectado'; ?></small></span>
 	<a class="btn<?php echo $a && 'ok' === $a->status ? ' ghost' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'go', $n, admin_url( 'admin-post.php' ) . '?' . http_build_query( $base ) ) ); ?>"><?php echo $a && 'ok' === $a->status ? 'Reconectar' : 'Conectar'; ?></a></div>
 <?php endforeach; ?>
-<?php if ( $picks ) : ?>
-	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="lk_connect_pick"><input type="hidden" name="c" value="<?php echo (int) $c->id; ?>"><input type="hidden" name="t" value="<?php echo esc_attr( $base['t'] ); ?>">
-	<strong>Qual é a Página da sua empresa?</strong><select name="page"><?php foreach ( $picks as $pg ) : ?><option value="<?php echo esc_attr( $pg['id'] ); ?>"><?php echo esc_html( $pg['name'] ); ?></option><?php endforeach; ?></select><button type="submit">Usar esta Página</button></form>
-<?php endif; ?>
-<p class="foot">Requisito do Instagram: a conta precisa ser Comercial ou Criador de conteúdo. Dúvidas? Fale com a gente.</p>
+<?php foreach ( $picks as $pn => $opts ) : ?>
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="lk_connect_pick"><input type="hidden" name="c" value="<?php echo (int) $c->id; ?>"><input type="hidden" name="t" value="<?php echo esc_attr( $base['t'] ); ?>"><input type="hidden" name="net" value="<?php echo esc_attr( $pn ); ?>">
+	<strong>Qual é o seu <?php echo esc_html( lk_networks()[ $pn ] ?? $pn ); ?>?</strong><select name="choice"><?php foreach ( $opts as $o ) : ?><option value="<?php echo esc_attr( $o['id'] ); ?>"><?php echo esc_html( $o['name'] ); ?></option><?php endforeach; ?></select><button type="submit">Usar este</button></form>
+<?php endforeach; ?>
+<p class="foot">Dúvidas? Fale com a gente.</p>
 </main></body></html>
 	<?php
 	exit;
@@ -89,17 +106,31 @@ function lk_connect_page() {
 add_action( 'admin_post_nopriv_lk_connect_pick', 'lk_connect_pick' );
 add_action( 'admin_post_lk_connect_pick', 'lk_connect_pick' );
 function lk_connect_pick() {
-	$c     = lk_connect_client();
-	$pages = json_decode( (string) lk_decrypt( (string) get_transient( 'lk_fbpages_' . $c->id ) ), true );
-	$want  = sanitize_text_field( wp_unslash( $_POST['page'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification -- o token do link autentica.
-	foreach ( (array) $pages as $pg ) {
-		if ( (string) $pg['id'] === $want ) {
-			lk_social_store( (int) $c->id, 'facebook', $pg['id'], '', $pg['name'], $pg['picture']['data']['url'] ?? '', $pg['access_token'], 0 );
-			delete_transient( 'lk_fbpages_' . $c->id );
-			lk_connect_done( (int) $c->id, 'Página "' . $pg['name'] . '" conectada.', 'ok' );
+	$c    = lk_connect_client();
+	$net  = sanitize_key( $_POST['net'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification -- o token do link autentica.
+	$want = sanitize_text_field( wp_unslash( $_POST['choice'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+	if ( 'facebook' === $net ) {
+		$pages = json_decode( (string) lk_decrypt( (string) get_transient( 'lk_fbpages_' . $c->id ) ), true );
+		foreach ( (array) $pages as $pg ) {
+			if ( (string) $pg['id'] === $want ) {
+				lk_social_store( (int) $c->id, 'facebook', $pg['id'], '', $pg['name'], $pg['picture']['data']['url'] ?? '', $pg['access_token'], 0 );
+				delete_transient( 'lk_fbpages_' . $c->id );
+				lk_connect_done( (int) $c->id, 'Página "' . $pg['name'] . '" conectada.', 'ok' );
+			}
+		}
+	} elseif ( in_array( $net, lk_social_more_nets(), true ) ) {
+		$raw = get_transient( 'lk_pick_' . $net . '_' . $c->id );
+		$d   = $raw ? json_decode( (string) lk_decrypt( $raw ), true ) : null;
+		foreach ( (array) ( $d['opts'] ?? array() ) as $o ) {
+			if ( (string) $o['id'] === $want ) {
+				$extra = 'linkedin' === $net ? lk_li_extra_encrypt( $o['extra'] ) : $o['extra'];
+				lk_social_store( (int) $c->id, $net, $o['id'], $o['user'], $o['name'], $o['avatar'], $d['token'], $d['expires'] ?? 0, $extra );
+				delete_transient( 'lk_pick_' . $net . '_' . $c->id );
+				lk_connect_done( (int) $c->id, ( lk_networks()[ $net ] ?? $net ) . ': "' . $o['name'] . '" conectado.', 'ok' );
+			}
 		}
 	}
-	lk_connect_done( (int) $c->id, 'Não encontrei essa Página. Conecte o Facebook de novo.', 'erro' );
+	lk_connect_done( (int) $c->id, 'Não encontrei essa opção. Conecte de novo.', 'erro' );
 }
 
 /** Volta para a página pública do cliente com o resultado. */
@@ -118,8 +149,8 @@ function lk_connect_watch() {
 	$sent  = (array) get_option( 'lk_connect_alerts', array() );
 	$limit = gmdate( 'Y-m-d H:i:s', time() + 5 * DAY_IN_SECONDS );
 	$team  = array();
-	// Só Instagram e Facebook: são as que o link do cliente reconecta.
-	foreach ( lk_rows( 'social_accounts', "network IN ('instagram','facebook') AND ( status <> 'ok' OR ( expires_at IS NOT NULL AND expires_at < %s ) )", array( $limit ) ) as $a ) {
+	// As redes que o link do cliente reconecta.
+	foreach ( lk_rows( 'social_accounts', "network IN ('instagram','facebook','linkedin','youtube') AND ( status <> 'ok' OR ( expires_at IS NOT NULL AND expires_at < %s ) )", array( $limit ) ) as $a ) {
 		if ( ! empty( $sent[ $a->id ] ) && $sent[ $a->id ] > time() - 5 * DAY_IN_SECONDS ) {
 			continue; // já avisou há pouco
 		}
