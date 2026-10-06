@@ -1,0 +1,63 @@
+const {chromium}=require('/opt/node22/lib/node_modules/playwright');
+const B='http://localhost:8082';
+let fail=0; const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(!c) fail++;};
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
+const errs=[];
+const mk=async(w=1300)=>{const c=await b.newContext({viewport:{width:w,height:900}});const p=await c.newPage();p.on('pageerror',e=>errs.push('JS '+e.message));p.on('dialog',d=>d.accept());return p;};
+// cliente: cadastro
+const c=await mk();
+await c.goto(B+'/cadastro/');
+await c.fill('[name=name]','Maria Teste');await c.fill('[name=company]','Gráfica Teste Ltda');await c.fill('[name=email]','maria@teste.com');await c.fill('[name=whatsapp]','11999990000');await c.fill('[name=cnpj]','12345678000199');await c.fill('[name=senha]','senha-forte-1');
+await Promise.all([c.waitForNavigation(),c.click('button[type=submit]')]);
+ok(/cliente/.test(c.url()),'cadastro redireciona p/ painel do cliente: '+c.url());
+await c.goto(B+'/cliente/novo/');
+ok(!(await c.locator('[data-oitem]').count()),'cliente não aprovado não vê formulário de pedido');
+// admin aprova
+const a=await mk();
+await a.goto(B+'/entrar/');await a.fill('input[name=email]','admin');await a.fill('input[name=senha]','SENHA_DO_ADMIN_DE_TESTE');
+await Promise.all([a.waitForNavigation(),a.click('button[type=submit]')]);
+ok(/painel/.test(a.url()),'admin logou: '+a.url());
+const cid=require('child_process').execSync("php -r \"require '/tmp/wpt2/wp-load.php'; global \\$wpdb; echo \\$wpdb->get_var('SELECT id FROM '.ap_table('clients').\\\" WHERE email='maria@teste.com'\\\");\"").toString().trim();
+await a.goto(B+'/painel/cliente/'+cid+'/');
+const btn=a.locator('button:has-text("Aprovar")').first();
+ok(await btn.count()>0,'botão aprovar existe');
+await Promise.all([a.waitForNavigation(),btn.click()]);
+await a.goto(B+'/painel/cliente/'+cid+'/');
+const txt=await a.locator('body').innerText();
+ok(/50,00/.test(txt),'crédito de boas-vindas R$ 50 aparece na ficha');
+// pedido do cliente
+await c.goto(B+'/cliente/novo/');
+ok(await c.locator('[data-oitem]').count()===1,'cliente aprovado vê formulário');
+const mat=c.locator('[data-f=material]').first();
+const opts=await mat.locator('option').allInnerTexts();console.log('materiais:',opts.length,opts.slice(0,4));
+await mat.selectOption({index:1});
+await c.fill('[data-f=w]','100');await c.fill('[data-f=h]','50');
+await c.waitForTimeout(300);
+console.log('preço linha:',await c.locator('[data-f=price]').first().innerText());
+await c.setInputFiles('[data-upload]',['/tmp/art/x8.cdr']);
+await c.waitForSelector('.upfile.is-done',{timeout:15000});
+ok(await c.locator('.upthumb').count()===1,'miniatura do CDR aparece no formulário');
+console.log('nota:',await c.locator('.upfile.is-done').first().innerText());
+await c.screenshot({path:'/tmp/art/cli-pedido.png'});
+const fv=await c.locator('[data-f=files]').first().inputValue();
+ok(/"thumb":"data:image\/(png|jpeg)/.test(fv),'thumb vai no JSON do arquivo');
+// cupom e crédito
+const cup=c.locator('[name=cupom]');ok(await cup.count()>0,'campo cupom existe'); 
+if(await cup.count()) await cup.fill('BEMVINDO10');
+const cred=c.locator('[name=usar_credito]'); if(await cred.count()) await cred.check();
+await c.waitForTimeout(500);
+console.log('resumo:',(await c.locator('[data-summary], .osummary, .summary').first().innerText().catch(()=> 'n/a')).replace(/\n/g,' | '));
+await c.waitForTimeout(800);
+const sum=await c.locator('[data-cart]').innerText(); console.log('cart:',sum.replace(/\n/g,' | '));
+ok(/-R\$ 3,50/.test(sum),'cupom 10% = R$ 3,50'); ok(/-R\$ 31,50/.test(sum),'crédito usado = R$ 31,50 (resto após cupom)');
+ok(/Finalizar pedido/.test(await c.locator('[data-submit]').innerText()),'botão sem valor quando total 0');
+for(const bx of await c.locator('form input[type=checkbox][required]').all()) await bx.check();
+await Promise.all([c.waitForNavigation({timeout:20000}),c.click('form button[type=submit]')]); await c.waitForTimeout(500); console.log('inv:',await c.evaluate(()=>[...document.querySelectorAll(':invalid')].map(e=>e.name+'|'+e.type).join(','))); await c.screenshot({path:'/tmp/art/after.png',fullPage:true});
+console.log('após pedido:',c.url());
+console.log((await c.locator('.flash').first().innerText().catch(()=>'')));
+// admin vê
+await a.goto(B+'/painel/projetos/');
+const html=await a.content();
+ok(/kcard-thumb/.test(html),'kanban mostra miniatura');
+console.log('erros JS:',errs.join(' || ')||'nenhum');
+console.log('FALHAS',fail);await b.close();})().catch(e=>{console.log('EXC',e.message);process.exit(1)});

@@ -1,0 +1,11 @@
+const {chromium}=require('/opt/node22/lib/node_modules/playwright');
+const B='http://localhost:8082';
+const q=(s)=>require('child_process').execSync("php -r \"require '/tmp/wpt2/wp-load.php'; global \\$wpdb; "+s+"\"").toString().trim();
+(async()=>{const tok=q("echo \\$wpdb->get_var('SELECT token FROM '.ap_table('quotes').' ORDER BY id DESC LIMIT 1');");
+const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});const p=await (await b.newContext({viewport:{width:1300,height:900}})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto(B+'/entrar/');await p.fill('input[name=email]','maria@teste.com');await p.fill('input[name=senha]','senha-forte-1');await Promise.all([p.waitForNavigation(),p.click('button[type=submit]')]);
+await p.goto(B+'/orcamento/'+tok+'/');await p.check('[name=aceite]');
+await Promise.all([p.waitForNavigation({timeout:20000}).catch(()=>{}),p.click('.oq-btn')]);await p.waitForTimeout(1500);
+console.log('url',p.url());
+console.log('pedido:',q("\\$r=\\$wpdb->get_row('SELECT id,title,value,notes FROM '.ap_table('projects').' ORDER BY id DESC LIMIT 1'); echo json_encode(\\$r,JSON_UNESCAPED_UNICODE);"));
+console.log('status proposta:',q("echo \\$wpdb->get_var('SELECT status FROM '.ap_table('quotes').' ORDER BY id DESC LIMIT 1');"),'erros JS:',errs.join('|')||'nenhum');await b.close();})();
