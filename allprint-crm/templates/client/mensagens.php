@@ -9,7 +9,7 @@ ap_client_start( 'Mensagens', $client );
 <section class="chello">
 	<span class="eyebrow">Mensagens</span>
 	<h1>Fale com a <?php echo esc_html( ap_setting( 'empresa' ) ); ?></h1>
-	<p class="muted">Tire dúvidas sobre um pedido ou qualquer assunto. Respondemos por aqui e você recebe um aviso por e-mail.<?php if ( $wa ) : ?> Se for urgente, <a href="<?php echo esc_url( ap_wa_link( $wa, 'Olá! Sou parceiro (' . ap_client_label( $client ) . ') e preciso de suporte.' ) ); ?>" target="_blank" rel="noopener">chame no WhatsApp</a>.<?php endif; ?></p>
+	<p class="muted">Tire dúvidas sobre um pedido ou qualquer assunto. Respondemos por aqui e você recebe um aviso por e-mail.<?php if ( $wa ) : ?> Se for urgente, <a href="<?php echo esc_url( ap_wa_link( $wa, 'Olá! Sou cliente (' . ap_client_label( $client ) . ') e preciso de suporte.' ) ); ?>" target="_blank" rel="noopener">chame no WhatsApp</a>.<?php endif; ?></p>
 </section>
 <section class="card chat" data-chat data-client="<?php echo (int) $client->id; ?>">
 	<div class="chat-list" data-chat-list><p class="muted small center">Carregando…</p></div>

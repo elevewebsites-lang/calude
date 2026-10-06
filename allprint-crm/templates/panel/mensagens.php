@@ -12,7 +12,7 @@ ap_panel_start( 'Mensagens', 'mensagens' );
 ?>
 <div class="inbox">
 	<aside class="inbox-list">
-		<?php if ( ! $inbox ) : ?><p class="muted small">Nenhuma conversa ainda. Quando um parceiro mandar mensagem pelo painel dele, aparece aqui (e o sininho avisa).</p><?php endif; ?>
+		<?php if ( ! $inbox ) : ?><p class="muted small">Nenhuma conversa ainda. Quando um cliente mandar mensagem pelo painel dele, aparece aqui (e o sininho avisa).</p><?php endif; ?>
 		<?php foreach ( $inbox as $row ) : ?>
 			<?php $c = ap_get( 'clients', $row->client_id ); $m = ap_get( 'messages', $row->last_id ); if ( ! $c || ! $m ) { continue; } ?>
 			<a class="inbox-item<?php echo (int) $row->client_id === $sel ? ' is-active' : ''; ?>" href="<?php echo esc_url( ap_panel_url( 'mensagens', 0, array( 'cliente' => $c->id ) ) ); ?>">
@@ -21,7 +21,7 @@ ap_panel_start( 'Mensagens', 'mensagens' );
 				<small class="muted"><?php echo esc_html( ap_ago( $m->created_at ) ); ?></small>
 			</a>
 		<?php endforeach; ?>
-		<label class="field"><span>Nova conversa com</span><select onchange="if(this.value)location.href='<?php echo esc_url( ap_panel_url( 'mensagens' ) ); ?>?cliente='+this.value"><?php foreach ( ap_client_options( 'Escolha o parceiro…' ) as $k => $v ) : ?><option value="<?php echo esc_attr( $k ); ?>"><?php echo esc_html( $v ); ?></option><?php endforeach; ?></select></label>
+		<label class="field"><span>Nova conversa com</span><select onchange="if(this.value)location.href='<?php echo esc_url( ap_panel_url( 'mensagens' ) ); ?>?cliente='+this.value"><?php foreach ( ap_client_options( 'Escolha o cliente…' ) as $k => $v ) : ?><option value="<?php echo esc_attr( $k ); ?>"><?php echo esc_html( $v ); ?></option><?php endforeach; ?></select></label>
 	</aside>
 	<?php if ( $client ) : ?>
 		<?php $orders = ap_projects( 'p.client_id = %d', array( $client->id ) ); ?>

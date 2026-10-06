@@ -10,7 +10,7 @@
 	var money = function (v) { return 'R$ ' + (Math.round(v * 100) / 100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
 	var m2 = function (v) { return (Math.round(v * 100) / 100).toFixed(2).replace('.', ',') + ' m²'; };
 	var uploading = 0;
-	/* Tabela de preço (parceiro, empresa, pessoa física): no pedido do cliente é fixa; no manual a equipe escolhe. */
+	/* Tabela de preço (terceirizado, empresa, pessoa física): no pedido do cliente é fixa; no manual a equipe escolhe. */
 	var tierKey = function () { var t = typeof C.tier === 'function' ? C.tier() : C.tier; return t || 'parceiro'; };
 	var pr = function (m) { return (m.prices && m.prices[tierKey()]) || m.price; };
 	var minArea = function () { return (typeof C.noMin === 'function' && C.noMin()) ? 0 : C.minArea; };

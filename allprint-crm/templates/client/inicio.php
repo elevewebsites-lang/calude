@@ -25,7 +25,7 @@ $first = $client->name ? strtok( $client->name, ' ' ) : ap_client_label( $client
 <?php else : ?>
 	<div class="quick-actions">
 		<a class="qa qa--main" href="<?php echo esc_url( ap_client_link( 'novo' ) ); ?>"><?php echo ap_icon( 'mais', 22 ); // phpcs:ignore ?><span><strong>Novo pedido</strong><small>material, medidas, arquivo e pagamento</small></span></a>
-		<a class="qa" href="<?php echo esc_url( ap_client_link( 'tabela' ) ); ?>"><?php echo ap_icon( 'tag', 22 ); // phpcs:ignore ?><span><strong>Tabela de preços</strong><small>valores de parceiro por m²</small></span></a>
+		<a class="qa" href="<?php echo esc_url( ap_client_link( 'tabela' ) ); ?>"><?php echo ap_icon( 'tag', 22 ); // phpcs:ignore ?><span><strong>Tabela de preços</strong><small>valores de cliente por m²</small></span></a>
 		<a class="qa" href="<?php echo esc_url( ap_client_link( 'mensagens' ) ); ?>"><?php echo ap_icon( 'chat', 22 ); // phpcs:ignore ?><span><strong>Mensagens</strong><small>fale com a produção</small></span></a>
 	</div>
 <?php endif; ?>

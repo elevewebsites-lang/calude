@@ -217,11 +217,11 @@ function ap_hub_html() {
 	?>
 <div class="hub" data-hub data-team="<?php echo $team ? '1' : '0'; ?>" data-client="<?php echo (int) $me; ?>">
 	<button type="button" class="hub-toast" data-hub-toast hidden><span class="hub-av" data-hub-toast-av></span><span class="hub-rt"><strong data-hub-toast-name></strong><small data-hub-toast-body></small></span></button>
-	<button type="button" class="hub-fab" data-hub-fab aria-label="<?php echo $team ? 'Mensagens dos parceiros' : 'Mandar mensagem para a ' . esc_attr( ap_setting( 'empresa' ) ); ?>" aria-expanded="false"><?php echo ap_icon( 'chat', 24 ); // phpcs:ignore ?><em class="hub-n" data-hub-n hidden></em></button>
+	<button type="button" class="hub-fab" data-hub-fab aria-label="<?php echo $team ? 'Mensagens dos clientes' : 'Mandar mensagem para a ' . esc_attr( ap_setting( 'empresa' ) ); ?>" aria-expanded="false"><?php echo ap_icon( 'chat', 24 ); // phpcs:ignore ?><em class="hub-n" data-hub-n hidden></em></button>
 	<section class="hub-win" data-hub-win hidden role="dialog" aria-label="Mensagens">
 		<header class="hub-head">
 			<button type="button" class="hub-ic" data-hub-back hidden aria-label="Voltar"><?php echo ap_icon( 'voltar', 18 ); // phpcs:ignore ?></button>
-			<span class="hub-title"><strong data-hub-title><?php echo $team ? 'Mensagens dos parceiros' : esc_html( ap_setting( 'empresa' ) ); ?></strong><small data-hub-sub><?php echo $team ? 'Responda direto por aqui' : 'Respondemos por aqui e avisamos por e-mail'; ?></small></span>
+			<span class="hub-title"><strong data-hub-title><?php echo $team ? 'Mensagens dos clientes' : esc_html( ap_setting( 'empresa' ) ); ?></strong><small data-hub-sub><?php echo $team ? 'Responda direto por aqui' : 'Respondemos por aqui e avisamos por e-mail'; ?></small></span>
 			<a class="hub-ic" href="<?php echo esc_url( $full ); ?>" title="Abrir em tela cheia" aria-label="Abrir em tela cheia"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></a>
 			<button type="button" class="hub-ic" data-hub-close aria-label="Fechar"><?php echo $x; // phpcs:ignore ?></button>
 		</header>

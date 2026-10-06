@@ -24,9 +24,9 @@ ap_panel_start( $label, 'clientes', $actions );
 <div class="detail-grid">
 	<div class="detail-main">
 		<section class="card <?php echo $c->approved ? '' : 'card--warn'; ?>">
-			<div class="card-head"><h3>Parceiro</h3><em class="badge badge--<?php echo $c->approved ? 'ok' : 'warn'; ?>"><?php echo $c->approved ? 'Aprovado: vê preços e faz pedidos' : 'Em análise: ainda não vê preços'; ?></em></div>
+			<div class="card-head"><h3>Cliente</h3><em class="badge badge--<?php echo $c->approved ? 'ok' : 'warn'; ?>"><?php echo $c->approved ? 'Aprovado: vê preços e faz pedidos' : 'Em análise: ainda não vê preços'; ?></em></div>
 			<div class="row-btns">
-				<?php ap_action_button( 'client_approve_partner', array( 'id' => $c->id ), $c->approved ? 'Suspender acesso aos preços' : 'Aprovar parceiro (envia e-mail de boas-vindas)', $c->approved ? 'btn btn--ghost btn--sm' : 'btn btn--primary', $c->approved ? 'Suspender o acesso aos preços e pedidos?' : '' ); ?>
+				<?php ap_action_button( 'client_approve_partner', array( 'id' => $c->id ), $c->approved ? 'Suspender acesso aos preços' : 'Aprovar cliente (envia e-mail de boas-vindas)', $c->approved ? 'btn btn--ghost btn--sm' : 'btn btn--primary', $c->approved ? 'Suspender o acesso aos preços e pedidos?' : '' ); ?>
 				<?php ap_action_button( 'client_pay_later', array( 'id' => $c->id ), $c->pay_later ? '✓ Pode pagar na retirada' : 'Permitir pagar na retirada', 'btn btn--ghost btn--sm' ); ?>
 				<a class="btn btn--ghost btn--sm" href="<?php echo esc_url( ap_panel_url( 'mensagens', 0, array( 'cliente' => $c->id ) ) ); ?>"><?php echo ap_icon( 'chat', 14 ); // phpcs:ignore ?><span>Mensagens</span></a>
 			</div>
@@ -35,7 +35,7 @@ ap_panel_start( $label, 'clientes', $actions );
 			<div class="card-head"><h3>Tabela de preço e crédito na loja</h3><em class="badge badge--ok"><?php echo esc_html( 'Crédito: ' . ap_money( ap_credit_balance( $c->id ) ) ); ?></em></div>
 			<?php ap_form( 'client_kind', 'inline-form' ); ?>
 				<input type="hidden" name="id" value="<?php echo (int) $c->id; ?>">
-				<?php ap_select( 'kind', 'Tipo de cliente (define a tabela de preço)', array( '' => 'Não informado (tabela de parceiro)', 'Terceirizado' => 'Terceirizado / parceiro', 'Empresa' => 'Empresa', 'Cliente P/F' => 'Pessoa física', 'Uso interno' => 'Uso interno' ), $c->kind ); ?>
+				<?php ap_select( 'kind', 'Tipo de cliente (define a tabela de preço)', array( '' => 'Não informado (tabela de terceirizado)', 'Terceirizado' => 'Terceirizado (revenda)', 'Empresa' => 'Empresa', 'Cliente P/F' => 'Pessoa física', 'Uso interno' => 'Uso interno' ), $c->kind ); ?>
 				<button class="btn btn--ghost btn--sm" type="submit">Salvar tipo</button>
 			</form>
 			<?php if ( ap_can( 'clientes' ) ) : ?>

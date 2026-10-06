@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function ap_audiences_mail() {
 	return array(
-		'aprovados'  => 'Todos os parceiros aprovados',
+		'aprovados'  => 'Todos os clientes aprovados',
 		'pendentes'  => 'Cadastros em análise',
 		'sem-pedido' => 'Aprovados sem pedido há 30 dias',
 		'nunca'      => 'Aprovados que nunca pediram',

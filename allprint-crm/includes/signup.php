@@ -1,6 +1,6 @@
 <?php
 /**
- * Cadastro público de parceiros (/cadastro/) e aprovação pela AllPrint.
+ * Cadastro público de clientes (/cadastro/) e aprovação pela AllPrint.
  * Antes de aprovar: o cliente entra, vê "cadastro em análise", mas não vê preços nem faz pedidos.
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -92,7 +92,7 @@ function ap_handle_signup() {
 	if ( is_email( $to ) ) {
 		ap_mail( $to, 'Cadastro novo para aprovar: ' . ap_in( 'company' ), 'Cadastro novo para aprovar', '<p>' . esc_html( $name . ' (' . ap_in( 'company' ) . ') se cadastrou no painel e aguarda aprovação para ver os preços e fazer pedidos.' ) . '</p>', array( array( 'Telefone', esc_html( ap_in( 'whatsapp' ) ) ), array( 'CPF/CNPJ', esc_html( ap_in( 'cnpj' ) ) ), array( 'Endereço', esc_html( ap_in( 'address' ) ) ) ), 'Aprovar no painel', ap_panel_url( 'cliente', $cid ) );
 	}
-	ap_mail( $email, 'Recebemos o seu cadastro · ' . ap_setting( 'empresa' ), 'Recebemos o seu cadastro', '<p>Olá, ' . esc_html( strtok( $name, ' ' ) ) . '! Obrigado pelo interesse em ser parceiro da ' . esc_html( ap_setting( 'empresa' ) ) . '. Vamos analisar os seus dados e te avisamos por e-mail assim que o acesso aos preços e pedidos for liberado.</p>', array(), 'Ver o meu painel', ap_client_url() );
+	ap_mail( $email, 'Recebemos o seu cadastro · ' . ap_setting( 'empresa' ), 'Recebemos o seu cadastro', '<p>Olá, ' . esc_html( strtok( $name, ' ' ) ) . '! Obrigado pelo interesse em ser cliente da ' . esc_html( ap_setting( 'empresa' ) ) . '. Vamos analisar os seus dados e te avisamos por e-mail assim que o acesso aos preços e pedidos for liberado.</p>', array(), 'Ver o meu painel', ap_client_url() );
 	wp_set_current_user( $uid );
 	wp_set_auth_cookie( $uid, true );
 	wp_safe_redirect( add_query_arg( 'bemvindo', 1, ap_client_url() ) );
@@ -100,7 +100,7 @@ function ap_handle_signup() {
 }
 
 /**
- * Aprovar / suspender parceiro.
+ * Aprovar / suspender cliente.
  */
 function ap_do_client_approve_partner() {
 	ap_require( 'clientes' );
@@ -118,7 +118,7 @@ function ap_do_client_approve_partner() {
 			$c->email,
 			'Cadastro aprovado! Bem-vindo à ' . ap_setting( 'empresa' ),
 			'Seu cadastro foi aprovado 🎉',
-			'<p>Olá, ' . esc_html( strtok( (string) $c->name, ' ' ) ) . '! A partir de agora você vê a tabela de preços de parceiros e faz os pedidos direto pelo painel: escolhe o material e as medidas, envia o arquivo e paga no Pix. Você acompanha cada etapa (revisão da arte, produção, acabamento) e recebe um aviso quando estiver pronto para retirar.</p>',
+			'<p>Olá, ' . esc_html( strtok( (string) $c->name, ' ' ) ) . '! A partir de agora você vê a tabela de preços de clientes e faz os pedidos direto pelo painel: escolhe o material e as medidas, envia o arquivo e paga no Pix. Você acompanha cada etapa (revisão da arte, produção, acabamento) e recebe um aviso quando estiver pronto para retirar.</p>',
 			array( array( 'Prazo normal', 'Até ' . (int) ap_setting( 'prazo_dias' ) . ' dia(s) útil(eis) após a aprovação da arte' ), array( 'Pedido mínimo', '1 m² por material' ), array( 'Arquivos', 'PDF, CDR em curvas (v25) ou JPG 300 dpi' ) ),
 			'Fazer meu primeiro pedido',
 			ap_client_entry_url( $c, 'novo' )
@@ -132,7 +132,7 @@ function ap_do_client_approve_partner() {
 			$wpdb->update( ap_table( 'leads' ), array( 'stage' => $won ), array( 'client_id' => $c->id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		}
 	}
-	ap_back( $on ? 'Parceiro aprovado e avisado por e-mail.' : 'Acesso aos preços suspenso.' );
+	ap_back( $on ? 'Cliente aprovado e avisado por e-mail.' : 'Acesso aos preços suspenso.' );
 }
 
 function ap_do_client_pay_later() {

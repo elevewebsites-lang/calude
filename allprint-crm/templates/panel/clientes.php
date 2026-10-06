@@ -11,14 +11,14 @@ foreach ( $wpdb->get_results( 'SELECT client_id, COUNT(*) AS n, SUM(archived = 0
 
 $actions = '<button type="button" class="btn btn--primary" data-open="novo-cliente">' . ap_icon( 'mais', 16 ) . '<span>Novo cliente</span></button>';
 $pend = count( array_filter( $clients, function ( $c ) { return ! $c->approved; } ) );
-ap_panel_start( 'Parceiros', 'clientes', $actions );
+ap_panel_start( 'Clientes', 'clientes', $actions );
 ?>
 
 <div class="toolbar">
 	<input type="search" class="filter" placeholder="Filtrar por nome, empresa ou e-mail…" data-filter=".table-row">
-	<span class="muted small"><?php echo (int) count( $clients ); ?> parceiros<?php echo $pend ? ' · <strong class="text-warn">' . (int) $pend . ' aguardando aprovação</strong>' : ''; // phpcs:ignore ?></span>
+	<span class="muted small"><?php echo (int) count( $clients ); ?> clientes<?php echo $pend ? ' · <strong class="text-warn">' . (int) $pend . ' aguardando aprovação</strong>' : ''; // phpcs:ignore ?></span>
 </div>
-<p class="muted small hint">Novos parceiros se cadastram em <a href="<?php echo esc_url( ap_url( 'cadastro' ) ); ?>" target="_blank"><?php echo esc_html( ap_url( 'cadastro' ) ); ?></a> (coloque esse link no botão "Seja parceiro" do site). Aprove na ficha de cada um.</p>
+<p class="muted small hint">Novos clientes se cadastram em <a href="<?php echo esc_url( ap_url( 'cadastro' ) ); ?>" target="_blank"><?php echo esc_html( ap_url( 'cadastro' ) ); ?></a> (coloque esse link no botão "Seja cliente" do site). Aprove na ficha de cada um.</p>
 
 <?php if ( ! $clients ) : ?>
 	<div class="empty empty--big">

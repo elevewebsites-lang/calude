@@ -30,7 +30,7 @@ ap_panel_start( 'Novo pedido manual', 'novo-pedido' );
 				<?php ap_input( 'new_company', 'Empresa / nome' ); ?>
 				<?php ap_input( 'new_name', 'Contato (quem pediu)' ); ?>
 				<?php ap_input( 'new_whatsapp', 'WhatsApp', '', 'tel', 'data-mask="phone"' ); ?>
-				<?php ap_select( 'new_kind', 'Tipo de cliente', array( 'Terceirizado' => 'Terceirizado (parceiro)', 'Empresa' => 'Empresa', 'Cliente P/F' => 'Pessoa física' ) ); ?>
+				<?php ap_select( 'new_kind', 'Tipo de cliente', array( 'Terceirizado' => 'Terceirizado (revenda)', 'Empresa' => 'Empresa', 'Cliente P/F' => 'Pessoa física' ) ); ?>
 				<?php ap_input( 'new_cnpj', 'CNPJ ou CPF (opcional)' ); ?>
 				<?php ap_input( 'new_email', 'E-mail (opcional)', '', 'email' ); ?>
 			</div>

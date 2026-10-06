@@ -79,7 +79,7 @@ function ap_catalog( $only_active = true, $online_only = false ) {
 	return ap_rows( 'catalog', $where ? implode( ' AND ', $where ) : '1=1', array(), 'grp, position, id' );
 }
 
-/** Tabela de preço do cliente: parceiro (terceirizado), empresa ou pessoa física. */
+/** Tabela de preço do cliente: terceirizado, empresa ou pessoa física. (A chave interna 'parceiro' é a tabela de terceirizado.) */
 function ap_client_tier( $client ) {
 	$k = $client ? ap_norm( $client->kind ) : '';
 	if ( 'empresa' === $k ) {
@@ -92,10 +92,10 @@ function ap_client_tier( $client ) {
 }
 
 function ap_tiers() {
-	return array( 'parceiro' => 'Parceiro / terceirizado', 'empresa' => 'Empresa', 'pf' => 'Pessoa física' );
+	return array( 'parceiro' => 'Terceirizado (revenda)', 'empresa' => 'Empresa', 'pf' => 'Pessoa física' );
 }
 
-/** Preço por unidade (m², un ou m linear) na tabela escolhida; cai para o do parceiro se a tabela estiver vazia. */
+/** Preço por unidade (m², un ou m linear) na tabela escolhida; cai para o do terceirizado se a tabela estiver vazia. */
 function ap_row_price( $row, $tier = 'parceiro' ) {
 	$v = (float) $row->price_m2;
 	if ( 'empresa' === $tier && (float) $row->price_empresa > 0 ) {

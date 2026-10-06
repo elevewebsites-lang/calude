@@ -4,14 +4,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ap_client_start( 'Tabela de preços', $client );
 if ( empty( $client->approved ) ) {
-	echo '<div class="empty empty--big">' . ap_icon( 'relogio', 28 ) . '<h3>Cadastro em análise</h3><p>Os preços de parceiro aparecem aqui assim que o seu cadastro for aprovado.</p></div>'; // phpcs:ignore
+	echo '<div class="empty empty--big">' . ap_icon( 'relogio', 28 ) . '<h3>Cadastro em análise</h3><p>Os preços de cliente aparecem aqui assim que o seu cadastro for aprovado.</p></div>'; // phpcs:ignore
 	ap_client_end();
 	return;
 }
 $prazo = max( 1, (int) ap_setting( 'prazo_dias' ) );
 ?>
 <section class="chello">
-	<span class="eyebrow">Parceiros cadastrados · <?php echo esc_html( gmdate( 'Y' ) ); ?></span>
+	<span class="eyebrow">Clientes cadastrados · <?php echo esc_html( gmdate( 'Y' ) ); ?></span>
 	<h1>Tabela de preços</h1>
 	<p class="muted">Valores por m². Mínimo de <?php echo esc_html( str_replace( '.', ',', ap_setting( 'area_minima' ) ) ); ?> m² por material no pedido. Corte simples incluso. Prazo: até <?php echo (int) $prazo; ?> dia útil após o pagamento e a aprovação da arte.</p>
 	<a class="btn btn--primary" href="<?php echo esc_url( ap_client_link( 'novo' ) ); ?>">Fazer um pedido</a>

@@ -2,7 +2,7 @@
 /**
  * Pedido manual (balcão, WhatsApp, telefone): a equipe monta o pedido para um cliente.
  * Usa o mesmo catálogo e a mesma conta do pedido do cliente, mas com:
- *  - escolha do cliente (ou cadastro rápido) e da tabela de preço (parceiro, empresa, pessoa física);
+ *  - escolha do cliente (ou cadastro rápido) e da tabela de preço (terceirizado, empresa, pessoa física);
  *  - valor ajustável por linha, desconto, cupom e crédito do cliente;
  *  - forma de pagamento: pago, sinal, na retirada ou aguardando (link de Pix).
  */

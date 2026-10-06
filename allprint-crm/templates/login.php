@@ -11,7 +11,7 @@ ap_head( 'Entrar' );
 	<div class="auth-side">
 		<?php echo ap_logo_for( 'auth', 'auth-logo' ); // phpcs:ignore ?>
 		<div class="auth-side-text">
-			<span class="eyebrow">Área de parceiros</span>
+			<span class="eyebrow">Área de clientes</span>
 			<h2>Sua gráfica parceira<br><strong>de grande formato.</strong></h2>
 		</div>
 		<span class="auth-copy">© <?php echo esc_html( gmdate( 'Y' ) . ' ' . ap_setting( 'empresa' ) ); ?> <?php echo ap_credit_html( 'dark' ); // phpcs:ignore ?></span>
@@ -30,7 +30,7 @@ ap_head( 'Entrar' );
 				<a href="<?php echo esc_url( wp_lostpassword_url( ap_url( 'entrar' ) ) ); ?>">Esqueci a senha</a>
 			</div>
 			<button type="submit" class="btn btn--primary btn--block">Entrar <?php echo ap_icon( 'seta', 16 ); // phpcs:ignore ?></button>
-			<p class="muted small">Ainda não é parceiro? <a href="<?php echo esc_url( ap_url( 'cadastro' ) ); ?>">Faça o seu cadastro</a></p>
+			<p class="muted small">Ainda não é cliente? <a href="<?php echo esc_url( ap_url( 'cadastro' ) ); ?>">Faça o seu cadastro</a></p>
 		</form>
 	</div>
 </div>

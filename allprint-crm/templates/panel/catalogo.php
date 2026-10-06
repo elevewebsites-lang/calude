@@ -22,7 +22,7 @@ $form = function ( $c = null ) use ( $sups ) {
 		<div class="grid-3">
 			<?php ap_check( 'allow_lamination', 'Aceita laminação', $c ? (bool) $c->allow_lamination : false ); ?>
 			<?php ap_check( 'allow_eyelets', 'Aceita reforço e ilhós avulso', $c ? (bool) $c->allow_eyelets : false ); ?>
-			<?php ap_check( 'active', 'Ativo (aparece para os parceiros)', $c ? (bool) $c->active : true ); ?>
+			<?php ap_check( 'active', 'Ativo (aparece para os clientes)', $c ? (bool) $c->active : true ); ?>
 		</div>
 		<?php if ( $sups ) : ?><?php ap_select( 'supply_id', 'Baixa no estoque (insumo em m²)', array( 0 => 'Não baixar' ) + wp_list_pluck( $sups, 'name', 'id' ), $c ? $c->supply_id : 0 ); ?><?php endif; ?>
 		<div class="form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button type="submit" class="btn btn--primary">Salvar</button></div>
@@ -30,7 +30,7 @@ $form = function ( $c = null ) use ( $sups ) {
 	<?php
 };
 ?>
-<p class="muted small hint">É a tabela que os parceiros aprovados veem e que calcula os pedidos. Serviços (ilhós, laminação), mínimo de m² e prazo ficam em Configurações → Preço.</p>
+<p class="muted small hint">É a tabela que os clientes aprovados veem e que calcula os pedidos. Serviços (ilhós, laminação), mínimo de m² e prazo ficam em Configurações → Preço.</p>
 <?php foreach ( ap_catalog_groups() as $g => $gl ) : ?>
 	<section class="card price-table">
 		<div class="card-head"><h3><?php echo esc_html( $gl ); ?></h3></div>

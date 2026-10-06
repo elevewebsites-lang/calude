@@ -34,7 +34,7 @@
 		if (team && home) {
 			home.innerHTML = (d.convs || []).length ? d.convs.map(function (c) {
 				return '<button type="button" class="hub-row' + (c.id === state.client ? ' is-on' : '') + '" data-hub-open="' + c.id + '" data-hub-name="' + esc(c.name) + '"><span class="hub-av">' + esc(c.ini) + '</span><span class="hub-rt"><strong>' + esc(c.name) + '</strong><small>' + esc(c.last) + ' · ' + esc(c.at) + '</small></span>' + (c.unread ? '<em class="hub-badge">' + c.unread + '</em>' : '') + '</button>';
-			}).join('') : '<p class="muted small hub-pad">Nenhuma conversa ainda. Quando um parceiro mandar mensagem, aparece aqui.</p>';
+			}).join('') : '<p class="muted small hub-pad">Nenhuma conversa ainda. Quando um cliente mandar mensagem, aparece aqui.</p>';
 		}
 		// Mensagem nova do outro lado: aviso na tela (se a janela não está mostrando essa conversa).
 		if (d.last && d.last.id > seen) {
@@ -92,7 +92,7 @@
 			state.client = +client; state.last = ''; state.lastProjects = '';
 			home.hidden = true; thread.hidden = false; back.hidden = false;
 			title.textContent = name || (state.data && (state.data.convs || []).filter(function (c) { return c.id === +client; }).map(function (c) { return c.name; })[0]) || 'Conversa';
-			sub.textContent = 'Parceiro';
+			sub.textContent = 'Cliente';
 			list.innerHTML = '<p class="muted small center">Carregando…</p>';
 		}
 		setOpen(true);
@@ -101,7 +101,7 @@
 	function showHome() {
 		state.client = 0; state.last = '';
 		thread.hidden = true; home.hidden = false; back.hidden = true;
-		title.textContent = 'Mensagens dos parceiros'; sub.textContent = 'Responda direto por aqui';
+		title.textContent = 'Mensagens dos clientes'; sub.textContent = 'Responda direto por aqui';
 		remember(); poll();
 	}
 	function drawThread(j) {

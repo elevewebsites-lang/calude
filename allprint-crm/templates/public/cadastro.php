@@ -6,17 +6,17 @@ $error = $GLOBALS['ap_signup_error'] ?? '';
 $old   = function ( $k ) {
 	return isset( $_POST[ $k ] ) ? sanitize_text_field( wp_unslash( $_POST[ $k ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 };
-ap_head( 'Cadastro de parceiro' );
+ap_head( 'Cadastro de cliente' );
 ?>
 <body class="ap ap-auth">
 <div class="auth">
 	<div class="auth-side">
 		<?php echo ap_logo_for( 'auth', 'auth-logo' ); // phpcs:ignore ?>
 		<div class="auth-side-text">
-			<span class="eyebrow">Área de parceiros</span>
+			<span class="eyebrow">Área de clientes</span>
 			<h2>Sua gráfica parceira<br><strong>de grande formato.</strong></h2>
 			<ul class="auth-list">
-				<li><?php echo ap_icon( 'check', 16 ); // phpcs:ignore ?> Tabela de preços de parceiro por m²</li>
+				<li><?php echo ap_icon( 'check', 16 ); // phpcs:ignore ?> Tabela de preços por m²</li>
 				<li><?php echo ap_icon( 'check', 16 ); // phpcs:ignore ?> Calculadora, acabamentos e previsão de entrega</li>
 				<li><?php echo ap_icon( 'check', 16 ); // phpcs:ignore ?> Envio de arquivos pesados e pagamento no Pix</li>
 				<li><?php echo ap_icon( 'check', 16 ); // phpcs:ignore ?> Acompanhe cada pedido até a retirada</li>
@@ -26,7 +26,7 @@ ap_head( 'Cadastro de parceiro' );
 	</div>
 	<div class="auth-main">
 		<form method="post" class="auth-form auth-form--wide">
-			<h1>Cadastro de parceiro</h1>
+			<h1>Cadastro de cliente</h1>
 			<p class="muted">Atendemos gráficas, agências, revendedores e empresas. Depois da aprovação, você vê os preços e faz pedidos pelo painel.</p>
 			<?php if ( $error ) : ?><div class="flash flash--erro"><?php echo esc_html( $error ); ?></div><?php endif; ?>
 			<?php wp_nonce_field( 'ap_signup' ); ?>

@@ -49,7 +49,7 @@ function ap_identity() {
 		'config'   => array(
 			'colunas'        => "Aguardando pagamento\nRevisão AllPrint\nProdução\nAcabamento\nPronto para retirada\nEntregue",
 			'coluna_pronto'  => 'pronto-para-retirada',
-			'funil'          => "Novo contato\nCadastro em análise\nParceiro aprovado\nPrimeiro pedido\nPerdido",
+			'funil'          => "Novo contato\nCadastro em análise\nCliente aprovado\nPrimeiro pedido\nPerdido",
 			'origens'        => "Indicação\nSite\nWhatsApp\nInstagram\nVisita\nOutro",
 			'categorias_in'  => "Pedido\nOrçamento\nOutros",
 			'categorias_out' => "Material\nTinta\nManutenção\nEquipamento\nImpostos\nTaxas\nOutros",

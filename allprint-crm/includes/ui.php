@@ -98,7 +98,7 @@ function ap_panel_start( $title, $active = '', $actions = '' ) {
 			'pedidos'     => array( 'Pedidos', 'projetos', 'projetos' ),
 			'novo-pedido' => array( 'Novo pedido manual', 'mais', 'projetos' ),
 			'mensagens'   => array( 'Mensagens', 'chat', 'clientes' ),
-			'clientes'    => array( 'Parceiros', 'clientes', 'clientes' ),
+			'clientes'    => array( 'Clientes', 'clientes', 'clientes' ),
 			'orcamentos'  => array( 'Propostas comerciais', 'proposta', 'orcamentos' ),
 			'cupons'      => array( 'Cupons e crédito', 'tag', 'clientes' ),
 			'calculadora' => array( 'Calculadora', 'calculadora', 'orcamentos' ),
@@ -245,7 +245,7 @@ function ap_client_end() {
 	$wa = ap_setting( 'whatsapp' );
 	echo '</main><footer class="cfoot">' . ap_credit_html( 'light' ) . '</footer>'; // phpcs:ignore
 	if ( $wa ) {
-		echo '<a class="wa-float" href="' . esc_url( ap_wa_link( $wa, 'Olá! Sou parceiro e preciso de suporte.' ) ) . '" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">' . ap_icon( 'whatsapp', 24 ) . '</a>'; // phpcs:ignore
+		echo '<a class="wa-float" href="' . esc_url( ap_wa_link( $wa, 'Olá! Sou cliente e preciso de suporte.' ) ) . '" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">' . ap_icon( 'whatsapp', 24 ) . '</a>'; // phpcs:ignore
 	}
 	echo ap_hub_html(); // phpcs:ignore
 	ap_scripts();
