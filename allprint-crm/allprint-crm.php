@@ -48,6 +48,7 @@ require_once AP_DIR . 'includes/bigupload.php';
 require_once AP_DIR . 'includes/chat.php';
 require_once AP_DIR . 'includes/broadcast.php';
 require_once AP_DIR . 'includes/signup.php';
+require_once AP_DIR . 'includes/import.php';
 
 register_activation_hook( __FILE__, 'ap_activate' );
 function ap_activate() {
@@ -94,26 +95,18 @@ add_action(
  * Primeiros cadastros (só com o módulo de estoque e só se estiver vazio). Ajuste por projeto.
  */
 function ap_seed_studio() {
-	if ( get_option( 'ap_seeded' ) || ! ap_module( 'estoque' ) ) {
+	// Gráfica: não há cadastros de exemplo (impressora 3D, sacolinha…). Limpa o que a base antiga tenha criado.
+	if ( get_option( 'ap_seed_cleaned' ) || ! function_exists( 'ap_rows' ) ) {
 		return;
 	}
-	if ( ! ap_rows( 'printers', '1=1' ) ) {
-		ap_insert(
-			'printers',
-			array(
-				'name'        => 'A1',
-				'model'       => 'Bambu Lab A1',
-				'watts'       => 95,
-				'price'       => 3500,
-				'life_hours'  => 5000,
-				'maint_every' => 500,
-			)
-		);
-	}
-	if ( ! ap_rows( 'supplies', '1=1' ) ) {
-		foreach ( array( array( 'Sacolinha', 'un', 1 ), array( 'Cartão de agradecimento', 'un', 1 ), array( 'Caixa de envio pequena', 'un', 0 ), array( 'Plástico bolha', 'm', 0 ), array( 'Etiqueta', 'un', 0 ) ) as $s ) {
-			ap_insert( 'supplies', array( 'name' => $s[0], 'unit' => $s[1], 'per_order' => $s[2] ) );
+	foreach ( ap_rows( 'supplies', "code = '' AND qty = 0" ) as $s ) {
+		if ( in_array( $s->name, array( 'Sacolinha', 'Cartão de agradecimento', 'Caixa de envio pequena', 'Plástico bolha', 'Etiqueta' ), true ) ) {
+			ap_delete( 'supplies', $s->id );
 		}
 	}
+	foreach ( ap_rows( 'printers', "name = 'A1' AND model = 'Bambu Lab A1'" ) as $p ) {
+		ap_delete( 'printers', $p->id );
+	}
+	update_option( 'ap_seed_cleaned', 1, false );
 	update_option( 'ap_seeded', 1, false );
 }

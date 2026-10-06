@@ -96,14 +96,16 @@ function ap_panel_start( $title, $active = '', $actions = '' ) {
 			''            => array( 'Dashboard', 'dashboard', '' ),
 			'leads'       => array( 'Funil', 'funil', 'leads' ),
 			'pedidos'     => array( 'Pedidos', 'projetos', 'projetos' ),
+			'novo-pedido' => array( 'Novo pedido manual', 'mais', 'projetos' ),
 			'mensagens'   => array( 'Mensagens', 'chat', 'clientes' ),
 			'clientes'    => array( 'Parceiros', 'clientes', 'clientes' ),
 			'orcamentos'  => array( 'Propostas comerciais', 'proposta', 'orcamentos' ),
+			'cupons'      => array( 'Cupons e crédito', 'tag', 'clientes' ),
 			'calculadora' => array( 'Calculadora', 'calculadora', 'orcamentos' ),
 		),
-		'Estúdio' => array(
+		'Estoque' => array(
 			'filamentos'  => array( 'Filamentos', 'carretel', 'estoque' ),
-			'insumos'     => array( 'Insumos', 'caixa', 'estoque' ),
+			'insumos'     => array( 'Estoque e insumos', 'caixa', 'estoque' ),
 			'compras'     => array( 'Compras e desejos', 'carrinho', 'estoque' ),
 			'impressoras' => array( 'Impressoras', 'impressora', 'estoque' ),
 			'frete'       => array( 'Frete', 'caminhao', 'projetos' ),
@@ -118,6 +120,7 @@ function ap_panel_start( $title, $active = '', $actions = '' ) {
 			'financeiro'  => array( 'Financeiro', 'financeiro', 'financeiro' ),
 			'tarefas'     => array( 'Tarefas', 'tarefas', 'tarefas' ),
 			'apontamentos' => array( 'Apontamentos', 'alvo', '' ),
+			'importar'    => array( 'Importar planilha', 'caixa', 'admin' ),
 		),
 	);
 	$today_count = ap_count_today_tasks();

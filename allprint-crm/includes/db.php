@@ -38,9 +38,14 @@ function ap_install_tables() {
 			notes text NULL,
 			invite_token varchar(64) NOT NULL DEFAULT '',
 			status varchar(20) NOT NULL DEFAULT 'convidado',
+			kind varchar(30) NOT NULL DEFAULT '',
+			ext_id varchar(30) NOT NULL DEFAULT '',
+			suspended tinyint(1) NOT NULL DEFAULT 0,
+			price_access tinyint(1) NOT NULL DEFAULT 1,
 			created_at datetime NOT NULL,
 			PRIMARY KEY  (id),
 			KEY user_id (user_id),
+			KEY ext_id (ext_id),
 			KEY invite_token (invite_token)
 		) $c;"
 	);
@@ -102,10 +107,15 @@ function ap_install_tables() {
 			art_note text NULL,
 			stock_done tinyint(1) NOT NULL DEFAULT 0,
 			archived tinyint(1) NOT NULL DEFAULT 0,
+			ext_id varchar(40) NOT NULL DEFAULT '',
+			coupon_code varchar(40) NOT NULL DEFAULT '',
+			discount decimal(12,2) NOT NULL DEFAULT 0,
+			credit_used decimal(12,2) NOT NULL DEFAULT 0,
 			created_at datetime NOT NULL,
 			updated_at datetime NOT NULL,
 			PRIMARY KEY  (id),
 			KEY client_id (client_id),
+			KEY ext_id (ext_id),
 			KEY status (status)
 		) $c;"
 	);
@@ -316,6 +326,16 @@ function ap_install_tables() {
 			per_order tinyint(1) NOT NULL DEFAULT 0,
 			link varchar(255) NOT NULL DEFAULT '',
 			active tinyint(1) NOT NULL DEFAULT 1,
+			category varchar(40) NOT NULL DEFAULT '',
+			code varchar(30) NOT NULL DEFAULT '',
+			brand varchar(80) NOT NULL DEFAULT '',
+			supplier varchar(120) NOT NULL DEFAULT '',
+			roll_m2 decimal(10,2) NOT NULL DEFAULT 0,
+			roll_width decimal(8,2) NOT NULL DEFAULT 0,
+			sale_price decimal(12,2) NOT NULL DEFAULT 0,
+			last_buy date NULL,
+			counted_at datetime NULL,
+			notes varchar(255) NOT NULL DEFAULT '',
 			created_at datetime NOT NULL,
 			PRIMARY KEY  (id)
 		) $c;"
@@ -445,6 +465,13 @@ function ap_install_tables() {
 			supply_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			position int(11) NOT NULL DEFAULT 0,
 			active tinyint(1) NOT NULL DEFAULT 1,
+			code varchar(20) NOT NULL DEFAULT '',
+			unit varchar(12) NOT NULL DEFAULT 'm2',
+			price_empresa decimal(10,2) NOT NULL DEFAULT 0,
+			price_pf decimal(10,2) NOT NULL DEFAULT 0,
+			cost_material decimal(10,2) NOT NULL DEFAULT 0,
+			cost_print decimal(10,2) NOT NULL DEFAULT 0,
+			online tinyint(1) NOT NULL DEFAULT 1,
 			created_at datetime NOT NULL,
 			PRIMARY KEY  (id)
 		) $c;"
@@ -512,6 +539,42 @@ function ap_install_tables() {
 		) $c;"
 	);
 
+	dbDelta(
+		'CREATE TABLE ' . ap_table( 'coupons' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			code varchar(40) NOT NULL DEFAULT '',
+			label varchar(120) NOT NULL DEFAULT '',
+			kind varchar(10) NOT NULL DEFAULT 'percent',
+			value decimal(10,2) NOT NULL DEFAULT 0,
+			min_total decimal(10,2) NOT NULL DEFAULT 0,
+			client_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			max_uses int(11) NOT NULL DEFAULT 0,
+			per_client int(11) NOT NULL DEFAULT 1,
+			uses int(11) NOT NULL DEFAULT 0,
+			starts_at date NULL,
+			expires_at date NULL,
+			active tinyint(1) NOT NULL DEFAULT 1,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY code (code)
+		) $c;"
+	);
+	dbDelta(
+		'CREATE TABLE ' . ap_table( 'credits' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			client_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			amount decimal(12,2) NOT NULL DEFAULT 0,
+			kind varchar(20) NOT NULL DEFAULT 'ajuste',
+			note varchar(255) NOT NULL DEFAULT '',
+			project_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			coupon_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			expires_at date NULL,
+			user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY client_id (client_id)
+		) $c;"
+	);
 	dbDelta(
 		'CREATE TABLE ' . ap_table( 'listings' ) . " (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,

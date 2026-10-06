@@ -128,6 +128,9 @@ function ap_route() {
 			'config'      => array( 'config', 'admin' ),
 			'saude'       => array( 'saude', 'admin' ),
 			'apontamentos' => array( 'apontamentos', '' ),
+			'importar'    => array( 'importar', 'admin' ),
+			'novo-pedido' => array( 'novo-pedido', 'projetos' ),
+			'cupons'      => array( 'cupons', 'clientes' ),
 		);
 
 		if ( ! isset( $map[ $section ] ) || ap_page_off( $section ) ) {
