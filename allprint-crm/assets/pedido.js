@@ -10,6 +10,10 @@
 	var money = function (v) { return 'R$ ' + (Math.round(v * 100) / 100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
 	var m2 = function (v) { return (Math.round(v * 100) / 100).toFixed(2).replace('.', ',') + ' m²'; };
 	var uploading = 0;
+	/* Tabela de preço (parceiro, empresa, pessoa física): no pedido do cliente é fixa; no manual a equipe escolhe. */
+	var tierKey = function () { var t = typeof C.tier === 'function' ? C.tier() : C.tier; return t || 'parceiro'; };
+	var pr = function (m) { return (m.prices && m.prices[tierKey()]) || m.price; };
+	var minArea = function () { return (typeof C.noMin === 'function' && C.noMin()) ? 0 : C.minArea; };
 
 	function items() { return $$('[data-oitem]', box); }
 	function f(row, k) { return $('[data-f="' + k + '"]', row); }
@@ -23,20 +27,28 @@
 	}
 
 	function render() {
-		var byMat = {}, lamArea = 0, eyeM = 0, total = 0;
+		var byMat = {}, lamArea = 0, eyeM = 0, total = 0, fixed = [];
 		items().forEach(function (row) {
 			var m = C.items[f(row, 'material').value];
 			var w = num(f(row, 'w').value), h = num(f(row, 'h').value), q = Math.max(1, parseInt(f(row, 'qty').value, 10) || 1);
-			f(row, 'eyelets').hidden = !(m && m.eyelets);
-			f(row, 'lamwrap').hidden = !(m && m.lam);
+			var perUnit = m && m.unit && m.unit !== 'm2';
+			var ov = f(row, 'ov'), ovv = ov && ov.value.trim() !== '' ? num(ov.value) : null;
+			$$('[data-sizes]', row).forEach(function (z) { z.hidden = !!perUnit; });
+			f(row, 'w').required = f(row, 'h').required = !perUnit;
+			f(row, 'eyelets').hidden = !(m && m.eyelets) || perUnit;
+			f(row, 'lamwrap').hidden = !(m && m.lam) || perUnit;
 			f(row, 'finishwrap').hidden = !(m && /banner/i.test(m.name));
-			f(row, 'info').textContent = m ? 'Larguras da bobina: ' + m.widths + ' cm' + (m.included ? ' · Incluso: ' + m.included : '') : '';
+			f(row, 'info').textContent = m ? (perUnit ? 'Cobrado por ' + (m.unit === 'm' ? 'metro' : 'unidade') + ': ' + money(pr(m)) : 'Larguras da bobina: ' + m.widths + ' cm' + (m.included ? ' · Incluso: ' + m.included : '')) : '';
 			var warn = f(row, 'warn'), msg = '';
-			if (!m || !w || !h) { f(row, 'area').textContent = ''; f(row, 'price').textContent = ''; warn.hidden = true; return; }
+			if (!m || (!perUnit && (!w || !h))) { f(row, 'area').textContent = ''; f(row, 'price').textContent = ''; warn.hidden = true; return; }
+			if (perUnit) {
+				var vu = ovv !== null ? ovv : q * pr(m);
+				total += vu; fixed.push('<div><span>' + m.name + '<small>' + q + (m.unit === 'm' ? ' m' : ' un') + (ovv !== null ? ' · valor ajustado' : '') + '</small></span><b>' + money(vu) + '</b></div>');
+				f(row, 'area').textContent = q + (m.unit === 'm' ? ' m' : ' un'); f(row, 'price').textContent = money(vu); warn.hidden = true; return;
+			}
 			var area = w * h / 10000 * q;
-			if (m.maxw && Math.min(w, h) > m.maxw) msg = 'A peça passa da largura máxima da bobina (' + m.maxw + ' cm). Divida em partes ou fale com a gente.';
+			if (m.maxw && Math.min(w, h) > m.maxw) msg = 'A peça passa da largura da bobina (' + m.maxw + ' cm): será feita com emenda. Diga nas observações como quer a emenda (vertical ou horizontal, sobreposição).';
 			warn.textContent = msg; warn.hidden = !msg;
-			byMat[f(row, 'material').value] = (byMat[f(row, 'material').value] || 0) + area;
 			var lin = 0;
 			if (m.eyelets) {
 				if ($('[data-side=st]', row).checked) lin += w / 100;
@@ -45,25 +57,34 @@
 				if ($('[data-side=sr]', row).checked) lin += h / 100;
 				lin *= q;
 			}
-			eyeM += lin;
 			var lam = m.lam && f(row, 'lam').checked;
+			if (ovv !== null) {
+				total += ovv; fixed.push('<div><span>' + m.name + '<small>' + m2(area) + ' · valor ajustado</small></span><b>' + money(ovv) + '</b></div>');
+				f(row, 'area').textContent = m2(area) + ' · valor ajustado'; f(row, 'price').textContent = money(ovv); return;
+			}
+			byMat[f(row, 'material').value] = (byMat[f(row, 'material').value] || 0) + area;
+			eyeM += lin;
 			if (lam) lamArea += area;
 			f(row, 'area').textContent = m2(area) + (lin ? ' · ' + lin.toFixed(2).replace('.', ',') + ' m de ilhós' : '') + (lam ? ' · laminado' : '');
-			f(row, 'price').textContent = money(area * m.price + lin * C.eyelet + (lam ? area * C.lam : 0));
+			f(row, 'price').textContent = money(area * pr(m) + lin * C.eyelet + (lam ? area * C.lam : 0));
 		});
-		var lines = [];
+		var lines = [], mn = minArea();
 		Object.keys(byMat).forEach(function (id) {
-			var a = byMat[id], bill = Math.max(C.minArea, a), v = bill * C.items[id].price;
+			var a = byMat[id], bill = Math.max(mn, a), v = bill * pr(C.items[id]);
 			total += v;
-			lines.push('<div><span>' + C.items[id].name + '<small>' + m2(a) + (a < C.minArea ? ' → cobrado ' + m2(bill) + ' (mínimo)' : '') + '</small></span><b>' + money(v) + '</b></div>');
+			lines.push('<div><span>' + C.items[id].name + '<small>' + m2(a) + (a < mn ? ' → cobrado ' + m2(bill) + ' (mínimo)' : '') + '</small></span><b>' + money(v) + '</b></div>');
 		});
-		if (lamArea) { var lb = Math.max(C.minArea, lamArea), lv = lb * C.lam; total += lv; lines.push('<div><span>Laminação<small>' + m2(lamArea) + (lamArea < C.minArea ? ' → mínimo ' + m2(lb) : '') + '</small></span><b>' + money(lv) + '</b></div>'); }
+		lines = lines.concat(fixed);
+		if (lamArea) { var lb = Math.max(mn, lamArea), lv = lb * C.lam; total += lv; lines.push('<div><span>Laminação<small>' + m2(lamArea) + (lamArea < mn ? ' → mínimo ' + m2(lb) : '') + '</small></span><b>' + money(lv) + '</b></div>'); }
 		if (eyeM) { var ev = eyeM * C.eyelet; total += ev; lines.push('<div><span>Reforço e ilhós<small>' + eyeM.toFixed(2).replace('.', ',') + ' m linear</small></span><b>' + money(ev) + '</b></div>'); }
 		$('[data-sum-lines]').innerHTML = lines.length ? lines.join('') : '<p class="muted small">Escolha o material e as medidas.</p>';
 		$('[data-sum-total]').textContent = money(total);
+		window.APORDER = { total: Math.round(total * 100) / 100, tier: tierKey() };
+		document.dispatchEvent(new CustomEvent('ap:total', { detail: window.APORDER }));
 		var btn = $('[data-submit]');
 		btn.disabled = uploading > 0;
-		btn.textContent = uploading ? 'Aguarde o envio dos arquivos…' : ($('[name=pagamento]:checked') && $('[name=pagamento]:checked').value === 'retirada' ? 'Finalizar pedido' : 'Finalizar e pagar ' + money(total));
+		if (btn.hasAttribute('data-keep-label')) { if (uploading) btn.textContent = 'Aguarde o envio dos arquivos…'; return; }
+		btn.textContent = uploading ? 'Aguarde o envio dos arquivos…' : ($('[name=pagamento]:checked') && $('[name=pagamento]:checked').value === 'retirada' ? 'Finalizar pedido' : 'Finalizar e pagar ' + money((window.APORDER && window.APORDER.payable != null) ? window.APORDER.payable : total));
 	}
 
 	form.addEventListener('input', render);
@@ -160,7 +181,7 @@
 	window.addEventListener('beforeunload', function (e) { if (uploading) { e.preventDefault(); e.returnValue = ''; } });
 	form.addEventListener('submit', function (e) {
 		if (uploading) { e.preventDefault(); alert('Espere terminar o envio dos arquivos.'); return; }
-		if (!$('[data-no-file]').checked && items().some(function (r) { return JSON.parse(f(r, 'files').value || '[]').length === 0; })) {
+		if (!$('[data-no-file]').checked && !form.hasAttribute('data-files-optional') && items().some(function (r) { return JSON.parse(f(r, 'files').value || '[]').length === 0; })) {
 			e.preventDefault(); alert('Envie o arquivo de cada item ou marque "Vou enviar o arquivo depois".');
 		}
 	});

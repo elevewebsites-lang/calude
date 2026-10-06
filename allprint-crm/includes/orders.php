@@ -312,7 +312,9 @@ function ap_order_stage_changed( $id, $status ) {
 function ap_order_ready_message( $p, $client ) {
 	$first = $client && $client->name ? strtok( $client->name, ' ' ) : '';
 	$how   = 'envio' === $p->delivery_mode ? 'Já vamos despachar' . ( $p->tracking ? ' (rastreio: ' . $p->tracking . ')' : '' ) . '.' : ap_setting( 'retirada_texto' );
-	return 'Olá' . ( $first ? ', ' . $first : '' ) . '! Seu pedido "' . $p->title . '" está pronto! 🎉 ' . $how . ' Veja as fotos na sua área do cliente: ' . ap_client_url( 'projeto', $p->id );
+	$pay   = ap_order_payment( $p );
+	$owe   = $pay['due'] > 0 ? ' Falta pagar ' . ap_money( $pay['due'] ) . ' na retirada (Pix, cartão ou dinheiro).' : '';
+	return 'Olá' . ( $first ? ', ' . $first : '' ) . '! Seu pedido "' . $p->title . '" está pronto! 🎉 ' . $how . $owe . ' Veja o pedido na sua área do cliente: ' . ap_client_url( 'projeto', $p->id );
 }
 
 function ap_order_wa_link( $p ) {
@@ -420,6 +422,10 @@ function ap_do_order_stage() {
 	$p      = ap_get( 'projects', ap_in( 'id', 'int' ) );
 	$status = sanitize_key( ap_in( 'status' ) );
 	if ( $p && isset( ap_columns()[ $status ] ) && $status !== $p->status ) {
+		$gate = ap_delivery_payment_gate( $p, $status, ap_in( 'pay_method' ), (bool) ap_in( 'unpaid', 'bool' ) );
+		if ( $gate ) {
+			ap_back( $gate, 'erro' );
+		}
 		ap_update( 'projects', $p->id, array( 'status' => $status, 'board_col' => '' ) );
 		ap_project_moved( $p->id, $status );
 	}

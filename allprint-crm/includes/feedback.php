@@ -253,6 +253,18 @@ function ap_do_feedback_delete() {
 	ap_back( 'Apontamento excluído.' );
 }
 
+/** Admin: liga ou desliga o botão Apontar para TODOS (equipe e clientes) de uma vez. */
+function ap_do_feedback_toggle_all() {
+	ap_require( 'admin' );
+	$on  = ap_in( 'ligar', 'bool' ) ? '1' : '0';
+	$st  = get_option( 'ap_settings', array() );
+	$st  = is_array( $st ) ? $st : array();
+	$st['apontamentos']          = $on;
+	$st['apontamentos_clientes'] = $on;
+	update_option( 'ap_settings', $st );
+	ap_back( $on ? 'Apontamentos ligados para a equipe e para os clientes.' : 'Apontamentos desligados para todos. Os que já foram feitos continuam aqui.' );
+}
+
 function ap_do_feedback_resolve_all() {
 	ap_require( 'admin' );
 	global $wpdb;

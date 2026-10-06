@@ -12,6 +12,8 @@ function ap_default_settings() {
 		'empresa'        => 'Minha Empresa',
 		'logo'           => '',
 		'logo_cor'       => '',
+		'credito_boas_vindas' => '0',
+		'credito_validade_dias' => '0',
 		'cor_ink'        => '',
 		'cor_bg'         => '',
 		'cor_accent'     => '',

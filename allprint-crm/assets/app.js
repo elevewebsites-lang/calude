@@ -375,6 +375,53 @@
 			.then(function () { btn.disabled = false; btn.textContent = 'WHOIS'; });
 	});
 
+	/* ---------- Entrega: "o pedido foi pago?" ---------- */
+	window.apAskPayment = function (info) {
+		return new Promise(function (resolve) {
+			var methods = ['Pix', 'Cartão de crédito', 'Cartão de débito', 'Dinheiro'];
+			var money = function (v) { return 'R$ ' + (Math.round(v * 100) / 100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
+			var back = document.createElement('div');
+			back.className = 'paymodal-back';
+			back.innerHTML = '<div class="paymodal" role="dialog" aria-modal="true" aria-labelledby="pm-t">' +
+				'<h3 id="pm-t">O pedido foi pago?</h3>' +
+				'<p class="paymodal-sub"><b></b><span></span></p>' +
+				'<p class="paymodal-due">Falta receber <b>' + money(info.due) + '</b></p>' +
+				'<fieldset class="paymodal-methods"><legend>Forma de pagamento</legend>' + methods.map(function (m, i) { return '<label><input type="radio" name="pm" value="' + m + '"' + (i === 0 ? '' : '') + '><span>' + m + '</span></label>'; }).join('') + '</fieldset>' +
+				'<p class="paymodal-err" hidden>Escolha a forma de pagamento.</p>' +
+				'<div class="paymodal-actions"><button type="button" class="btn btn--primary" data-ok>Foi pago, entregar</button><button type="button" class="btn btn--ghost" data-unpaid>Ainda não pagou, entregar assim mesmo</button><button type="button" class="btn btn--ghost" data-cancel>Cancelar</button></div></div>';
+			$('.paymodal-sub b', back).textContent = info.title || '';
+			$('.paymodal-sub span', back).textContent = info.client ? ' · ' + info.client : '';
+			document.body.appendChild(back);
+			var done = function (v) { document.removeEventListener('keydown', onkey); back.remove(); resolve(v); };
+			var onkey = function (e) { if (e.key === 'Escape') done(null); };
+			document.addEventListener('keydown', onkey);
+			back.addEventListener('click', function (e) { if (e.target === back) done(null); });
+			$('[data-cancel]', back).addEventListener('click', function () { done(null); });
+			$('[data-unpaid]', back).addEventListener('click', function () { done({ unpaid: true }); });
+			$('[data-ok]', back).addEventListener('click', function () {
+				var m = $('input[name=pm]:checked', back);
+				if (!m) { $('.paymodal-err', back).hidden = false; return; }
+				done({ method: m.value });
+			});
+			setTimeout(function () { var f = $('input[name=pm]', back); if (f) f.focus(); }, 30);
+		});
+	};
+	$$('[data-stage-select]').forEach(function (sel) {
+		var prev = sel.value;
+		sel.addEventListener('change', function () {
+			var form = sel.form, due = parseFloat(sel.getAttribute('data-due') || '0') || 0;
+			if (sel.value === sel.getAttribute('data-last') && due > 0) {
+				window.apAskPayment({ title: sel.getAttribute('data-ptitle'), due: due }).then(function (res) {
+					if (!res) { sel.value = prev; return; }
+					['pay_method', 'unpaid'].forEach(function (n) { var i = document.createElement('input'); i.type = 'hidden'; i.name = n; i.value = n === 'unpaid' ? '1' : res.method || ''; if ((n === 'unpaid') === !!res.unpaid) form.appendChild(i); });
+					form.submit();
+				});
+				return;
+			}
+			form.submit();
+		});
+	});
+
 	/* ---------- Kanban (arrastar e soltar) ---------- */
 
 	$$('[data-kanban]').forEach(function (board) {
@@ -424,10 +471,29 @@
 		}
 
 		function save(card, col) {
+			var status = col.getAttribute('data-status');
+			var lastBody = $('.kcol[data-last] .kcol-body', board);
+			var isLast = !!lastBody && lastBody.getAttribute('data-status') === status;
+			var due = parseFloat(card.dataset.due || '0') || 0;
+			if (type === 'project' && isLast && due > 0 && window.apAskPayment) {
+				window.apAskPayment({ title: card.dataset.ptitle, client: card.dataset.client, due: due }).then(function (res) {
+					if (!res) { location.reload(); return; }
+					send(card, col, res);
+				});
+				return;
+			}
+			send(card, col, {});
+		}
+
+		function send(card, col, extra) {
 			var order = $$('.kcard', col).map(function (c) { return parseInt(c.dataset.id, 10); });
 			counts();
-			api('move', 'POST', { type: type, id: parseInt(card.dataset.id, 10), status: col.getAttribute('data-status'), order: order })
-				.catch(function (err) { toast(err.message, 'erro'); });
+			var body = { type: type, id: parseInt(card.dataset.id, 10), status: col.getAttribute('data-status'), order: order };
+			if (extra.method) body.pay_method = extra.method;
+			if (extra.unpaid) body.unpaid = true;
+			api('move', 'POST', body)
+				.then(function () { if (extra.method) { card.dataset.due = '0'; location.reload(); } })
+				.catch(function (err) { toast(err.message, 'erro'); setTimeout(function () { location.reload(); }, 1400); });
 		}
 
 		function counts() {

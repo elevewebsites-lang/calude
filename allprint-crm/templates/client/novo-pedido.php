@@ -9,6 +9,8 @@ if ( empty( $client->approved ) ) {
 	return;
 }
 $cfg    = ap_catalog_js();
+$tier   = ap_client_tier( $client );
+$cfg['tier'] = $tier;
 $groups = ap_catalog_groups();
 $prazo  = max( 1, (int) ap_setting( 'prazo_dias' ) );
 $prev   = ap_next_business_day( ap_today(), $prazo );
@@ -31,7 +33,7 @@ ap_client_start( 'Novo pedido', $client );
 					<?php foreach ( $groups as $g => $gl ) : ?>
 						<optgroup label="<?php echo esc_attr( $gl ); ?>">
 							<?php foreach ( $cfg['items'] as $id => $m ) : ?>
-								<?php if ( $m['grp'] === $g ) : ?><option value="<?php echo (int) $id; ?>"><?php echo esc_html( $m['name'] . ' · ' . ap_money( $m['price'] ) . '/m²' ); ?></option><?php endif; ?>
+								<?php if ( $m['grp'] === $g ) : ?><option value="<?php echo (int) $id; ?>"><?php echo esc_html( $m['name'] . ' · ' . ap_money( $m['prices'][ $tier ] ? $m['prices'][ $tier ] : $m['price'] ) . ( 'm2' === $m['unit'] ? '/m²' : '' ) ); ?></option><?php endif; ?>
 							<?php endforeach; ?>
 						</optgroup>
 					<?php endforeach; ?>
@@ -76,6 +78,13 @@ ap_client_start( 'Novo pedido', $client );
 				<?php echo ap_icon( 'relogio', 16 ); // phpcs:ignore ?>
 				<span>Previsão de retirada: <strong><?php echo esc_html( ucfirst( date_i18n( 'l, d/m', strtotime( $prev ) ) ) ); ?></strong><small>até <?php echo (int) $prazo; ?> dia útil após o pagamento e a aprovação da arte</small></span>
 			</div>
+			<div class="mo-disc" data-cart>
+				<label class="field"><span>Cupom de desconto</span><span class="mo-coupon"><input type="text" name="cupom" data-coupon placeholder="CÓDIGO" autocomplete="off"><small data-coupon-msg class="muted"></small></span></label>
+				<?php $bal = ap_credit_balance( $client->id ); if ( $bal > 0 ) : ?><label class="chk"><input type="checkbox" name="usar_credito" value="1" data-usecredit checked> Usar meu crédito de <b><?php echo esc_html( ap_money( $bal ) ); ?></b></label><?php endif; ?>
+				<div class="calc-sub" data-row-discount hidden><span>Desconto</span><b data-sum-discount>R$ 0,00</b></div>
+				<div class="calc-sub" data-row-credit hidden><span>Crédito usado</span><b data-sum-credit>R$ 0,00</b></div>
+				<div class="calc-sub"><span>Total a pagar</span><b data-sum-pay>R$ 0,00</b></div>
+			</div>
 			<?php ap_input( 'titulo', 'Nome do pedido (opcional, para você se achar)', '', 'text', 'placeholder="Ex.: Fachada loja do João"' ); ?>
 			<label class="chk"><input type="checkbox" name="urgente" value="1"> <strong>É urgente</strong> <small class="muted">(sem custo a mais: só avisa a produção para priorizar)</small></label>
 			<?php if ( ! empty( $client->pay_later ) ) : ?>
@@ -92,5 +101,6 @@ ap_client_start( 'Novo pedido', $client );
 	</aside>
 </form>
 <script src="<?php echo esc_url( AP_URL . 'assets/pedido.js?ver=' . AP_VERSION ); ?>"></script>
+<script src="<?php echo esc_url( AP_URL . 'assets/cart.js?ver=' . AP_VERSION ); ?>"></script>
 <?php
 ap_client_end();

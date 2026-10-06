@@ -121,6 +121,10 @@ function ap_api_move( WP_REST_Request $r ) {
 			}
 			return array( 'ok' => true );
 		}
+		$gate = ap_delivery_payment_gate( $old, $status, sanitize_text_field( (string) $r['pay_method'] ), ! empty( $r['unpaid'] ) );
+		if ( $gate ) {
+			return new WP_Error( 'ap_pay', $gate, array( 'status' => 409 ) );
+		}
 		ap_update( 'projects', $id, array( 'status' => $status, 'board_col' => '' ) );
 		foreach ( $order as $pos => $pid ) {
 			ap_update( 'projects', $pid, array( 'position' => $pos ) );

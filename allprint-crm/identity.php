@@ -64,6 +64,10 @@ function ap_identity() {
 			'preco_ilhos'    => '10',
 			'preco_laminacao' => '10',
 			'prazo_dias'     => '1',
+			'credito_boas_vindas' => '50', // R$ de presente no primeiro pedido feito pelo sistema (0 = desligado)
+			'credito_validade_dias' => '60',
+			'apontamentos'   => '1',
+			'apontamentos_clientes' => '1',
 		),
 	);
 }

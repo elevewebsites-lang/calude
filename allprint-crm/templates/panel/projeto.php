@@ -27,9 +27,11 @@ $fin     = ap_can( 'financeiro' );
 
 ob_start();
 ?>
+<?php $pay = ap_order_payment( $p ); ?>
 <?php ap_form( 'order_stage', 'inline-form stage-form' ); ?>
 	<input type="hidden" name="id" value="<?php echo (int) $p->id; ?>">
-	<select name="status" onchange="this.form.submit()" aria-label="Etapa"><?php foreach ( $cols as $slug => $name ) : ?><option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $p->status, $slug ); ?>><?php echo esc_html( $name ); ?></option><?php endforeach; ?></select>
+	<span class="stage-form-tags"><?php echo ap_stage_badge( $p->status ); ?><?php echo ap_pay_badge( $p ); // phpcs:ignore ?></span>
+	<select name="status" data-stage-select data-due="<?php echo esc_attr( $pay['due'] ); ?>" data-last="<?php echo esc_attr( ap_last_column() ); ?>" data-ptitle="<?php echo esc_attr( '#' . $p->id . ' · ' . $p->title ); ?>" aria-label="Etapa"><?php foreach ( $cols as $slug => $name ) : ?><option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $p->status, $slug ); ?>><?php echo esc_html( $name ); ?></option><?php endforeach; ?></select>
 </form>
 <?php
 $actions = ob_get_clean();
@@ -46,6 +48,22 @@ ap_panel_start( '#' . $p->id . ' · ' . $p->title, 'pedidos', $actions );
 		</div>
 	</section>
 <?php endif; ?>
+
+<section class="card opay tone-<?php echo esc_attr( $pay['tone'] ); ?>">
+	<div class="card-head"><h3>Pagamento</h3><?php echo ap_pay_badge( $p ); // phpcs:ignore ?></div>
+	<?php foreach ( ap_rows( 'transactions', "project_id = %d AND type = 'in'", array( $p->id ), 'id' ) as $tr ) : ?>
+		<div class="pay-line"><span><?php echo esc_html( ( 'pago' === $tr->status ? 'Recebido' : 'A receber' ) . ( $tr->method ? ' · ' . $tr->method : '' ) . ( $tr->paid_at ? ' · ' . date_i18n( 'd/m/Y', strtotime( $tr->paid_at ) ) : '' ) ); ?></span><b><?php echo esc_html( ap_money( $tr->amount ) ); ?></b></div>
+	<?php endforeach; ?>
+	<?php if ( $pay['due'] > 0 ) : ?>
+		<?php ap_form( 'order_pay', 'inline-form pay-form' ); ?>
+			<input type="hidden" name="id" value="<?php echo (int) $p->id; ?>">
+			<?php ap_input( 'amount', 'Valor recebido (R$)', number_format( $pay['due'], 2, ',', '' ), 'text', 'inputmode="decimal"' ); ?>
+			<?php ap_select( 'method', 'Forma de pagamento', ap_pay_methods(), 'Pix' ); ?>
+			<?php ap_input( 'date', 'Data', ap_today(), 'date' ); ?>
+			<button class="btn btn--primary" type="submit">Registrar pagamento</button>
+		</form>
+	<?php endif; ?>
+</section>
 
 <div class="split">
 	<div class="split-main">

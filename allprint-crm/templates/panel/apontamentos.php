@@ -21,6 +21,12 @@ ap_panel_start( 'Apontamentos', 'apontamentos', $acoes );
 		O botão Apontar está <strong>desligado</strong>. Ligue em <a href="<?php echo esc_url( ap_panel_url( 'config' ) ); ?>#apontamentos">Configurações → Apontamentos</a>.
 	<?php endif; ?>
 </p>
+<?php if ( ap_is_admin() ) : $on = '1' === (string) ap_setting( 'apontamentos' ); ?>
+	<div class="fbl-switch card">
+		<div><strong>Botão Apontar: <?php echo $on ? 'ligado para a equipe' . ( '1' === (string) ap_setting( 'apontamentos_clientes' ) ? ' e para os clientes' : '' ) : 'desligado'; ?></strong><br><span class="muted small">Quando o sistema estiver aprovado, desligue para todos (os apontamentos já feitos ficam guardados aqui).</span></div>
+		<?php ap_form( 'feedback_toggle_all', 'inline-form' ); ?><input type="hidden" name="ligar" value="<?php echo $on ? '0' : '1'; ?>"><button class="btn <?php echo $on ? 'btn--ghost' : 'btn--primary'; ?>" type="submit" <?php echo $on ? 'data-confirm="Desligar o botão Apontar para todos?"' : ''; ?>><?php echo $on ? 'Desligar para todos' : 'Ligar para todos'; ?></button></form>
+	</div>
+<?php endif; ?>
 <nav class="fbl-tabs">
 	<?php foreach ( $labels as $k => $l ) : ?>
 		<a class="<?php echo $k === $filtro ? 'is-on' : ''; ?>" href="<?php echo esc_url( ap_panel_url( 'apontamentos', 0, array( 'ver' => $k ) ) ); ?>"><?php echo esc_html( $l . ' (' . $counts[ $k ] . ')' ); ?></a>

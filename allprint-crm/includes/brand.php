@@ -201,6 +201,7 @@ function ap_brand_css() {
 	$out .= '[data-theme="dark"]{' . $fmt( $k['dark'] ) . $fmt( $flat( 'dark' ) ) . '}';
 	// Superfícies escuras fixas usam o acento "cru" também como texto.
 	$out .= '.side,.auth-side,.ctop,.card--dark,.drive,.autofill,.toast,.stat--dark,.fz,.pay-result{--accent-text:' . esc_attr( $k['light']['accent-bright'] ) . ';}';
+	$out .= ap_tones_css();
 	// Logo: troca conforme o tema (claro/escuro) quando as duas versões diferem.
 	$out .= 'html:not([data-theme="dark"]) .lg-dk{display:none!important}[data-theme="dark"] .lg-lt{display:none!important}';
 	return $out;
@@ -330,6 +331,12 @@ function ap_contrast_report() {
 		$add( $mode, 'Topo da área do cliente: texto', $ct['muted'], $ct['bg'], 4.5 );
 		$add( $mode, 'Botão "+ Novo pedido" do topo', $ct['on-acc'], $ct['accent'], 4.5 );
 		$add( $mode, 'Barras, abas e indicadores sobre o cartão', $tok['accent-ui'], $card, 3.0 );
+	}
+	$tone_names = array( 'pay' => 'Aguardando pagamento / sinal', 'rev' => 'Revisão', 'prod' => 'Produção', 'fin' => 'Acabamento', 'ready' => 'Pronto / pago', 'done' => 'Entregue', 'art' => 'Arte', 'pickup' => 'Paga na retirada', 'wait' => 'Pagamento pendente', 'x' => 'Outras etapas' );
+	foreach ( array( 'light' => ap_tone_palette(), 'dark' => ap_tone_palette_dark() ) as $mode => $pal ) {
+		foreach ( $pal as $tk => $tc ) {
+			$add( $mode, 'Tag: ' . $tone_names[ $tk ], $tc['fg'], $tc['bg'], 4.5 );
+		}
 	}
 	foreach ( ap_surfaces() as $key => $s ) {
 		foreach ( array( 'light' => $s[1], 'dark' => $s[2] ) as $mode => $bg ) {

@@ -7,7 +7,7 @@ $cols  = ap_columns();
 $ready = ap_ready_column();
 
 $actions  = '<div class="seg"><a href="' . esc_url( ap_panel_url( 'pedidos' ) ) . '" class="' . ( '' === $view ? 'is-active' : '' ) . '">Quadro</a><a href="' . esc_url( ap_panel_url( 'pedidos', 0, array( 'ver' => 'todos' ) ) ) . '" class="' . ( 'todos' === $view ? 'is-active' : '' ) . '">Lista</a><a href="' . esc_url( ap_panel_url( 'pedidos', 0, array( 'ver' => 'arquivados' ) ) ) . '" class="' . ( 'arquivados' === $view ? 'is-active' : '' ) . '">Arquivados</a></div>';
-$actions .= '<button type="button" class="btn btn--ghost" data-open="novo-pedido">' . ap_icon( 'mais', 16 ) . '<span>Pedido manual</span></button>';
+$actions .= '<a class="btn btn--ghost" href="' . esc_url( ap_panel_url( 'novo-pedido' ) ) . '">' . ap_icon( 'mais', 16 ) . '<span>Pedido manual</span></a>';
 $actions .= '<a class="btn btn--primary" href="' . esc_url( ap_panel_url( 'orcamento' ) ) . '">' . ap_icon( 'mais', 16 ) . '<span>Novo orçamento</span></a>';
 ap_panel_start( 'Pedidos', 'pedidos', $actions );
 
@@ -36,7 +36,7 @@ if ( '' === $view ) :
 	<div class="kanban kanban--editable" data-kanban="project">
 		<?php foreach ( $board as $slug => $info ) : ?>
 			<?php list( $name, $kind ) = $info; ?>
-			<section class="kcol<?php echo 'internal' === $kind ? ' kcol--internal' : ''; ?><?php echo $slug === $ready ? ' kcol--ready' : ''; ?>" data-col="<?php echo esc_attr( $slug ); ?>" data-kind="<?php echo esc_attr( $kind ); ?>"<?php echo $slug === $last_stage ? ' data-last' : ''; ?>>
+			<section class="kcol tone-<?php echo esc_attr( 'internal' === $kind ? 'x' : ap_stage_tone( $slug ) ); ?><?php echo 'internal' === $kind ? ' kcol--internal' : ''; ?><?php echo $slug === $ready ? ' kcol--ready' : ''; ?>" data-col="<?php echo esc_attr( $slug ); ?>" data-kind="<?php echo esc_attr( $kind ); ?>"<?php echo $slug === $last_stage ? ' data-last' : ''; ?>>
 				<header class="kcol-head">
 					<h3 class="kcol-title" data-col-name title="Clique para renomear"><?php echo esc_html( $name ); ?></h3>
 					<?php if ( 'internal' === $kind ) : ?><span class="kcol-tag" title="Coluna interna: só organiza o seu quadro.">interna</span><?php endif; ?>
@@ -58,7 +58,8 @@ if ( '' === $view ) :
 						}
 						$wa = $slug === $ready ? ap_order_wa_link( $p ) : '';
 						?>
-						<article class="kcard kcard--order" draggable="true" data-id="<?php echo (int) $p->id; ?>" data-href="<?php echo esc_url( ap_panel_url( 'pedido', $p->id ) ); ?>">
+						<?php $pay = ap_order_payment( $p ); ?>
+						<article class="kcard kcard--order tone-<?php echo esc_attr( ap_stage_tone( $p->status ) ); ?>" draggable="true" data-id="<?php echo (int) $p->id; ?>" data-due="<?php echo esc_attr( $pay['due'] ); ?>" data-ptitle="<?php echo esc_attr( '#' . $p->id . ' · ' . $p->title ); ?>" data-client="<?php echo esc_attr( ap_project_client_label( $p ) ); ?>" data-href="<?php echo esc_url( ap_panel_url( 'pedido', $p->id ) ); ?>">
 							<?php if ( $thumb ) : ?><img class="kcard-thumb" src="<?php echo esc_url( $thumb ); ?>" alt="" loading="lazy"><?php endif; ?>
 							<div class="kcard-top">
 								<span class="badge">#<?php echo (int) $p->id; ?></span>
@@ -68,8 +69,10 @@ if ( '' === $view ) :
 								<span class="badge badge--<?php echo 'envio' === $p->delivery_mode ? 'ship' : 'pickup'; ?>"><?php echo 'envio' === $p->delivery_mode ? 'Envio' : 'Retirada'; ?></span>
 								<?php if ( 'internal' === $kind && isset( $cols[ $p->status ] ) ) : ?><span class="badge"><?php echo esc_html( $cols[ $p->status ] ); ?></span><?php endif; ?>
 							</div>
+							<div class="kcard-tags"><?php echo ap_stage_badge( $p->status ); // phpcs:ignore ?><?php echo ap_pay_badge( $p ); // phpcs:ignore ?></div>
 							<h4><?php echo esc_html( $p->title ); ?></h4>
 							<p class="kcard-sub"><?php echo esc_html( ap_project_client_label( $p ) ); ?></p>
+							<?php if ( $slug === $ready && $pay['due'] > 0 ) : ?><p class="kcard-charge">💰 Cobrar <?php echo esc_html( ap_money( $pay['due'] ) ); ?> na retirada</p><?php endif; ?>
 							<div class="kcard-foot">
 								<span class="money small"><?php echo ap_can( 'financeiro' ) ? esc_html( ap_money( $p->value ) ) : ''; ?></span>
 								<?php echo ap_due_badge( $p->due_date, $last_stage === $p->status || $ready === $p->status ); // phpcs:ignore ?>
@@ -112,7 +115,7 @@ else :
 				<?php $cost = $p->cost_real > 0 ? $p->cost_real : $p->cost_estimated; ?>
 				<a class="table-row" href="<?php echo esc_url( ap_panel_url( 'pedido', $p->id ) ); ?>">
 					<span class="cell-main"><span><strong>#<?php echo (int) $p->id; ?> · <?php echo esc_html( $p->title ); ?></strong><small><?php echo esc_html( ap_project_client_label( $p ) ); ?></small></span></span>
-					<span data-label="Etapa"><?php echo esc_html( $cols[ $p->status ] ?? $p->status ); ?><?php echo $p->archived ? ' <small>arquivado</small>' : ''; ?></span>
+					<span data-label="Etapa"><?php echo ap_stage_badge( $p->status ); // phpcs:ignore ?> <?php echo ap_pay_badge( $p ); // phpcs:ignore ?><?php echo $p->archived ? ' <small>arquivado</small>' : ''; ?></span>
 					<span data-label="Entrega"><?php echo esc_html( $p->due_date ? ap_date( $p->due_date ) : '—' ); ?></span>
 					<span data-label="Valor" class="money"><?php echo ap_can( 'financeiro' ) ? esc_html( ap_money( $p->value ) ) : '—'; ?></span>
 					<span data-label="Lucro" class="money"><?php echo ap_can( 'financeiro' ) && $cost > 0 ? esc_html( ap_money( $p->value - $p->ship_price - $cost ) ) : '—'; ?></span>

@@ -14,7 +14,7 @@ $cols     = ap_columns();
 
 $actions  = '<a class="btn btn--ghost" href="' . esc_url( ap_client_url( '', 0, array( 'como' => $c->id ) ) ) . '">' . ap_icon( 'olho', 16 ) . '<span>Ver como cliente</span></a>';
 $actions .= ap_can( 'leads' ) ? '<a class="btn btn--ghost" href="' . esc_url( ap_panel_url( 'leads', 0, array( 'abrir' => 'novo-lead', 'cliente' => $c->id ) ) ) . '">' . ap_icon( 'mais', 16 ) . '<span>Novo lead</span></a>' : '';
-$actions .= ap_can( 'projetos' ) ? '<a class="btn btn--ghost" href="' . esc_url( ap_panel_url( 'pedidos', 0, array( 'abrir' => 'novo-pedido', 'cliente' => $c->id ) ) ) . '">' . ap_icon( 'mais', 16 ) . '<span>Pedido manual</span></a>' : '';
+$actions .= ap_can( 'projetos' ) ? '<a class="btn btn--ghost" href="' . esc_url( ap_panel_url( 'novo-pedido', 0, array( 'cliente' => $c->id ) ) ) . '">' . ap_icon( 'mais', 16 ) . '<span>Pedido manual</span></a>' : '';
 $actions .= ap_can( 'orcamentos' ) ? '<a class="btn btn--primary" href="' . esc_url( ap_panel_url( 'orcamento', 0, array( 'cliente' => $c->id ) ) ) . '">' . ap_icon( 'mais', 16 ) . '<span>Novo orçamento</span></a>' : '';
 ap_panel_start( $label, 'clientes', $actions );
 ?>
@@ -30,6 +30,24 @@ ap_panel_start( $label, 'clientes', $actions );
 				<?php ap_action_button( 'client_pay_later', array( 'id' => $c->id ), $c->pay_later ? '✓ Pode pagar na retirada' : 'Permitir pagar na retirada', 'btn btn--ghost btn--sm' ); ?>
 				<a class="btn btn--ghost btn--sm" href="<?php echo esc_url( ap_panel_url( 'mensagens', 0, array( 'cliente' => $c->id ) ) ); ?>"><?php echo ap_icon( 'chat', 14 ); // phpcs:ignore ?><span>Mensagens</span></a>
 			</div>
+		</section>
+		<section class="card">
+			<div class="card-head"><h3>Tabela de preço e crédito na loja</h3><em class="badge badge--ok"><?php echo esc_html( 'Crédito: ' . ap_money( ap_credit_balance( $c->id ) ) ); ?></em></div>
+			<?php ap_form( 'client_kind', 'inline-form' ); ?>
+				<input type="hidden" name="id" value="<?php echo (int) $c->id; ?>">
+				<?php ap_select( 'kind', 'Tipo de cliente (define a tabela de preço)', array( '' => 'Não informado (tabela de parceiro)', 'Terceirizado' => 'Terceirizado / parceiro', 'Empresa' => 'Empresa', 'Cliente P/F' => 'Pessoa física', 'Uso interno' => 'Uso interno' ), $c->kind ); ?>
+				<button class="btn btn--ghost btn--sm" type="submit">Salvar tipo</button>
+			</form>
+			<?php if ( ap_can( 'clientes' ) ) : ?>
+				<?php ap_form( 'credit_add', 'inline-form' ); ?>
+					<input type="hidden" name="client_id" value="<?php echo (int) $c->id; ?>">
+					<input type="hidden" name="op" value="dar">
+					<?php ap_input( 'amount', 'Dar crédito (R$)', '', 'text', 'inputmode="decimal" placeholder="50,00"' ); ?>
+					<?php ap_input( 'note', 'Motivo', '', 'text', 'placeholder="Boas-vindas, bônus, estorno…"' ); ?>
+					<button class="btn btn--ghost btn--sm" type="submit">Lançar crédito</button>
+					<a class="btn btn--ghost btn--sm" href="<?php echo esc_url( ap_panel_url( 'cupons', 0, array( 'cliente' => $c->id ) ) ); ?>">Histórico e cupons</a>
+				</form>
+			<?php endif; ?>
 		</section>
 		<?php if ( $invite ) : ?>
 			<section class="card card--accent">

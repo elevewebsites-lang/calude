@@ -18,7 +18,7 @@ function ap_catalog_kinds() {
 }
 
 function ap_catalog_groups() {
-	return array( 'impresso' => 'Material impresso', 'sem-impressao' => 'Material sem impressão' );
+	return array( 'impresso' => 'Material impresso', 'sem-impressao' => 'Material sem impressão', 'outros' => 'Chapas e outros', 'servico' => 'Serviços', 'revenda' => 'Revenda' );
 }
 
 /**
@@ -68,8 +68,42 @@ function ap_catalog_seed() {
 }
 add_action( 'init', 'ap_catalog_seed', 100 );
 
-function ap_catalog( $only_active = true ) {
-	return ap_rows( 'catalog', $only_active ? 'active = 1' : '1=1', array(), 'grp, position, id' );
+function ap_catalog( $only_active = true, $online_only = false ) {
+	$where = array();
+	if ( $only_active ) {
+		$where[] = 'active = 1';
+	}
+	if ( $online_only ) {
+		$where[] = 'online = 1';
+	}
+	return ap_rows( 'catalog', $where ? implode( ' AND ', $where ) : '1=1', array(), 'grp, position, id' );
+}
+
+/** Tabela de preço do cliente: parceiro (terceirizado), empresa ou pessoa física. */
+function ap_client_tier( $client ) {
+	$k = $client ? ap_norm( $client->kind ) : '';
+	if ( 'empresa' === $k ) {
+		return 'empresa';
+	}
+	if ( 'cliente p f' === $k || 'pf' === $k || 'pessoa fisica' === $k ) {
+		return 'pf';
+	}
+	return 'parceiro';
+}
+
+function ap_tiers() {
+	return array( 'parceiro' => 'Parceiro / terceirizado', 'empresa' => 'Empresa', 'pf' => 'Pessoa física' );
+}
+
+/** Preço por unidade (m², un ou m linear) na tabela escolhida; cai para o do parceiro se a tabela estiver vazia. */
+function ap_row_price( $row, $tier = 'parceiro' ) {
+	$v = (float) $row->price_m2;
+	if ( 'empresa' === $tier && (float) $row->price_empresa > 0 ) {
+		$v = (float) $row->price_empresa;
+	} elseif ( 'pf' === $tier && (float) $row->price_pf > 0 ) {
+		$v = (float) $row->price_pf;
+	}
+	return $v;
 }
 
 function ap_max_width( $row ) {
@@ -80,12 +114,14 @@ function ap_max_width( $row ) {
 /**
  * Dados do catálogo para o JavaScript do pedido.
  */
-function ap_catalog_js() {
+function ap_catalog_js( $all = false ) {
 	$out = array();
-	foreach ( ap_catalog() as $c ) {
+	foreach ( ap_catalog( true, ! $all ) as $c ) {
 		$out[ $c->id ] = array(
 			'name'     => $c->name,
 			'grp'      => $c->grp,
+			'unit'     => $c->unit ? $c->unit : 'm2',
+			'prices'   => array( 'parceiro' => (float) $c->price_m2, 'empresa' => ap_row_price( $c, 'empresa' ), 'pf' => ap_row_price( $c, 'pf' ) ),
 			'price'    => (float) $c->price_m2,
 			'maxw'     => ap_max_width( $c ),
 			'widths'   => $c->widths,
@@ -108,12 +144,12 @@ function ap_catalog_js() {
  * item: [material, w, h (cm), qty, sides:[t,b,l,r], lam, cut, obs]
  * Devolve linhas por item + cobranças por material (com o mínimo) + total.
  */
-function ap_price_items( $items ) {
-	$cat   = array();
+function ap_price_items( $items, $tier = 'parceiro', $apply_min = true ) {
+	$cat = array();
 	foreach ( ap_catalog( false ) as $c ) {
 		$cat[ $c->id ] = $c;
 	}
-	$min       = max( 0, ap_num_setting( 'area_minima' ) );
+	$min       = $apply_min ? max( 0, ap_num_setting( 'area_minima' ) ) : 0;
 	$eye_price = ap_num_setting( 'preco_ilhos' );
 	$lam_price = ap_num_setting( 'preco_laminacao' );
 	$by_mat    = array();
@@ -121,22 +157,36 @@ function ap_price_items( $items ) {
 	$eye_m     = 0;
 	$lines     = array();
 	$errors    = array();
+	$notes     = array();
+	$charges   = array();
+	$total     = 0;
 	foreach ( $items as $i => $it ) {
 		$c = $cat[ (int) $it['material'] ] ?? null;
 		if ( ! $c ) {
 			continue;
 		}
+		$unit  = $c->unit ? $c->unit : 'm2';
+		$price = ap_row_price( $c, $tier );
+		$q     = max( 1, (int) $it['qty'] );
+		$ov    = ( isset( $it['override'] ) && null !== $it['override'] && '' !== $it['override'] ) ? round( (float) $it['override'], 2 ) : null;
+		if ( 'm2' !== $unit ) {
+			// Por unidade, metro ou serviço: quantidade × preço.
+			$v         = null !== $ov ? $ov : round( $q * $price, 2 );
+			$charges[] = array( 'label' => $c->name . ( 'm2' !== $unit ? ' · ' . $q . ( 'm' === $unit ? ' m' : ' un' ) : '' ) . ( null !== $ov ? ' (valor ajustado)' : '' ), 'area' => 0, 'billed' => 0, 'value' => $v, 'min' => false );
+			$total    += $v;
+			$lines[]   = array( 'material' => $c->name, 'area' => 0, 'eyelet_m' => 0, 'lam' => false );
+			continue;
+		}
 		$w    = max( 0, (float) $it['w'] );
 		$h    = max( 0, (float) $it['h'] );
-		$q    = max( 1, (int) $it['qty'] );
 		$area = $w * $h / 10000 * $q;
 		$maxw = ap_max_width( $c );
 		if ( $maxw && min( $w, $h ) > $maxw ) {
-			$errors[] = 'Item ' . ( $i + 1 ) . ': a peça passa da largura máxima da bobina de ' . $c->name . ' (' . $maxw . ' cm). Divida em partes ou fale com a gente.';
+			// Sem limite: a gráfica faz com emenda. Só avisa (não bloqueia).
+			$notes[] = 'Item ' . ( $i + 1 ) . ': passa da largura da bobina (' . $maxw . ' cm), será feito com emenda.';
 		}
-		$by_mat[ $c->id ] = ( $by_mat[ $c->id ] ?? 0 ) + $area;
-		$sides            = (array) ( $it['sides'] ?? array() );
-		$lin              = 0;
+		$sides = (array) ( $it['sides'] ?? array() );
+		$lin   = 0;
 		if ( $c->allow_eyelets ) {
 			foreach ( array( 't' => $w, 'b' => $w, 'l' => $h, 'r' => $h ) as $sd => $len ) {
 				if ( ! empty( $sides[ $sd ] ) ) {
@@ -145,23 +195,22 @@ function ap_price_items( $items ) {
 			}
 			$lin *= $q;
 		}
-		$eye_m += $lin;
-		$lam    = $c->allow_lamination && ! empty( $it['lam'] );
+		$lam = $c->allow_lamination && ! empty( $it['lam'] );
+		$lines[] = array( 'material' => $c->name, 'area' => round( $area, 4 ), 'eyelet_m' => round( $lin, 2 ), 'lam' => $lam );
+		if ( null !== $ov ) {
+			$charges[] = array( 'label' => $c->name . ' (valor ajustado)', 'area' => round( $area, 4 ), 'billed' => round( $area, 4 ), 'value' => $ov, 'min' => false );
+			$total    += $ov;
+			continue;
+		}
+		$by_mat[ $c->id ] = ( $by_mat[ $c->id ] ?? 0 ) + $area;
+		$eye_m           += $lin;
 		if ( $lam ) {
 			$lam_area += $area;
 		}
-		$lines[] = array(
-			'material' => $c->name,
-			'area'     => round( $area, 4 ),
-			'eyelet_m' => round( $lin, 2 ),
-			'lam'      => $lam,
-		);
 	}
-	$charges = array();
-	$total   = 0;
 	foreach ( $by_mat as $mid => $area ) {
 		$bill      = max( $min, $area );
-		$v         = round( $bill * (float) $cat[ $mid ]->price_m2, 2 );
+		$v         = round( $bill * ap_row_price( $cat[ $mid ], $tier ), 2 );
 		$charges[] = array( 'label' => $cat[ $mid ]->name, 'area' => round( $area, 4 ), 'billed' => round( $bill, 4 ), 'value' => $v, 'min' => $area < $min );
 		$total    += $v;
 	}
@@ -176,7 +225,7 @@ function ap_price_items( $items ) {
 		$charges[] = array( 'label' => 'Reforço e ilhós (' . number_format( $eye_m, 2, ',', '.' ) . ' m linear)', 'area' => 0, 'billed' => 0, 'value' => $v, 'min' => false );
 		$total    += $v;
 	}
-	return array( 'lines' => $lines, 'charges' => $charges, 'total' => round( $total, 2 ), 'errors' => $errors );
+	return array( 'lines' => $lines, 'charges' => $charges, 'total' => round( $total, 2 ), 'errors' => $errors, 'notes' => $notes );
 }
 
 /**
@@ -251,8 +300,9 @@ function ap_order_items_from_post() {
 			),
 			'lam'      => ! empty( $raw['lam'][ $k ] ),
 			'cut'      => 'complexo' === ( $raw['cut'][ $k ] ?? '' ) ? 'complexo' : 'simples',
-			'finish'   => sanitize_text_field( $raw['finish'][ $k ] ?? '' ),
+			'finish'   => ( ( $cm = ap_get( 'catalog', absint( $mat ) ) ) && preg_match( '/banner/i', (string) $cm->name ) ) ? sanitize_text_field( $raw['finish'][ $k ] ?? '' ) : '',
 			'obs'      => sanitize_textarea_field( $raw['obs'][ $k ] ?? '' ),
+			'override' => isset( $raw['ov'][ $k ] ) && '' !== trim( (string) $raw['ov'][ $k ] ) ? ap_parse_money( $raw['ov'][ $k ] ) : null,
 			'files'    => is_array( $files ) ? array_values(
 				array_filter(
 					array_map(
@@ -280,7 +330,7 @@ function ap_do_client_order() {
 	if ( ! $items ) {
 		ap_back( 'Adicione pelo menos um item.', 'erro' );
 	}
-	$price = ap_price_items( $items );
+	$price = ap_price_items( $items, ap_client_tier( $client ) );
 	if ( $price['errors'] ) {
 		ap_back( implode( ' ', $price['errors'] ), 'erro' );
 	}
@@ -309,7 +359,7 @@ function ap_do_client_order() {
 			'name'     => $c->name . ' · ' . rtrim( rtrim( number_format( $it['w'], 1, ',', '' ), '0' ), ',' ) . '×' . rtrim( rtrim( number_format( $it['h'], 1, ',', '' ), '0' ), ',' ) . ' cm',
 			'desc'     => ucfirst( implode( ' · ', $extras ) ) . ( $it['obs'] ? ' · ' . $it['obs'] : '' ),
 			'qty'      => $it['qty'],
-			'unit'     => 0,
+			'unit'     => round( ap_row_price( $cat[ $it['material'] ], ap_client_tier( $client ) ) * $it['w'] * $it['h'] / 10000, 2 ),
 			'cost'     => 0,
 			'material' => $it['material'],
 			'w'        => $it['w'],
@@ -321,7 +371,12 @@ function ap_do_client_order() {
 			'files'    => $it['files'],
 		);
 	}
+	$d = ap_discounts( $client->id, $price['total'], ap_in( 'cupom' ), (bool) ap_in( 'usar_credito', 'bool' ) );
+	if ( ap_in( 'cupom' ) && ! $d['coupon'] ) {
+		ap_back( $d['coupon_msg'] . ' Tire o cupom ou corrija o código e finalize de novo.', 'erro' );
+	}
 	$pay_later = $client->pay_later && 'retirada' === ap_in( 'pagamento' );
+	$free      = $d['total'] <= 0;
 	$cols      = array_keys( ap_columns() );
 	$urgent    = ap_in( 'urgente', 'bool' );
 	$pid       = ap_insert(
@@ -329,8 +384,11 @@ function ap_do_client_order() {
 		array(
 			'client_id'     => $client->id,
 			'title'         => ap_in( 'titulo' ) ? ap_in( 'titulo' ) : ( count( $saved ) . ' item(ns) · ' . $cat[ $items[0]['material'] ]->name ),
-			'status'        => $pay_later ? ( $cols[1] ?? $cols[0] ) : $cols[0],
-			'value'         => $price['total'],
+			'status'        => ( $pay_later || $free ) ? ( $cols[1] ?? $cols[0] ) : $cols[0],
+			'value'         => round( $price['total'] - $d['discount'], 2 ),
+			'coupon_code'   => $d['coupon'] ? $d['coupon']->code : '',
+			'discount'      => $d['discount'],
+			'credit_used'   => $d['credit_used'],
 			'items'         => wp_json_encode( $saved ),
 			'notes'         => wp_json_encode( $price['charges'] ),
 			'delivery_mode' => 'retirada',
@@ -339,24 +397,34 @@ function ap_do_client_order() {
 			'due_date'      => ap_next_business_day( ap_today(), max( 1, (int) ap_setting( 'prazo_dias' ) ) ),
 		)
 	);
-	$trans = ap_insert(
-		'transactions',
-		array(
-			'type'        => 'in',
-			'project_id'  => $pid,
-			'client_id'   => $client->id,
-			'category'    => 'Pedido',
-			'description' => 'Pedido #' . $pid,
-			'amount'      => $price['total'],
-			'due_date'    => ap_today(),
-			'method'      => $pay_later ? 'Na retirada' : 'Pix',
-			'status'      => 'pendente',
-		)
-	);
-	ap_log( $pid, 'Pedido feito pelo cliente: ' . ap_money( $price['total'] ) . ( $urgent ? ' · URGENTE' : '' ) . ( $pay_later ? ' · paga na retirada' : '' ) . '.', true );
+	$trans = 0;
+	if ( $d['credit_used'] > 0 ) {
+		ap_insert( 'transactions', array( 'type' => 'in', 'project_id' => $pid, 'client_id' => $client->id, 'category' => 'Pedido', 'description' => 'Pedido #' . $pid . ' (crédito na loja)', 'amount' => $d['credit_used'], 'due_date' => ap_today(), 'paid_at' => ap_today(), 'method' => 'Crédito na loja', 'status' => 'pago' ) );
+	}
+	if ( $d['total'] > 0 ) {
+		$trans = ap_insert(
+			'transactions',
+			array(
+				'type'        => 'in',
+				'project_id'  => $pid,
+				'client_id'   => $client->id,
+				'category'    => 'Pedido',
+				'description' => 'Pedido #' . $pid,
+				'amount'      => $d['total'],
+				'due_date'    => ap_today(),
+				'method'      => $pay_later ? 'Na retirada' : 'Pix',
+				'status'      => 'pendente',
+			)
+		);
+	}
+	ap_discounts_commit( $d, $pid, $client->id );
+	ap_log( $pid, 'Pedido feito pelo cliente: ' . ap_money( $price['total'] ) . ( $d['discount'] > 0 ? ' − desconto ' . ap_money( $d['discount'] ) : '' ) . ( $d['credit_used'] > 0 ? ' − crédito ' . ap_money( $d['credit_used'] ) : '' ) . ( $urgent ? ' · URGENTE' : '' ) . ( $pay_later ? ' · paga na retirada' : '' ) . '.', true );
 	ap_drive_label_order( $pid, $client, $saved );
 	ap_email_welcome( $pid );
-	ap_notify_team( $pid, 'Pedido novo #' . $pid . ( $urgent ? ' (URGENTE)' : '' ), ap_client_label( $client ) . ' fez um pedido de ' . ap_money( $price['total'] ) . '.' . ( $pay_later ? ' Vai pagar na retirada.' : ' Aguardando o pagamento.' ) );
+	ap_notify_team( $pid, 'Pedido novo #' . $pid . ( $urgent ? ' (URGENTE)' : '' ), ap_client_label( $client ) . ' fez um pedido de ' . ap_money( $price['total'] - $d['discount'] ) . '.' . ( $pay_later ? ' Vai pagar na retirada.' : ' Aguardando o pagamento.' ) );
+	if ( $free ) {
+		ap_back( 'Pedido #' . $pid . ' recebido! Foi pago com o seu crédito e já está na revisão da arte.', 'ok', ap_client_url( 'projeto', $pid ) );
+	}
 	if ( $pay_later ) {
 		ap_back( 'Pedido #' . $pid . ' recebido! Já está na revisão da arte. O pagamento fica para a retirada.', 'ok', ap_client_url( 'projeto', $pid ) );
 	}

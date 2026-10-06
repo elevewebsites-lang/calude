@@ -110,6 +110,9 @@ function ap_do_client_approve_partner() {
 	}
 	$on = ! $c->approved;
 	ap_update( 'clients', $c->id, array( 'approved' => $on ? 1 : 0 ) );
+	if ( $on && ! is_email( $c->email ) && function_exists( 'ap_credit_welcome' ) ) {
+		ap_credit_welcome( $c->id );
+	}
 	if ( $on && is_email( $c->email ) ) {
 		ap_mail(
 			$c->email,
@@ -120,6 +123,9 @@ function ap_do_client_approve_partner() {
 			'Fazer meu primeiro pedido',
 			ap_client_entry_url( $c, 'novo' )
 		);
+		if ( function_exists( 'ap_credit_welcome' ) ) {
+			ap_credit_welcome( $c->id );
+		}
 		$won = ap_funnel_won();
 		if ( $won ) {
 			global $wpdb;

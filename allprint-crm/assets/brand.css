@@ -90,3 +90,56 @@
 /* Login e cadastro: o painel escuro segue a cor principal do tema (não um preto fixo) */
 .auth-side { background: var(--ink); color: var(--auth-text, #fff); }
 .auth-side h2 { color: inherit; }
+/* gastos nas barras: cor suave da marca (antes laranja da base) */
+.bar--out { background: var(--brand-line); }
+.bar-col.is-current .bar--out { background: var(--brand-line); }
+
+.fbl-switch { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 12px 0 16px; padding: 16px 18px; }
+
+/* Pedido: cupom, desconto e formas de pagamento */
+.mo-disc { display: grid; gap: 10px; margin: 12px 0; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.mo-coupon { display: grid; gap: 4px; }
+.mo-coupon input { text-transform: uppercase; }
+.calc-sub { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; }
+.mo-client .mo-info { margin: 6px 0 10px; font-size: 13.5px; color: var(--muted); }
+.mo-new { margin-top: 10px; }
+.mo-pay { border: 0; padding: 0; margin: 12px 0 6px; }
+.mo-pay legend { font-size: 13px; font-weight: 600; margin-bottom: 8px; padding: 0; }
+
+/* ===== Tags coloridas: etapa e pagamento ===== */
+.tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px; border-radius: 999px; background: var(--tn-bg, var(--accent-soft)); color: var(--tn-fg, var(--ink)); border: 1px solid var(--tn-bd, var(--line)); font: 600 11.5px/1.35 var(--font); white-space: nowrap; }
+.tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--tn-dot, var(--muted)); flex: none; }
+.tag--pay { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.kcard-tags { display: flex; flex-wrap: wrap; gap: 5px; margin: 2px 0 8px; }
+.kcard.tone-pay, .kcard.tone-rev, .kcard.tone-prod, .kcard.tone-fin, .kcard.tone-ready, .kcard.tone-done, .kcard.tone-art, .kcard.tone-x { border-left: 4px solid var(--tn-dot, var(--line-2)); }
+/* Coluna: faixa de cor no topo + contador na cor da etapa */
+.kcol[class*="tone-"] > .kcol-head { border-top: 4px solid var(--tn-dot, var(--line-2)); border-radius: 12px 12px 0 0; }
+.kcol[class*="tone-"] .kcount { background: var(--tn-bg); color: var(--tn-fg); }
+.kcard-charge { margin: 8px 0 0; padding: 7px 10px; border-radius: 9px; background: var(--tn-bg); color: var(--tn-fg); font: 700 12.5px/1.3 var(--font); }
+.kcol--ready .kcard-charge { background: #ffe8d1; color: #8a3a00; box-shadow: inset 0 0 0 1px #f7c48f; }
+[data-theme="dark"] .kcol--ready .kcard-charge { background: #3a2410; color: #ffc999; box-shadow: inset 0 0 0 1px #6b3d12; }
+.stage-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.stage-form-tags { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.opay { margin-bottom: 16px; }
+.pay-line { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.pay-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-top: 14px; }
+.pay-form .field { min-width: 150px; }
+.table-row .tag { margin-right: 4px; }
+
+/* ===== Janela "o pedido foi pago?" ===== */
+.paymodal-back { position: fixed; inset: 0; z-index: 9990; display: grid; place-items: center; padding: 18px; background: rgba(8, 8, 20, .62); }
+.paymodal { width: min(460px, 100%); padding: 24px; border-radius: 18px; background: var(--card); color: var(--ink); box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+.paymodal h3 { font-size: 20px; margin-bottom: 6px; }
+.paymodal-sub { font-size: 14px; color: var(--muted); }
+.paymodal-sub b { color: var(--ink); }
+.paymodal-due { margin: 12px 0; padding: 10px 12px; border-radius: 10px; background: var(--brand-soft); font-size: 15px; }
+.paymodal-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border: 0; padding: 0; margin: 0 0 8px; }
+.paymodal-methods legend { font-size: 13px; font-weight: 600; margin-bottom: 8px; padding: 0; }
+.paymodal-methods label { position: relative; display: block; cursor: pointer; }
+.paymodal-methods input { position: absolute; opacity: 0; inset: 0; }
+.paymodal-methods span { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 8px 10px; border-radius: 12px; border: 1.5px solid var(--line-2); font-weight: 600; font-size: 14px; text-align: center; transition: border-color .15s, background-color .15s; }
+.paymodal-methods input:checked + span { border-color: var(--accent-ui); background: var(--brand-soft); }
+.paymodal-methods input:focus-visible + span { outline: 2px solid var(--accent-ui); outline-offset: 2px; }
+.paymodal-err { color: var(--late); font-size: 13px; margin: 0 0 8px; }
+.paymodal-actions { display: grid; gap: 8px; margin-top: 12px; }
+.paymodal-actions .btn { width: 100%; justify-content: center; }

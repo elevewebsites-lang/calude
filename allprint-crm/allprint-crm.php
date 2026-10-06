@@ -49,6 +49,9 @@ require_once AP_DIR . 'includes/chat.php';
 require_once AP_DIR . 'includes/broadcast.php';
 require_once AP_DIR . 'includes/signup.php';
 require_once AP_DIR . 'includes/import.php';
+require_once AP_DIR . 'includes/coupons.php';
+require_once AP_DIR . 'includes/paystatus.php';
+require_once AP_DIR . 'includes/manual.php';
 
 register_activation_hook( __FILE__, 'ap_activate' );
 function ap_activate() {
