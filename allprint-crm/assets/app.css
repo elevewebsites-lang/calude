@@ -1728,18 +1728,13 @@ hr.sep { border: 0; border-top: 1px solid var(--line, #e5e5e5); margin: 16px 0; 
 }
 
 /* Crédito Eleve (discreto) */
-.eleve-credit { display: inline-flex; align-items: center; gap: 7px; font-size: 10.5px; line-height: 1.2; letter-spacing: .01em; text-decoration: none; opacity: .55; transition: opacity .2s; }
+.eleve-credit { display: inline-flex; align-items: center; gap: 7px; font-size: 10.5px; line-height: 1.2; letter-spacing: .01em; text-decoration: none; opacity: 1; transition: opacity .2s; }
 .eleve-credit:hover { opacity: 1; }
 .eleve-credit img { height: 13px; width: auto; }
-.eleve-credit--dark { color: #bdbdbd; }
-.eleve-credit--light { color: #6b6b6b; }
-.eleve-credit--light img { filter: invert(1) brightness(.35); }
 .side > .eleve-credit { margin: 4px 12px 0; flex-wrap: wrap; }
 .cfoot { display: flex; justify-content: center; padding: 26px 16px 90px; }
 .auth-copy .eleve-credit { margin-left: 10px; }
 .pay-result > .eleve-credit { margin-top: 18px; }
-[data-theme="dark"] .eleve-credit--light { color: #9a9a9a; }
-[data-theme="dark"] .eleve-credit--light img { filter: none; }
 
 /* ==========================================================
    AllPrint · pedido, chat, tabela

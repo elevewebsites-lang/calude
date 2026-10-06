@@ -182,3 +182,10 @@
 .veh-nums strong{font-size:1rem}
 .table--veh .table-row{grid-template-columns:90px minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) 90px 110px auto}
 @media (max-width:900px){.table--veh .table-row{grid-template-columns:1fr 1fr}}
+
+/* Crédito Eleve: versão da logo e cor do texto vêm do contraste com o fundo (ver ap_credit_html) */
+.eleve-credit{display:inline-flex;align-items:center;gap:8px;font-size:11px;line-height:1.2;text-decoration:none;opacity:1}
+.eleve-credit span{text-decoration:underline;text-underline-offset:2px}
+.eleve-credit img{height:16px;width:auto;max-width:none;display:inline-block}
+.eleve-credit:hover{filter:brightness(1.1)}
+.pp-foot .eleve-credit{margin-right:10px}

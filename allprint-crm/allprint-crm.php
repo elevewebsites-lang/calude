@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Allprint CRM
  * Description: Modelo base de CRM (painel + área do cliente + orçamentos com pagamento + pedidos em Kanban + financeiro), com segurança, tema e módulos opcionais. Identidade em identity.php.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author: Eleve Websites
  * Author URI: https://elevewebsites.com.br
  * Text Domain: allprint-crm
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'AP_VERSION', '1.3.0' );
+define( 'AP_VERSION', '1.3.1' );
 define( 'AP_FILE', __FILE__ );
 define( 'AP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AP_URL', plugin_dir_url( __FILE__ ) );

@@ -176,7 +176,7 @@ function ap_panel_start( $title, $active = '', $actions = '' ) {
 			<span class="side-user-name"><?php echo esc_html( $user->display_name ); ?><small><?php echo ap_is_admin() ? 'Administrador' : 'Equipe'; ?></small></span>
 			<a href="<?php echo esc_url( ap_url( 'sair' ) ); ?>" title="Sair" class="side-out"><?php echo ap_icon( 'sair', 17 ); // phpcs:ignore ?></a>
 		</div>
-		<?php echo ap_credit_html( 'dark' ); // phpcs:ignore ?>
+		<?php echo ap_credit_html( 'side' ); // phpcs:ignore ?>
 	</aside>
 	<div class="side-backdrop" data-side-close></div>
 	<main class="main">
@@ -239,7 +239,7 @@ function ap_client_start( $title, $client ) {
 
 function ap_client_end() {
 	$wa = ap_setting( 'whatsapp' );
-	echo '</main><footer class="cfoot">' . ap_credit_html( 'light' ) . '</footer>'; // phpcs:ignore
+	echo '</main><footer class="cfoot">' . ap_credit_html( 'card' ) . '</footer>'; // phpcs:ignore
 	if ( $wa ) {
 		echo '<a class="wa-float" href="' . esc_url( ap_wa_link( $wa, 'Olá! Sou cliente e preciso de suporte.' ) ) . '" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">' . ap_icon( 'whatsapp', 24 ) . '</a>'; // phpcs:ignore
 	}
@@ -613,8 +613,22 @@ function ap_theme_head( $css, $light = true ) {
 
 /**
  * Crédito discreto: "Sistema personalizado desenvolvido por Eleve Websites" (clica e vai para o site da Eleve).
- * $tone: 'dark' (fundo escuro) ou 'light' (fundo claro).
+ * $tone: chave de uma superfície do sistema (ver ap_surfaces: side, auth, card, oq…) ou 'dark' / 'light'.
+ * A versão da logo (texto claro ou escuro) e a cor do texto são escolhidas pelo contraste com o fundo, nos temas claro e escuro.
  */
 function ap_credit_html( $tone = 'dark' ) {
-	return '<a class="eleve-credit eleve-credit--' . esc_attr( $tone ) . '" href="https://elevewebsites.com.br/?utm_source=sistema&utm_medium=credito&utm_campaign=' . rawurlencode( sanitize_title( ap_setting( 'empresa' ) ) ) . '" target="_blank" rel="noopener" title="Eleve Websites"><span>Sistema personalizado desenvolvido por</span><img src="https://elevewebsites.com.br/wp-content/uploads/2025/03/Ativo-11.png" alt="Eleve Websites" loading="lazy"></a>';
+	$surf = ap_surfaces();
+	$key  = isset( $surf[ $tone ] ) ? $tone : ( 'light' === $tone ? 'card' : 'auth' );
+	$bgl  = $surf[ $key ][1];
+	$bgd  = $surf[ $key ][2];
+	$img  = function ( $bg, $class ) {
+		$v = ap_contrast( '#e6e6e6', $bg ) >= ap_contrast( '#000000', $bg ) ? 'claro' : 'escuro';
+		return '<img class="' . esc_attr( $class ) . '" src="' . esc_url( AP_URL . 'assets/brand/eleve-' . $v . '.png?ver=' . AP_VERSION ) . '" alt="Eleve Websites" data-logo="eleve-' . $v . '" loading="lazy">';
+	};
+	$same = ap_contrast( '#e6e6e6', $bgl ) >= ap_contrast( '#000000', $bgl ) === ap_contrast( '#e6e6e6', $bgd ) >= ap_contrast( '#000000', $bgd );
+	$logo = $same ? $img( $bgl, '' ) : $img( $bgl, 'lg-lt' ) . $img( $bgd, 'lg-dk' );
+	$txtl = ap_ensure_contrast( '#8a8a8a', $bgl, 4.5, ap_luminance( $bgl ) > 0.4 );
+	$txtd = ap_ensure_contrast( '#8a8a8a', $bgd, 4.5, ap_luminance( $bgd ) > 0.4 );
+	$id   = 'ec' . substr( md5( $key ), 0, 6 );
+	return '<a class="eleve-credit ' . $id . '" href="https://elevewebsites.com.br/?utm_source=sistema&utm_medium=credito&utm_campaign=' . rawurlencode( sanitize_title( ap_setting( 'empresa' ) ) ) . '" target="_blank" rel="noopener" title="Eleve Websites"><span>Sistema personalizado desenvolvido por</span>' . $logo . '</a><style>.' . $id . '{color:' . esc_attr( $txtl ) . '}[data-theme="dark"] .' . $id . '{color:' . esc_attr( $txtd ) . '}</style>'; // phpcs:ignore
 }
