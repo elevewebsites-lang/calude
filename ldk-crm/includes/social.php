@@ -339,7 +339,11 @@ function lk_ig_publish( $acc, $p, $urls ) {
 		}
 		$c = $make( array( 'media_type' => 'CAROUSEL', 'children' => implode( ',', $kids ), 'caption' => $cap ) );
 	} elseif ( $isv( $urls[0] ) ) {
-		$c = $make( array( 'media_type' => 'REELS', 'video_url' => $urls[0], 'caption' => $cap, 'share_to_feed' => 'true' ) );
+		$args = array( 'media_type' => 'REELS', 'video_url' => $urls[0], 'caption' => $cap, 'share_to_feed' => 'true' );
+		if ( ! empty( $p->cover_url ) ) {
+			$args['cover_url'] = $p->cover_url;
+		}
+		$c = $make( $args );
 	} else {
 		$c = $make( array( 'image_url' => $urls[0], 'caption' => $cap ) );
 	}
@@ -382,7 +386,21 @@ function lk_fb_publish( $acc, $p, $urls ) {
 	$tok  = lk_decrypt( $acc->token );
 	$base = 'https://graph.facebook.com/' . LK_GRAPH . '/' . $acc->account_id;
 	$isv  = (bool) preg_match( '/\.(mp4|mov|m4v|webm)(\?|$)/i', $urls[0] );
-	if ( $isv ) {
+	if ( $isv && 'feed' !== $p->vkind ) {
+		// Reel do Facebook: abre o envio, manda o arquivo por URL e publica.
+		$st = lk_http_json( 'POST', $base . '/video_reels', array( 'upload_phase' => 'start', 'access_token' => $tok ) );
+		if ( is_wp_error( $st ) ) {
+			return $st;
+		}
+		$up = wp_remote_post( $st['upload_url'], array( 'timeout' => 120, 'headers' => array( 'Authorization' => 'OAuth ' . $tok, 'file_url' => $urls[0] ) ) );
+		if ( is_wp_error( $up ) || (int) wp_remote_retrieve_response_code( $up ) >= 300 ) {
+			return new WP_Error( 'lk', 'O Facebook não recebeu o vídeo do Reel.' );
+		}
+		$r = lk_http_json( 'POST', $base . '/video_reels', array( 'upload_phase' => 'finish', 'video_id' => $st['video_id'], 'video_state' => 'PUBLISHED', 'description' => $p->caption, 'access_token' => $tok ) );
+		if ( ! is_wp_error( $r ) ) {
+			$r = array( 'id' => $st['video_id'] );
+		}
+	} elseif ( $isv ) {
 		$r = lk_http_json( 'POST', $base . '/videos', array( 'file_url' => $urls[0], 'description' => $p->caption, 'access_token' => $tok ) );
 	} elseif ( count( $urls ) > 1 ) {
 		$att = array();

@@ -179,7 +179,7 @@ function lk_upload_image( $field ) {
 	$mimes = array( 'png' => 'image/png', 'jpg|jpeg' => 'image/jpeg', 'webp' => 'image/webp' );
 	$check = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'], $mimes );
 	if ( empty( $check['type'] ) ) {
-		return new WP_Error( 'lk_upload', 'Envie a logo em PNG, JPG ou WebP.' );
+		return new WP_Error( 'lk_upload', 'Envie a imagem em PNG, JPG ou WebP.' );
 	}
 	require_once ABSPATH . 'wp-admin/includes/file.php';
 	$up = wp_handle_upload( $file, array( 'test_form' => false, 'mimes' => $mimes ) );

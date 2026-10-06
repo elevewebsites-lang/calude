@@ -465,6 +465,8 @@ function lk_install_tables() {
 			hashtags text NULL,
 			review longtext NULL,
 			media longtext NULL,
+			vkind varchar(10) NOT NULL DEFAULT 'reel',
+			cover_url text NULL,
 			approval_token varchar(40) NOT NULL DEFAULT '',
 			client_status varchar(20) NOT NULL DEFAULT '',
 			change_target varchar(20) NOT NULL DEFAULT '',

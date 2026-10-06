@@ -1368,3 +1368,12 @@
 		box.appendChild(copy);
 	});
 })();
+
+/* Vídeo: mostra "Reels ou vídeo normal" e a capa só quando o formato é Vídeo / Reels. */
+(function () {
+	var sel = document.querySelector('[data-format-select]');
+	if (!sel) { return; }
+	var box = sel.form && sel.form.querySelector('[data-vopts]');
+	function sync() { if (box) { box.hidden = sel.value !== 'reels'; } }
+	sel.addEventListener('change', sync); sync();
+})();

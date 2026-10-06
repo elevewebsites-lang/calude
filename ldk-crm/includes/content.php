@@ -23,6 +23,32 @@ function lk_formats() {
 	return array( 'arte' => 'Arte única', 'carrossel' => 'Carrossel', 'reels' => 'Vídeo / Reels', 'foto' => 'Foto', 'story' => 'Story' );
 }
 
+/** Como o vídeo sai: Reels ou vídeo normal (feed). */
+function lk_video_kinds() {
+	return array( 'reel' => 'Reels', 'feed' => 'Vídeo normal (feed)' );
+}
+
+/**
+ * Bloco "Como vai ser publicado?" (só aparece quando o formato é Vídeo / Reels) e capa opcional.
+ */
+function lk_video_opts_html( $p, $with_cover = false ) {
+	$kind = $p && 'feed' === $p->vkind ? 'feed' : 'reel';
+	$show = ! $p || 'reels' === $p->format;
+	$o    = '<div class="vopts" data-vopts' . ( $show ? '' : ' hidden' ) . '><span class="vopts-t">Como vai ser publicado?</span><div class="vopts-r">';
+	foreach ( lk_video_kinds() as $k => $l ) {
+		$o .= '<label class="vopt"><input type="radio" name="vkind" value="' . esc_attr( $k ) . '"' . checked( $kind, $k, false ) . '><span><b>' . esc_html( $l ) . '</b><small>' . ( 'reel' === $k ? 'Vertical 9:16, entra na aba Reels e no feed. No Facebook sai como Reel.' : 'Vídeo comum. No Facebook sai como vídeo na página; no Instagram a Meta publica todo vídeo como Reels.' ) . '</small></span></label>';
+	}
+	$o .= '</div>';
+	if ( $with_cover ) {
+		$o .= '<div class="vcover">';
+		if ( $p && $p->cover_url ) {
+			$o .= '<img src="' . esc_url( $p->cover_url ) . '" alt="Capa do vídeo"><label class="chk small"><input type="checkbox" name="remover_capa" value="1"> remover a capa</label>';
+		}
+		$o .= '<label class="drop drop--file"><input type="file" name="cover_file" accept="image/jpeg,image/png"><span><strong>' . ( $p && $p->cover_url ? 'Trocar a capa' : 'Subir a capa' ) . '</strong><small>Imagem JPG ou PNG até 3 MB, vertical 1080×1920 (9:16). Sem capa, usamos um quadro do vídeo. A capa vale para o Instagram; o Facebook usa a capa automática.</small></span></label></div>';
+	}
+	return $o . '</div>';
+}
+
 function lk_networks() {
 	return array( 'instagram' => 'Instagram', 'facebook' => 'Facebook', 'linkedin' => 'LinkedIn', 'youtube' => 'YouTube', 'gmn' => 'Google Meu Negócio' );
 }
@@ -294,6 +320,7 @@ function lk_do_post_save() {
 		'title'          => lk_in( 'title' ) ? lk_in( 'title' ) : 'Post',
 		'caption'        => lk_in( 'caption', 'textarea' ),
 		'format'         => isset( lk_formats()[ lk_in( 'format' ) ] ) ? lk_in( 'format' ) : 'arte',
+		'vkind'          => 'feed' === lk_in( 'vkind' ) ? 'feed' : 'reel',
 		'networks'       => implode( ',', $nets ),
 		'scheduled_at'   => $date ? $date . ' ' . $time . ':00' : null,
 		'designer_id'    => lk_in( 'designer_id', 'int' ) ? lk_in( 'designer_id', 'int' ) : (int) $client->designer_id,
@@ -424,7 +451,22 @@ function lk_do_post_media() {
 	if ( $order && count( $order ) === count( $media ) ) {
 		$media = array_values( array_map( function ( $i ) use ( $media ) { return $media[ $i ]; }, $order ) );
 	}
-	lk_update( 'posts', $p->id, array( 'media' => wp_json_encode( $media ) ) );
+	$vup = array( 'media' => wp_json_encode( $media ) );
+	if ( isset( $_POST['vkind'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		$vup['vkind'] = 'feed' === lk_in( 'vkind' ) ? 'feed' : 'reel';
+	}
+	if ( lk_in( 'remover_capa', 'bool' ) ) {
+		$vup['cover_url'] = '';
+	}
+	if ( ! empty( $_FILES['cover_file']['name'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		$cv = lk_upload_image( 'cover_file' );
+		if ( is_wp_error( $cv ) ) {
+			lk_back( $cv->get_error_message(), 'erro' );
+		}
+		$vup['cover_url'] = $cv;
+		lk_post_log( $p->id, 'Capa do vídeo enviada.' );
+	}
+	lk_update( 'posts', $p->id, $vup );
 	if ( $new ) {
 		lk_post_log( $p->id, count( (array) $new ) . ' arquivo(s) enviado(s).' );
 	}
@@ -717,8 +759,9 @@ function lk_post_form( $p = null, $client_id = 0, $back = '' ) {
 		<input type="hidden" name="volta_url" value="<?php echo esc_attr( $back ); ?>">
 		<div class="grid-2">
 			<?php lk_select( 'client_id', 'Cliente', lk_client_options( 'Escolha o cliente…' ), $cid, 'required data-post-client' ); ?>
-			<?php lk_select( 'format', 'Formato', lk_formats(), $p ? $p->format : 'arte' ); ?>
+			<?php lk_select( 'format', 'Formato', lk_formats(), $p ? $p->format : 'arte', 'data-format-select' ); ?>
 		</div>
+		<?php echo lk_video_opts_html( $p ); // phpcs:ignore ?>
 		<?php lk_input( 'title', 'Título (interno)', $p ? $p->title : '', 'text', 'required placeholder="Ex.: Dia das Mães · oferta"' ); ?>
 		<?php lk_input( 'idea', 'Ideia do conteúdo (o cliente vê no planejamento)', $p ? $p->idea : '', 'textarea', 'rows="3" placeholder="Em 1–2 frases: o que vai ser esse post, o objetivo e a ideia visual…"' ); ?>
 		<?php lk_input( 'caption', 'Legenda', $p ? $p->caption : '', 'textarea', 'rows="6" placeholder="A legenda que vai ser publicada…" data-caption' ); ?>

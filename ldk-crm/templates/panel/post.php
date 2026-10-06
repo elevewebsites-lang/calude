@@ -77,7 +77,7 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 
 		<section class="card">
 			<div class="card-head"><h3>Arte</h3><span class="muted small"><?php echo esc_html( lk_formats()[ $p->format ] ?? '' ); ?> · vai para o Drive do cliente</span></div>
-			<?php lk_form( 'post_media', 'stack' ); ?>
+			<?php lk_form( 'post_media', 'stack', true ); ?>
 				<input type="hidden" name="id" value="<?php echo (int) $p->id; ?>">
 				<input type="hidden" name="new_media" value="[]" data-new-media>
 				<input type="hidden" name="order" value="" data-order>
@@ -94,6 +94,7 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 				<?php endif; ?>
 				<label class="drop drop--file"><input type="file" multiple accept="image/*,video/*" data-media-upload data-client="<?php echo (int) $p->client_id; ?>"><?php echo lk_icon( 'upload', 20 ); // phpcs:ignore ?><span><strong>Subir arte, fotos ou vídeo</strong><small>Instagram: imagem JPG até 8 MB · vídeo MP4/MOV até 300 MB (3 s a 15 min) · Story até 100 MB (60 s) · carrossel até 10 · vídeo grande vai direto para o Drive</small></span></label>
 				<div class="upfiles" data-upfiles></div>
+				<?php echo lk_video_opts_html( $p, true ); // phpcs:ignore ?>
 				<div class="form-actions">
 					<?php if ( $p->stage === lk_stage_for( 'design' ) ) : ?>
 						<button type="submit" name="so_salvar" value="1" class="btn btn--ghost" data-media-save>Só salvar (ainda não terminei)</button>

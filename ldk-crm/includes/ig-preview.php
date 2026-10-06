@@ -40,7 +40,8 @@ function lk_ig_media_el( $p, $i, $m, $video_attrs = 'controls playsinline preloa
 		return '<iframe src="' . esc_url( 'https://drive.google.com/file/d/' . rawurlencode( $m['id'] ) . '/preview' ) . '" allow="autoplay" loading="lazy"></iframe>';
 	}
 	if ( 'video' === $m['type'] ) {
-		return '<video src="' . esc_url( $src ) . '" ' . $video_attrs . ' data-mi="' . (int) $i . '"></video>';
+		$poster = 0 === (int) $i && ! empty( $p->cover_url ) ? ' poster="' . esc_url( $p->cover_url ) . '"' : '';
+		return '<video src="' . esc_url( $src ) . '" ' . $video_attrs . $poster . ' data-mi="' . (int) $i . '"></video>';
 	}
 	return '<img src="' . esc_url( $src ) . '" alt="Arte ' . esc_attr( $p->title ) . '">';
 }

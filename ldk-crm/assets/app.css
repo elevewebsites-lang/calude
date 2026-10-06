@@ -3332,3 +3332,18 @@ body.lk-lobby { margin: 0; background: #02060b; }
 .dsh-top .dsh-card.dsh-profile { margin: 0; height: 100%; box-sizing: border-box; }
 @container dshc (max-width: 860px) { .dsh-top { grid-template-columns: minmax(0, 1fr); } .dsh-top .dsh-hero-art { display: none; } }
 .dash-stamp { margin: 0 0 8px; text-align: right; }
+
+/* Vídeo: Reels ou vídeo normal + capa */
+.vopts{display:grid;gap:10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.vopts[hidden]{display:none}
+.vopts-t{font-weight:700;font-size:.9rem;color:var(--ink)}
+.vopts-r{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vopt{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:var(--bg)}
+.vopt input{margin-top:3px;accent-color:var(--accent)}
+.vopt span{display:flex;flex-direction:column;gap:3px}
+.vopt b{font-size:.92rem;color:var(--ink)}
+.vopt small{font-size:.78rem;line-height:1.45;color:var(--muted)}
+.vopt:has(input:checked){border-color:var(--accent-text);box-shadow:0 0 0 2px var(--accent)}
+.vcover{display:grid;gap:10px}
+.vcover img{width:96px;aspect-ratio:9/16;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
+@media (max-width:640px){.vopts-r{grid-template-columns:1fr}}
