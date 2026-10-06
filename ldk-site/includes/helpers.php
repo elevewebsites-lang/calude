@@ -98,8 +98,8 @@ function ldk_site_ico( $name ) {
 			'bell'    => '<path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 21h4"/>',
 			'lock'    => '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
 			'pin'     => '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
-			'ig'      => '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8"/>',
-			'wa'      => '<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.4A8 8 0 1 1 21 12z"/><path d="M9 9c0 3 3 6 6 6l1-2-2-1-1 .8c-.8-.4-1.600-1.200-2-2L11.800 10l-1-2z"/>',
+			'ig'      => '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>',
+			'wa'      => '<path d="M3 21l1.6-4.9A9 9 0 1 1 8 19.5z"/><path d="M9 8.5c.3 3.2 3.300 6.200 6.500 6.500l1.300-1.600-2.300-1.200-.900.900c-1-.4-2.200-1.600-2.600-2.600l.9-.9L10.700 7z"/>',
 			'mail'    => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
 			'globe'   => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
 			'link'    => '<path d="M10 14a4 4 0 0 0 5.700 0l3-3a4 4 0 0 0-5.700-5.700l-1 1M14 10a4 4 0 0 0-5.700 0l-3 3a4 4 0 0 0 5.700 5.700l1-1"/>',
@@ -117,4 +117,9 @@ function ldk_site_logo_html( $cls = 'ldk-logo' ) {
 	$src = esc_url( ldk_site_opt( 'logo' ) );
 	$fb  = esc_url( ldk_site_logo_fallback() );
 	return '<img class="' . esc_attr( $cls ) . '" src="' . $src . '" alt="LDK Marketing Digital" onerror="this.onerror=null;this.src=\'' . $fb . '\'">';
+}
+
+/** Monograma em SVG embutido (nunca quebra, mesmo sem a imagem da logo). */
+function ldk_site_mark() {
+	return '<svg class="ldk-mark" viewBox="0 0 120 120" aria-label="LDK" role="img"><defs><linearGradient id="ldkg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14E9EC"/><stop offset="1" stop-color="#2f8cff"/></linearGradient></defs><rect x="3" y="3" width="114" height="114" rx="34" fill="#071826"/><rect x="3" y="3" width="114" height="114" rx="34" fill="none" stroke="url(#ldkg)" stroke-width="3"/><text x="60" y="73" text-anchor="middle" font-family="Montserrat,Arial,sans-serif" font-weight="800" font-size="40" fill="#fff" letter-spacing="-1">LDK</text><circle cx="60" cy="90" r="4" fill="#14E9EC"/></svg>';
 }

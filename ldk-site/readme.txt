@@ -1,4 +1,4 @@
-LDK Site 1.0.0 — site institucional da LDK em um único plugin (sem tema), feito para Elementor Pro.
+LDK Site 1.1.0 — site institucional da LDK em um único plugin (sem tema), feito para Elementor Pro.
 
 INSTALAR: Plugins > Adicionar novo > Enviar plugin > ativar. Ao ativar, cria sozinho:
  páginas (Início, Serviços, Painel do cliente, Sobre nós, Blog, Contato, Diagnóstico de perfil, Links),

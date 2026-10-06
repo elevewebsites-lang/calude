@@ -44,24 +44,20 @@ function ldk_site_r_pagehead( $s ) {
 }
 
 function ldk_site_r_hero( $s ) {
-	$chips = '';
-	foreach ( ldk_site_lines( $s['chips'] ) as $i => $c ) {
-		$chips .= '<span class="chip c' . ( $i % 5 ) . '" style="--d:' . ( 0.5 + $i * 0.12 ) . 's">' . esc_html( $c ) . '</span>';
-	}
 	return '<section class="ldk-sec ldk-herosec"><div class="ldk-wrap ldk-herogrid">' .
 		'<div class="ldk-herotxt">' .
-		'<span class="ldk-eyebrow" data-r><i class="dot"></i>' . esc_html( $s['eyebrow'] ) . '</span>' .
+		'<span class="ldk-eyebrow" data-r>' . esc_html( $s['eyebrow'] ) . '</span>' .
 		'<h1 class="ldk-h1" data-r style="--d:.06s">' . ldk_site_hl( $s['title'] ) . '</h1>' .
 		'<p class="ldk-lead" data-r style="--d:.12s">' . esc_html( $s['text'] ) . '</p>' .
 		'<div class="ldk-actions" data-r style="--d:.18s">' . ldk_site_btn( $s['btn1'], $s['btn1_u'] ) . ldk_site_btn( $s['btn2'], $s['btn2_u'], true ) . '</div>' .
-		( $s['proof'] ? '<p class="ldk-proof" data-r style="--d:.24s">' . ldk_site_ico( 'star' ) . esc_html( $s['proof'] ) . '</p>' : '' ) .
+		( $s['proof'] ? '<p class="ldk-proof" data-r style="--d:.24s">' . esc_html( $s['proof'] ) . '</p>' : '' ) .
 		'</div>' .
 		'<div class="ldk-herovis" data-r="zoom" aria-hidden="true">' .
-		'<div class="orb o1" data-par="-.06"></div><div class="orb o2" data-par=".05"></div>' .
-		'<div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>' .
-		'<div class="core">' . ldk_site_logo_html( 'ldk-logo core-logo' ) . '</div>' .
-		$chips .
-		'</div></div><a class="ldk-scroll" href="#ldk-next" aria-label="Rolar"><i></i></a><span id="ldk-next"></span></section>';
+		'<div class="hv-glow" data-par="-.05"></div>' .
+		'<div class="hv-laptop" data-par=".03"><div class="bar"><i></i><i></i><i></i></div><img src="' . esc_url( ldk_site_img( $s['img_main'] ) ) . '" alt=""></div>' .
+		'<div class="hv-phone" data-par="-.04"><img src="' . esc_url( ldk_site_img( $s['img_phone'] ) ) . '" alt=""></div>' .
+		'<div class="hv-toast">' . ldk_site_ico( 'check' ) . '<span><b>Post aprovado</b><small>Publicação agendada</small></span></div>' .
+		'</div></div></section>';
 }
 
 function ldk_site_r_marquee( $s ) {
@@ -237,14 +233,14 @@ function ldk_site_r_posts( $s ) {
 }
 
 function ldk_site_r_links( $s ) {
-	$h = '<section class="ldk-linkpage"><div class="lp-card" data-r="zoom"><div class="lp-av">' . ldk_site_logo_html( 'ldk-logo' ) . '</div>' .
-		'<h1>' . esc_html( $s['name'] ) . '</h1><p>' . esc_html( $s['bio'] ) . '</p><div class="lp-list">';
+	$h = '<section class="ldk-linkpage"><div class="lp-card"><div class="lp-av" data-r="zoom">' . ldk_site_mark() . '</div>' .
+		'<h1 data-r style="--d:.05s">' . esc_html( $s['name'] ) . '</h1><p data-r style="--d:.1s">' . esc_html( $s['bio'] ) . '</p><div class="lp-list">';
 	foreach ( (array) $s['items'] as $i => $it ) {
 		$u  = ldk_site_link( $it['url'] );
-		$h .= '<a class="lp-link" href="' . esc_url( $u ) . '" style="--d:' . ( 0.15 + $i * 0.07 ) . 's"' . ( 0 === strpos( $u, 'http' ) && false === strpos( $u, home_url() ) ? ' target="_blank" rel="noopener"' : '' ) . '>' .
-			'<span class="ldk-ico">' . ldk_site_ico( isset( $it['icon'] ) ? $it['icon'] : 'link' ) . '</span><span class="tx"><b>' . esc_html( $it['title'] ) . '</b><small>' . esc_html( $it['sub'] ) . '</small></span>' . ldk_site_ico( 'arrow' ) . '</a>';
+		$h .= '<a class="lp-link' . ( 0 === $i ? ' main' : '' ) . '" href="' . esc_url( $u ) . '" data-r style="--d:' . ( 0.12 + $i * 0.06 ) . 's"' . ( 0 === strpos( $u, 'http' ) && false === strpos( $u, home_url() ) ? ' target="_blank" rel="noopener"' : '' ) . '>' .
+			'<span class="lic">' . ldk_site_ico( isset( $it['icon'] ) ? $it['icon'] : 'link' ) . '</span><span class="tx"><b>' . esc_html( $it['title'] ) . '</b><small>' . esc_html( $it['sub'] ) . '</small></span><span class="go">' . ldk_site_ico( 'arrow' ) . '</span></a>';
 	}
-	return $h . '</div><p class="lp-foot">© ' . gmdate( 'Y' ) . ' LDK Marketing Digital</p></div></section>';
+	return $h . '</div><p class="lp-foot">© ' . gmdate( 'Y' ) . ' LDK Marketing Digital · ' . esc_html( ldk_site_opt( 'cidade' ) ) . '</p></div></section>';
 }
 
 function ldk_site_r_faq( $s ) {

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LDK Site
  * Description: Site institucional da LDK Marketing Digital em um único plugin: instala páginas, widgets do Elementor Pro, imagens, menu, animações e formulários ligados ao CRM. Sem tema.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Eleve Websites
  * Requires PHP: 7.4
  * Text Domain: ldk-site
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LDK_SITE_VERSION', '1.0.0' );
+define( 'LDK_SITE_VERSION', '1.1.0' );
 define( 'LDK_SITE_FILE', __FILE__ );
 define( 'LDK_SITE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LDK_SITE_URL', plugin_dir_url( __FILE__ ) );
