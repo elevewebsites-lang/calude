@@ -699,7 +699,14 @@ function ap_insert( $table, $data ) {
 		$data['updated_at'] = ap_now();
 	}
 	$wpdb->insert( ap_table( $table ), $data );
-	return (int) $wpdb->insert_id;
+	$new_id = (int) $wpdb->insert_id;
+	if ( 'transactions' === $table && function_exists( 'ap_order_payment_reset' ) ) {
+		ap_order_payment_reset();
+	}
+	if ( function_exists( 'ap_sheet_hook' ) && in_array( $table, array( 'projects', 'transactions', 'clients', 'credits' ), true ) ) {
+		ap_sheet_hook( $table, $new_id, $data );
+	}
+	return $new_id;
 }
 
 function ap_update( $table, $id, $data ) {
@@ -707,7 +714,14 @@ function ap_update( $table, $id, $data ) {
 	if ( in_array( $table, array( 'projects', 'leads', 'quotes' ), true ) ) {
 		$data['updated_at'] = ap_now();
 	}
-	return $wpdb->update( ap_table( $table ), $data, array( 'id' => (int) $id ) );
+	$res = $wpdb->update( ap_table( $table ), $data, array( 'id' => (int) $id ) );
+	if ( 'transactions' === $table && function_exists( 'ap_order_payment_reset' ) ) {
+		ap_order_payment_reset();
+	}
+	if ( function_exists( 'ap_sheet_hook' ) && in_array( $table, array( 'projects', 'transactions', 'clients', 'credits' ), true ) ) {
+		ap_sheet_hook( $table, (int) $id, $data );
+	}
+	return $res;
 }
 
 function ap_delete( $table, $id ) {

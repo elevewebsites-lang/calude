@@ -269,6 +269,7 @@ function ap_import_catalog_alias() {
  */
 function ap_import_run( $path, $dry = false ) {
 	@set_time_limit( 300 ); // phpcs:ignore
+	$GLOBALS['ap_sheets_pause'] = true; // a planilha do Google recebe tudo de uma vez pelo botão "Sincronizar tudo"
 	$sheets = ap_xlsx_read( $path );
 	if ( is_wp_error( $sheets ) ) {
 		return array( 'counts' => array(), 'log' => array(), 'errors' => array( $sheets->get_error_message() ) );
@@ -484,6 +485,9 @@ function ap_import_run( $path, $dry = false ) {
 			continue;
 		}
 		$add( 'custos fixos' );
+		if ( preg_match( '/funcion|sal[aá]rio|folha/iu', $cat ) ) {
+			$desc = ''; // folha de pagamento entra só como custo, sem o nome de cada pessoa
+		}
 		if ( ! $dry ) {
 			ap_insert( 'transactions', array( 'type' => 'out', 'category' => $cat, 'description' => mb_substr( $cat . ( $desc ? ' · ' . $desc : '' ), 0, 250 ), 'amount' => $amount, 'due_date' => $due, 'paid_at' => $paid ? ( is_string( $r['data pagamento'] ?? null ) ? $r['data pagamento'] : $due ) : null, 'method' => '', 'status' => $paid ? 'pago' : 'pendente', 'external_id' => $ext ) );
 		}

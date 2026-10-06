@@ -104,6 +104,7 @@ ap_client_start( $p->title, $client );
 <?php
 ?>
 <p class="small center"><a href="<?php echo esc_url( ap_client_link( 'mensagens', 0, array( 'pedido' => $p->id ) ) ); ?>">Dúvida sobre este pedido? Mande uma mensagem →</a></p>
+<script src="<?php echo esc_url( AP_URL . 'assets/artpreview.js?ver=' . AP_VERSION ); ?>"></script>
 <script src="<?php echo esc_url( AP_URL . 'assets/reupload.js?ver=' . AP_VERSION ); ?>"></script>
 <?php
 ap_client_end();

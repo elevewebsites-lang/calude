@@ -141,7 +141,7 @@ function ap_google_connect() {
 			'client_id'     => rawurlencode( $client_id ),
 			'redirect_uri'  => rawurlencode( ap_google_redirect_uri() ),
 			'response_type' => 'code',
-			'scope'         => rawurlencode( 'openid email https://www.googleapis.com/auth/drive.file' ),
+			'scope'         => rawurlencode( 'openid email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets' ),
 			'access_type'   => 'offline',
 			'prompt'        => 'consent',
 			'state'         => $state,
@@ -192,10 +192,11 @@ function ap_google_callback() {
 	$st['access']  = ap_encrypt( $json['access_token'] );
 	$st['expires'] = time() + (int) $json['expires_in'] - 60;
 	$st['refresh'] = ap_encrypt( $json['refresh_token'] );
+	$st['scope']   = (string) ( $json['scope'] ?? '' );
 	$me            = ap_google_api( 'GET', 'https://www.googleapis.com/oauth2/v3/userinfo', null, $st );
 	$st['email']   = ! is_wp_error( $me ) && ! empty( $me['email'] ) ? $me['email'] : '';
 	update_option( 'ap_google', $st, false );
-	ap_flash( 'Google Drive conectado' . ( $st['email'] ? ' (' . $st['email'] . ')' : '' ) . '. A partir de agora, os arquivos são copiados para lá.' );
+	ap_flash( 'Google conectado' . ( $st['email'] ? ' (' . $st['email'] . ')' : '' ) . '. Os arquivos dos clientes vão direto para o seu Drive' . ( false !== strpos( $st['scope'], 'spreadsheets' ) ? ' e a planilha de pedidos pode ser criada.' : '.' ) );
 	wp_safe_redirect( $back );
 	exit;
 }
@@ -236,6 +237,11 @@ function ap_google_token( $state = null ) {
 }
 
 function ap_google_api( $method, $url, $body = null, $state = null, $raw = null ) {
+	// Gancho para testes e para simular a API do Google sem rede.
+	$pre = apply_filters( 'ap_google_api_pre', null, $method, $url, $body, $raw );
+	if ( null !== $pre ) {
+		return $pre;
+	}
 	$token = $state && ! empty( $state['access'] ) ? ap_decrypt( $state['access'] ) : ap_google_token();
 	if ( is_wp_error( $token ) ) {
 		return $token;
@@ -339,6 +345,17 @@ function ap_drive_push() {
 	if ( $left && ! wp_next_scheduled( 'ap_drive_push' ) ) {
 		wp_schedule_single_event( time() + 300, 'ap_drive_push' );
 	}
+}
+
+/** Envia um arquivo local (ex.: temporário do PHP) para uma pasta do Drive. Devolve id, name, size e webViewLink. */
+function ap_drive_upload_path( $path, $name, $mime, $parent_id ) {
+	if ( ! is_readable( $path ) ) {
+		return new WP_Error( 'ap_drive', 'Arquivo não encontrado.' );
+	}
+	$boundary = 'ap' . wp_generate_password( 16, false );
+	$meta     = wp_json_encode( array( 'name' => $name, 'parents' => array( $parent_id ) ) );
+	$body     = "--$boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n$meta\r\n--$boundary\r\nContent-Type: $mime\r\n\r\n" . file_get_contents( $path ) . "\r\n--$boundary--"; // phpcs:ignore WordPress.WP.AlternativeFunctions
+	return ap_google_api( 'POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,size,webViewLink', null, null, array( 'type' => 'multipart/related; boundary=' . $boundary, 'body' => $body ) );
 }
 
 function ap_drive_upload( $attachment_id, $folder ) {

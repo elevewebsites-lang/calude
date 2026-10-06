@@ -114,7 +114,13 @@
 
 	function drawFiles(row) {
 		var list = JSON.parse(f(row, 'files').value || '[]');
-		var done = list.map(function (x, i) { return '<div class="upfile is-done"><span>✓ ' + x.name + '<small>' + (x.size ? (x.size / 1048576).toFixed(1).replace('.', ',') + ' MB' : '') + '</small></span><button type="button" class="icon-btn" data-rmfile="' + i + '">×</button></div>'; }).join('');
+		var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+		var wv = num(f(row, 'w').value), hv = num(f(row, 'h').value);
+		var done = list.map(function (x, i) {
+			var w = window.apArtCheck ? window.apArtCheck(x, wv, hv) : '';
+			var note = w || x.note || '';
+			return '<div class="upfile is-done' + (x.thumb ? ' has-thumb' : '') + '">' + (x.thumb ? '<img class="upthumb" alt="" src="' + x.thumb + '">' : '') + '<span>✓ ' + esc(x.name) + '<small>' + (x.size ? (x.size / 1048576).toFixed(1).replace('.', ',') + ' MB' : '') + (x.pw ? ' · ' + (Math.round(x.pw * 10) / 10) + '×' + (Math.round(x.ph * 10) / 10) + ' cm' : '') + '</small>' + (note ? '<small class="upnote' + (w ? ' is-warn' : '') + '">' + esc(note) + '</small>' : '') + '</span><button type="button" class="icon-btn" data-rmfile="' + i + '">×</button></div>';
+		}).join('');
 		var box2 = $('[data-upfiles]', row);
 		$$('.upfile.is-done', box2).forEach(function (n) { n.remove(); });
 		box2.insertAdjacentHTML('afterbegin', done);
@@ -138,6 +144,7 @@
 				xhr.onload = function () {
 					if (xhr.status === 308) { var rg = xhr.getResponseHeader('Range'); start = rg ? parseInt(rg.split('-')[1], 10) + 1 : end; next(); }
 					else if (xhr.status === 200 || xhr.status === 201) { try { resolve(JSON.parse(xhr.responseText)); } catch (e) { reject(new Error('Resposta inválida do Drive.')); } }
+					else if (xhr.status === 403) { var q = new Error('O Drive está sem espaço.'); q.quota = true; reject(q); }
 					else reject(new Error('O Drive recusou o envio (' + xhr.status + ').'));
 				};
 				xhr.onerror = function () { setTimeout(next, 3000); }; // queda de conexão: tenta o mesmo pedaço de novo
@@ -154,24 +161,37 @@
 		el.innerHTML = '<span>' + file.name + '<small>' + (file.size / 1048576).toFixed(1).replace('.', ',') + ' MB</small></span><div class="upbar"><i></i></div>';
 		holder.appendChild(el);
 		var bar = $('i', el);
+		var art = window.apArtPreview ? window.apArtPreview(file) : Promise.resolve({});
 		uploading++; render();
+		var viaServer = function (max) {
+			if (max && file.size > max) throw new Error('Arquivo maior que o limite do servidor (' + Math.round(max / 1048576) + ' MB) e o Google Drive está sem espaço. Avise a ' + 'AllPrint.');
+			var fd = new FormData(); fd.append('file', file);
+			return api('upload/small', fd, true);
+		};
 		return api('upload/start', { name: file.name, size: file.size, type: file.type || 'application/octet-stream' })
 			.then(function (s) {
-				if (s.mode === 'drive') return putChunks(s.url, file, s.chunk, bar).then(function (g) { return api('upload/done', { id: g.id }); });
-				if (file.size > s.max) throw new Error('Arquivo maior que o limite do servidor (' + Math.round(s.max / 1048576) + ' MB). Peça para a ' + 'AllPrint conectar o Google Drive.');
-				var fd = new FormData(); fd.append('file', file);
-				return api('upload/small', fd, true);
+				if (s.mode === 'drive') return putChunks(s.url, file, s.chunk, bar).then(function (g) { return api('upload/done', { id: g.id }); }).catch(function (err) { if (err.quota) return viaServer(s.max); throw err; });
+				return viaServer(s.max);
 			})
 			.then(function (res) {
-				var list = JSON.parse(f(row, 'files').value || '[]');
-				list.push({ id: res.id, name: res.name, size: res.size, link: res.link });
-				f(row, 'files').value = JSON.stringify(list);
-				el.remove(); drawFiles(row);
+				return art.then(function (m) {
+					m = m || {};
+					var list = JSON.parse(f(row, 'files').value || '[]'), o = { id: res.id, name: res.name, size: res.size, link: res.link };
+					if (m.thumb) o.thumb = m.thumb;
+					if (m.pw) { o.pw = m.pw; o.ph = m.ph; }
+					if (m.note) o.note = m.note;
+					list.push(o);
+					f(row, 'files').value = JSON.stringify(list);
+					el.remove(); drawFiles(row);
+				});
 			})
 			.catch(function (err) { el.classList.add('is-err'); el.querySelector('.upbar').outerHTML = '<small class="text-late">' + err.message + '</small>'; })
 			.then(function () { uploading--; render(); });
 	}
 
+	box.addEventListener('input', function (e) {
+		if (e.target.matches('[data-f=w],[data-f=h]')) drawFiles(e.target.closest('[data-oitem]'));
+	});
 	box.addEventListener('change', function (e) {
 		if (!e.target.matches('[data-upload]')) return;
 		var row = e.target.closest('[data-oitem]');

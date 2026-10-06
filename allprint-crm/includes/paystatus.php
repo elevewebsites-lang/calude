@@ -94,11 +94,18 @@ function ap_stage_badge( $slug, $label = '' ) {
  * Situação do pagamento
  * -------------------------------------------------------------------- */
 
+/** Limpa o cache de situação de pagamento (chamado quando um lançamento muda). */
+function ap_order_payment_reset() {
+	$GLOBALS['ap_pay_cache'] = array();
+}
+
 function ap_order_payment( $p ) {
-	static $cache = array();
 	$id = is_object( $p ) ? (int) $p->id : (int) $p;
-	if ( isset( $cache[ $id ] ) ) {
-		return $cache[ $id ];
+	if ( ! isset( $GLOBALS['ap_pay_cache'] ) ) {
+		$GLOBALS['ap_pay_cache'] = array();
+	}
+	if ( isset( $GLOBALS['ap_pay_cache'][ $id ] ) ) {
+		return $GLOBALS['ap_pay_cache'][ $id ];
 	}
 	global $wpdb;
 	$rows    = $wpdb->get_results( $wpdb->prepare( 'SELECT amount, status, method FROM ' . ap_table( 'transactions' ) . " WHERE project_id = %d AND type = 'in'", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL
@@ -132,7 +139,7 @@ function ap_order_payment( $p ) {
 	} else {
 		$st = array( 'state' => 'wait', 'tone' => 'wait', 'label' => 'Aguardando pagamento', 'paid' => $paid, 'due' => $due );
 	}
-	$cache[ $id ] = $st;
+	$GLOBALS['ap_pay_cache'][ $id ] = $st;
 	return $st;
 }
 

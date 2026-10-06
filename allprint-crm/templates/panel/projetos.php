@@ -56,6 +56,16 @@ if ( '' === $view ) :
 							$qi    = ap_json( $q->images );
 							$thumb = $qi ? ( $qi[0]['thumb'] ?? $qi[0]['url'] ) : '';
 						}
+						if ( ! $thumb ) {
+							foreach ( ap_json( $p->items ) as $oi ) {
+								foreach ( (array) ( $oi['files'] ?? array() ) as $fl ) {
+									if ( ! empty( $fl['thumb'] ) ) {
+										$thumb = $fl['thumb'];
+										break 2;
+									}
+								}
+							}
+						}
 						$wa = $slug === $ready ? ap_order_wa_link( $p ) : '';
 						?>
 						<?php $pay = ap_order_payment( $p ); ?>

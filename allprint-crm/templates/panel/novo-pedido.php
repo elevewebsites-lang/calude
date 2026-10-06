@@ -123,6 +123,7 @@ ap_panel_start( 'Novo pedido manual', 'novo-pedido' );
 		</div>
 	</aside>
 </form>
+<script src="<?php echo esc_url( AP_URL . 'assets/artpreview.js?ver=' . AP_VERSION ); ?>"></script>
 <script src="<?php echo esc_url( AP_URL . 'assets/pedido.js?ver=' . AP_VERSION ); ?>"></script>
 <script src="<?php echo esc_url( AP_URL . 'assets/manual.js?ver=' . AP_VERSION ); ?>"></script>
 <?php

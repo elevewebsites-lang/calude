@@ -284,6 +284,7 @@ function ap_action_button( $do, $fields, $label, $class = 'btn btn--ghost btn--s
  * Campo com rótulo.
  */
 function ap_input( $name, $label, $value = '', $type = 'text', $attrs = '' ) {
+	$value = null === $value ? '' : $value;
 	$id = 'f_' . preg_replace( '/[^a-z0-9_]/', '_', strtolower( $name ) ) . '_' . wp_rand( 100, 999 );
 	echo '<label class="field" for="' . esc_attr( $id ) . '"><span>' . esc_html( $label ) . '</span>';
 	if ( 'textarea' === $type ) {

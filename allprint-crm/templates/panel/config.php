@@ -215,6 +215,24 @@ ap_panel_start( 'Configurações', 'config' );
 	<?php endif; ?>
 </section>
 
+<section class="card" id="planilha-google">
+	<div class="card-head"><h3>Planilha do Google (pedidos)</h3><?php $sh = ap_sheets_state(); ?><?php if ( ! empty( $sh['id'] ) ) : ?><em class="badge badge--ok">sincronizando</em><?php endif; ?></div>
+	<p class="muted small">Cria uma planilha na sua conta Google com todos os pedidos (uma linha por item, no mesmo formato da planilha de controle) e uma aba de clientes. Cada mudança no sistema, como pedido novo, etapa, pagamento ou entrega, atualiza as linhas dela sozinha. Os arquivos dos clientes ficam no Google Drive, numa pasta por cliente e por pedido.</p>
+	<?php if ( ! ap_google_connected() ) : ?>
+		<p class="flash flash--warn">Conecte o Google acima primeiro.</p>
+	<?php elseif ( ! ap_sheets_scope_ok() ) : ?>
+		<p class="flash flash--warn">O Google está conectado, mas sem permissão para planilhas. Clique em "Desconectar Google" e conecte de novo (um clique) para liberar.</p>
+	<?php elseif ( ! empty( $sh['id'] ) ) : ?>
+		<p><a class="btn btn--primary btn--sm" href="<?php echo esc_url( $sh['url'] ); ?>" target="_blank" rel="noopener">Abrir a planilha</a>
+		<?php ap_action_button( 'sheets_create', array(), 'Sincronizar tudo de novo', 'btn btn--ghost btn--sm', 'Reescrever a planilha inteira com os dados do sistema?' ); ?>
+		<?php ap_action_button( 'sheets_off', array(), 'Desligar', 'btn btn--link btn--sm', 'Parar de atualizar a planilha?' ); ?></p>
+		<p class="muted small"><?php echo ! empty( $sh['last_sync'] ) ? 'Última atualização: ' . esc_html( ap_ago( $sh['last_sync'] ) ) . '. ' : ''; ?><?php echo ! empty( $sh['rows'] ) ? (int) $sh['rows'] . ' linhas na carga inicial.' : ''; ?></p>
+		<?php if ( ! empty( $sh['error'] ) ) : ?><p class="flash flash--warn">Última tentativa falhou: <?php echo esc_html( $sh['error'] ); ?> (o sistema tenta de novo de hora em hora).</p><?php endif; ?>
+	<?php else : ?>
+		<?php ap_action_button( 'sheets_create', array(), 'Criar a planilha e enviar os pedidos', 'btn btn--primary', '' ); ?>
+	<?php endif; ?>
+</section>
+
 <section class="card" id="formulario-site">
 	<div class="card-head"><h3>Formulários do site → funil</h3></div>
 	<p class="muted small">Quem preencher um formulário no <?php echo esc_html( preg_replace( '#^https?://#', '', $s['site'] ) ); ?> entra no Funil como lead (origem "Site"), com lembrete para responder hoje.</p>

@@ -155,3 +155,12 @@
 .est-inputs { display: flex; gap: 8px; flex-wrap: wrap; }
 .est-inputs .field { min-width: 96px; max-width: 130px; }
 @media (max-width: 900px) { .est-table .table-row, .table--count .table-row { grid-template-columns: 1fr; } }
+
+/* Prévia da arte enviada (CDR, PDF, imagem) */
+.upfile.has-thumb{align-items:center;gap:10px}
+.upthumb{width:56px;height:56px;object-fit:contain;background:repeating-conic-gradient(#e6e6e6 0 25%,#fff 0 50%) 0 0/12px 12px;border:1px solid var(--line,#ddd);border-radius:6px;flex:none}
+.upnote{display:block;color:var(--muted,#555)}
+.upnote.is-warn{color:var(--warn-text,#8a3a00)}
+.order-items,.oitem,.order-sum,.mo-client,.mo-new>*{min-width:0}
+.oitem .grid-3,.oitem .grid-2{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
+.seg{max-width:100%;overflow-x:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch}

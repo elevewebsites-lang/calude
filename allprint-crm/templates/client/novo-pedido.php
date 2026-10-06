@@ -100,6 +100,7 @@ ap_client_start( 'Novo pedido', $client );
 		</div>
 	</aside>
 </form>
+<script src="<?php echo esc_url( AP_URL . 'assets/artpreview.js?ver=' . AP_VERSION ); ?>"></script>
 <script src="<?php echo esc_url( AP_URL . 'assets/pedido.js?ver=' . AP_VERSION ); ?>"></script>
 <script src="<?php echo esc_url( AP_URL . 'assets/cart.js?ver=' . AP_VERSION ); ?>"></script>
 <?php

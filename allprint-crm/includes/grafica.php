@@ -275,6 +275,32 @@ function ap_do_catalog_save() {
  * -------------------------------------------------------------------- */
 
 /**
+ * Dados de um arquivo enviado (ele mora no Google Drive; aqui só ficam o link, o nome e uma miniatura pequena
+ * gerada no navegador, guardada no próprio pedido: nenhum arquivo ocupa a hospedagem).
+ */
+function ap_clean_file_meta( $f ) {
+	$out = array(
+		'id'   => sanitize_text_field( $f['id'] ),
+		'name' => sanitize_text_field( $f['name'] ?? '' ),
+		'size' => (int) ( $f['size'] ?? 0 ),
+		'link' => esc_url_raw( $f['link'] ?? '' ),
+	);
+	$thumb = (string) ( $f['thumb'] ?? '' );
+	if ( $thumb && strlen( $thumb ) <= 45000 && preg_match( '#^data:image/(jpeg|png);base64,[A-Za-z0-9+/=]+$#', $thumb ) ) {
+		$out['thumb'] = $thumb;
+	}
+	foreach ( array( 'pw', 'ph' ) as $k ) {
+		if ( isset( $f[ $k ] ) && is_numeric( $f[ $k ] ) && $f[ $k ] > 0 && $f[ $k ] < 100000 ) {
+			$out[ $k ] = round( (float) $f[ $k ], 2 );
+		}
+	}
+	if ( ! empty( $f['note'] ) ) {
+		$out['note'] = sanitize_text_field( mb_substr( (string) $f['note'], 0, 200 ) );
+	}
+	return $out;
+}
+
+/**
  * Lê os itens do formulário do pedido (i[material][], i[w][], …).
  */
 function ap_order_items_from_post() {
@@ -307,7 +333,7 @@ function ap_order_items_from_post() {
 				array_filter(
 					array_map(
 						function ( $f ) {
-							return is_array( $f ) && ! empty( $f['id'] ) ? array( 'id' => sanitize_text_field( $f['id'] ), 'name' => sanitize_text_field( $f['name'] ?? '' ), 'size' => (int) ( $f['size'] ?? 0 ), 'link' => esc_url_raw( $f['link'] ?? '' ) ) : null;
+							return is_array( $f ) && ! empty( $f['id'] ) ? ap_clean_file_meta( $f ) : null;
 						},
 						$files
 					)
@@ -460,7 +486,7 @@ function ap_do_client_files() {
 		if ( isset( $items[ $k ] ) && is_array( $files ) ) {
 			foreach ( $files as $f ) {
 				if ( ! empty( $f['id'] ) ) {
-					$items[ $k ]['files'][] = array( 'id' => sanitize_text_field( $f['id'] ), 'name' => sanitize_text_field( $f['name'] ?? '' ), 'size' => (int) ( $f['size'] ?? 0 ), 'link' => esc_url_raw( $f['link'] ?? '' ), 'new' => 1 );
+					$items[ $k ]['files'][] = ap_clean_file_meta( $f ) + array( 'new' => 1 );
 					$added++;
 				}
 			}

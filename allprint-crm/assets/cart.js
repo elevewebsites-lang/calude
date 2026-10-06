@@ -2,13 +2,13 @@
 (function () {
 	'use strict';
 	var box = document.querySelector('[data-cart]');
-	if (!box || !window.AP) return;
+	if (!box) return;
 	var $ = function (s) { return box.querySelector(s); };
 	var money = function (v) { return 'R$ ' + (Math.round(v * 100) / 100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
 	var timer;
 	function recalc() {
 		var subtotal = (window.APORDER && APORDER.total) || 0;
-		clearTimeout(timer);
+		clearTimeout(timer); if (!window.AP) { timer = setTimeout(recalc, 200); return; }
 		timer = setTimeout(function () {
 			var uc = $('[data-usecredit]');
 			fetch(window.AP.rest + 'coupon', { method: 'POST', credentials: 'same-origin', headers: { 'X-WP-Nonce': window.AP.nonce, 'Content-Type': 'application/json' }, body: JSON.stringify({ subtotal: subtotal, code: $('[data-coupon]').value.trim(), use_credit: uc ? uc.checked : false }) })

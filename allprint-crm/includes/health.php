@@ -128,6 +128,20 @@ function ap_health_checks() {
 		'',
 	);
 
+	// 3b. Arquivos dos clientes: ficam no Google Drive; só vão para a hospedagem se o Drive estiver sem espaço.
+	$hp = function_exists( 'ap_hosted_pending' ) ? ap_hosted_pending() : array( 'n' => 0, 'bytes' => 0 );
+	if ( ap_google_connected() ) {
+		$c['hosted'] = array(
+			$hp['n'] ? 'warn' : 'ok',
+			'Arquivos dos clientes no Google Drive',
+			$hp['n'] ? $hp['n'] . ' arquivo(s) (' . size_format( $hp['bytes'] ) . ') ficaram na hospedagem porque o Drive estava sem espaço. Eles vão para o Drive sozinhos quando houver espaço.' : 'Todos os arquivos enviados pelos clientes estão no Drive (nada ocupa a hospedagem).',
+			$hp['n'] ? 'Libere espaço no Google Drive (ou aumente o plano Google One). A cada hora o sistema tenta mover e apaga a cópia da hospedagem.' : '',
+			'',
+		);
+	} else {
+		$c['hosted'] = array( 'warn', 'Arquivos dos clientes', 'O Google Drive não está conectado: os arquivos dos clientes estão ficando na hospedagem' . ( $hp['n'] ? ' (' . $hp['n'] . ' arquivo(s), ' . size_format( $hp['bytes'] ) . ')' : '' ) . '.', 'Conecte o Drive em Configurações → Google Drive. Depois disso os arquivos vão para o Drive e a hospedagem é liberada.', '' );
+	}
+
 	// 4. E-mail.
 	$ok_at  = (int) get_option( 'ap_mail_ok', 0 );
 	$fails  = (array) get_option( 'ap_mail_fails', array() );

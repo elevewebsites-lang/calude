@@ -26,10 +26,12 @@ document.addEventListener('DOMContentLoaded', function () {
 			Array.prototype.forEach.call(input.files, function (file) {
 				var el = document.createElement('div'); el.className = 'upfile'; el.innerHTML = '<span>' + file.name + '</span><div class="upbar"><i></i></div>'; list.appendChild(el);
 				busy++;
+				var art = window.apArtPreview ? window.apArtPreview(file) : Promise.resolve({});
 				api('upload/start', { name: file.name, size: file.size, type: file.type }).then(function (st) {
-					if (st.mode === 'drive') return put(st.url, file, st.chunk, el.querySelector('i')).then(function (g) { return api('upload/done', { id: g.id }); });
-					var fd = new FormData(); fd.append('file', file); return api('upload/small', fd, true);
-				}).then(function (res) {
+					var viaServer = function () { var fd = new FormData(); fd.append('file', file); return api('upload/small', fd, true); };
+					if (st.mode === 'drive') return put(st.url, file, st.chunk, el.querySelector('i')).then(function (g) { return api('upload/done', { id: g.id }); }).catch(function (err) { if (/403|espa/i.test(err.message || '')) return viaServer(); throw err; });
+					return viaServer();
+				}).then(function (res) { return art.then(function (m) { m = m || {}; if (m.thumb) res.thumb = m.thumb; if (m.pw) { res.pw = m.pw; res.ph = m.ph; } if (m.note) res.note = m.note; return res; }); }).then(function (res) {
 					var arr = JSON.parse(hid.value || '[]'); arr.push(res); hid.value = JSON.stringify(arr);
 					el.className = 'upfile is-done'; el.innerHTML = '<span>✓ ' + res.name + '</span>';
 				}).catch(function (err) { el.classList.add('is-err'); el.innerHTML += '<small class="text-late">' + err.message + '</small>'; }).then(function () { busy--; });
