@@ -85,6 +85,7 @@ add_action(
 			ap_install_tables();
 			ap_add_roles();
 			ap_seed_studio();
+			ap_logo_reset_once();
 			ap_security_upgrade();
 			flush_rewrite_rules();
 			update_option( 'ap_version', AP_VERSION );
@@ -114,4 +115,20 @@ function ap_seed_studio() {
 	}
 	update_option( 'ap_seed_cleaned', 1, false );
 	update_option( 'ap_seeded', 1, false );
+}
+
+/**
+ * A logo antiga guardada nas configurações (versão 1.1) podia ser colorida e era usada em fundo escuro (contraste zero).
+ * Uma vez só, limpa as duas; o sistema passa a escolher a logo certa de cada fundo. Quem quiser, envia logos próprias de novo.
+ */
+function ap_logo_reset_once() {
+	if ( get_option( 'ap_logo_reset_120' ) ) {
+		return;
+	}
+	$saved = get_option( 'ap_settings', array() );
+	if ( is_array( $saved ) && ( ! empty( $saved['logo'] ) || ! empty( $saved['logo_cor'] ) ) ) {
+		unset( $saved['logo'], $saved['logo_cor'] );
+		update_option( 'ap_settings', $saved );
+	}
+	update_option( 'ap_logo_reset_120', 1, false );
 }
