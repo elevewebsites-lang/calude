@@ -73,14 +73,46 @@
 		el.textContent = '0'; o.observe(el);
 	});
 
-	/* Brilho que segue o mouse nos cards */
-	$$('.ldk-card').forEach(function (c) {
-		c.addEventListener('pointermove', function (e) {
-			var r = c.getBoundingClientRect();
-			c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-			c.style.setProperty('--my', (e.clientY - r.top) + 'px');
-		});
+	/* Títulos entram palavra por palavra */
+	$$('[data-split]').forEach(function (h) {
+		var i = 0;
+		(function walk(node) {
+			Array.prototype.slice.call(node.childNodes).forEach(function (n) {
+				if (n.nodeType === 3) {
+					var frag = D.createDocumentFragment();
+					n.textContent.split(/(\s+)/).forEach(function (t) {
+						if (!t) { return; }
+						if (/^\s+$/.test(t)) { frag.appendChild(D.createTextNode(' ')); return; }
+						var w = D.createElement('span'), inner = D.createElement('span');
+						w.className = 'w'; inner.textContent = t; inner.style.setProperty('--i', i++);
+						w.appendChild(inner); frag.appendChild(w);
+					});
+					node.replaceChild(frag, n);
+				} else if (n.nodeType === 1) { walk(n); }
+			});
+		})(h);
+		if (!('IntersectionObserver' in W) || reduce) { h.classList.add('in'); return; }
+		var o = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { h.classList.add('in'); o.disconnect(); } }, { threshold: .1 });
+		o.observe(h);
 	});
+
+	/* A seção clara entra por cima da escura, abrindo as laterais conforme a rolagem */
+	var sheets = $$('.ldk[data-tone=light]');
+	function sheetScrub() {
+		if (reduce) { return; }
+		var vh = W.innerHeight;
+		sheets.forEach(function (el) {
+			var top = el.getBoundingClientRect().top;
+			var p = Math.max(0, Math.min(1, (vh - top) / (vh * .55)));
+			el.style.setProperty('--ci', ((1 - p) * 4).toFixed(2) + '%');
+		});
+	}
+	W.addEventListener('scroll', sheetScrub, { passive: true }); W.addEventListener('resize', sheetScrub); sheetScrub();
+
+	/* Imagem que não carregar: o bloco fica com o fundo da marca, sem ícone quebrado */
+	function fixImg(img) { img.style.visibility = 'hidden'; }
+	D.addEventListener('error', function (e) { if (e.target && e.target.tagName === 'IMG' && e.target.closest('.ldk')) { fixImg(e.target); } }, true);
+	$$('.ldk img').forEach(function (i) { if (i.complete && i.naturalWidth === 0 && i.getAttribute('src')) { fixImg(i); } });
 
 	/* Painel do cliente: abas com as telas */
 	$$('[data-panel]').forEach(function (p) {
@@ -133,8 +165,19 @@
 			e.preventDefault();
 			if (!valid(form, msg)) { return; }
 			var btn = $('button[type=submit]', form); btn.disabled = true;
-			send(form.getAttribute('data-tipo') || 'contato', collect(form), msg, function () {
-				form.reset(); msg.className = 'fmsg ok'; msg.textContent = 'Mensagem enviada! A equipe da LDK entra em contato em breve.';
+			var f = collect(form);
+			send(form.getAttribute('data-tipo') || 'contato', f, msg, function () {
+				form.reset();
+				if (form.getAttribute('data-wa') === '1' && C.waNum) {
+					var t = 'Olá! Sou ' + f['Nome'] + (f['Empresa'] ? ' da ' + f['Empresa'] : '') + '. Acabei de enviar meus dados pelo site da LDK.' +
+						(f['Interesse'] ? '\nTenho interesse em: ' + f['Interesse'] + '.' : '') + (f['Mensagem'] ? '\n' + f['Mensagem'] : '');
+					var url = 'https://wa.me/' + C.waNum + '?text=' + encodeURIComponent(t);
+					msg.className = 'fmsg ok';
+					msg.innerHTML = 'Recebemos seus dados. Abrindo o WhatsApp… <a href="' + url + '">Se não abrir, toque aqui.</a>';
+					setTimeout(function () { W.location.href = url; }, 1400);
+				} else {
+					msg.className = 'fmsg ok'; msg.textContent = 'Mensagem enviada! A equipe da LDK entra em contato em breve.';
+				}
 			}).then(function () { btn.disabled = false; });
 		});
 	});

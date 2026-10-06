@@ -38,18 +38,97 @@ function ldk_site_elementor_data( $widgets ) {
 	return $out;
 }
 
+function ldk_site_ph( $eyebrow, $title, $text, $stock ) {
+	return array( 'pagehead', array( 'eyebrow' => $eyebrow, 'title' => $title, 'text' => $text, 'image' => array( 'url' => ldk_site_stock( $stock, 1800 ), 'id' => '' ) ) );
+}
+
 function ldk_site_pages_def() {
 	return array(
-		'inicio'            => array( 'Início', array( 'hero', 'marquee', 'services', 'stats', 'panel', 'steps', 'clients', 'testimonials', 'social', 'cta' ), array() ),
-		'servicos'          => array( 'Serviços', array( array( 'pagehead', array( 'eyebrow' => 'Serviços', 'title' => 'Tudo para a sua marca *crescer*', 'text' => 'Estratégia, criação e execução em uma equipe só, com acompanhamento transparente pelo painel do cliente.' ) ), 'services', 'steps', 'faq', 'cta' ), array() ),
-		'painel-do-cliente' => array( 'Painel do cliente', array( array( 'pagehead', array( 'eyebrow' => 'Painel do cliente', 'title' => 'Transparência que você *enxerga*', 'text' => 'Todo cliente LDK tem uma área exclusiva para aprovar, acompanhar e decidir com clareza.' ) ), 'panel', 'stats', 'faq', 'cta' ), array() ),
-		'sobre-nos'         => array( 'Sobre nós', array( array( 'pagehead', array( 'eyebrow' => 'Sobre nós', 'title' => 'Conheça a *LDK*', 'text' => '' ) ), 'about', 'stats', 'clients', 'testimonials', 'cta' ), array() ),
-		'blog'              => array( 'Blog', array( array( 'pagehead', array( 'eyebrow' => 'Blog', 'title' => 'Conteúdo para quem quer *crescer de verdade*', 'text' => 'Dicas práticas de marketing digital, redes sociais e tráfego pago.' ) ), 'posts', 'cta' ), array() ),
-		'contato'           => array( 'Contato', array( array( 'pagehead', array( 'eyebrow' => 'Contato', 'title' => 'Vamos conversar sobre o *seu projeto*?', 'text' => '' ) ), 'contact', 'faq' ), array() ),
-		'diagnostico'       => array( 'Diagnóstico de perfil', array( array( 'pagehead', array( 'eyebrow' => 'Diagnóstico gratuito de perfil', 'title' => 'Seu perfil está *perdendo clientes* todos os dias?', 'text' => 'Em menos de 2 minutos você descobre o estágio do seu perfil e o que fazer primeiro para transformar seguidores em contatos.' ) ), 'diag', 'pains', 'steps', 'testimonials', 'faq' ), array( '_ldk_site_lp' => 1 ) ),
+		'inicio'            => array( 'Início', array( 'hero', 'quick', 'marquee', 'services', 'stats', 'panel', 'steps', 'clients', 'feed', 'testimonials', 'cta' ), array() ),
+		'servicos'          => array( 'Serviços', array( ldk_site_ph( 'Serviços', 'Tudo para a sua marca *crescer*', 'Estratégia, criação e execução em uma equipe só, com acompanhamento transparente pelo painel do cliente.', 'servicos' ), 'services', 'steps', 'faq', 'cta' ), array() ),
+		'painel-do-cliente' => array( 'Painel do cliente', array( ldk_site_ph( 'Painel do cliente', 'Transparência que você *enxerga*', 'Todo cliente LDK tem uma área exclusiva para aprovar, acompanhar e decidir com clareza.', 'painel' ), 'panel', 'stats', 'faq', 'cta' ), array() ),
+		'sobre-nos'         => array( 'Sobre nós', array( ldk_site_ph( 'Sobre nós', 'Conheça a *LDK*', 'Uma equipe de Taubaté que cuida da sua marca de ponta a ponta.', 'sobre' ), 'about', 'stats', 'clients', 'testimonials', 'cta' ), array() ),
+		'blog'              => array( 'Blog', array( ldk_site_ph( 'Blog', 'Conteúdo para quem quer *crescer de verdade*', 'Dicas práticas de marketing digital, redes sociais e tráfego pago.', 'blog' ), 'posts', 'cta' ), array() ),
+		'contato'           => array( 'Contato', array( ldk_site_ph( 'Contato', 'Vamos conversar sobre o *seu projeto*?', 'Fale com a equipe pelo formulário ou direto no WhatsApp.', 'contato' ), 'contact', 'faq' ), array() ),
+		'diagnostico'       => array( 'Diagnóstico de perfil', array( ldk_site_ph( 'Diagnóstico gratuito de perfil', 'Seu perfil está *perdendo clientes* todos os dias?', 'Em menos de 2 minutos você descobre o estágio do seu perfil e o que fazer primeiro para transformar seguidores em contatos.', 'diag' ), 'diag', 'pains', 'steps', 'testimonials', 'faq' ), array( '_ldk_site_lp' => 1 ) ),
 		'links'             => array( 'Links', array( 'links' ), array( '_ldk_site_bare' => 1 ) ),
 	);
 }
+
+/** Troca o layout das páginas do plugin pelo da versão atual (guarda cópia do que havia). */
+function ldk_site_relayout() {
+	$ids = get_option( 'ldk_site_pages', array() );
+	$defs = ldk_site_pages_def();
+	foreach ( $defs as $slug => $def ) {
+		if ( empty( $ids[ $slug ] ) || ! get_post( (int) $ids[ $slug ] ) ) {
+			continue;
+		}
+		$id  = (int) $ids[ $slug ];
+		$old = get_post_meta( $id, '_elementor_data', true );
+		if ( $old ) {
+			update_post_meta( $id, '_ldk_site_prev_data', $old );
+		}
+		$html = '';
+		foreach ( $def[1] as $w ) {
+			$html .= ldk_site_render( is_array( $w ) ? $w[0] : $w, is_array( $w ) ? $w[1] : array() );
+		}
+		wp_update_post( array( 'ID' => $id, 'post_content' => $html ) );
+		update_post_meta( $id, '_elementor_data', wp_slash( wp_json_encode( ldk_site_elementor_data( $def[1] ) ) ) );
+		update_post_meta( $id, '_elementor_edit_mode', 'builder' );
+	}
+	if ( class_exists( '\\Elementor\\Plugin' ) ) {
+		try {
+			\Elementor\Plugin::$instance->files_manager->clear_cache();
+		} catch ( \Throwable $e ) { // phpcs:ignore
+			unset( $e );
+		}
+	}
+}
+
+add_action(
+	'init',
+	function () {
+		if ( ! is_admin() && ! wp_doing_cron() ) {
+			return;
+		}
+		if ( get_option( 'ldk_site_layout' ) === LDK_SITE_VERSION ) {
+			return;
+		}
+		update_option( 'ldk_site_layout', LDK_SITE_VERSION );
+		if ( get_option( 'ldk_site_pages' ) ) {
+			ldk_site_relayout();
+			if ( ! wp_next_scheduled( 'ldk_site_sideload' ) ) {
+				wp_schedule_single_event( time() + 20, 'ldk_site_sideload' );
+			}
+		}
+	},
+	30
+);
+
+/** Baixa as imagens da internet para a biblioteca de mídia e define como imagem destacada dos artigos que não têm. */
+function ldk_site_sideload_posts() {
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+	$posts = get_posts( array( 'numberposts' => 30, 'post_status' => 'publish', 'meta_query' => array( array( 'key' => '_thumbnail_id', 'compare' => 'NOT EXISTS' ) ) ) ); // phpcs:ignore
+	$n     = 0;
+	foreach ( $posts as $i => $p ) {
+		$tmp = download_url( ldk_site_post_fallback( $i, 1400 ), 25 );
+		if ( is_wp_error( $tmp ) ) {
+			continue;
+		}
+		$file = array( 'name' => sanitize_title( $p->post_title ) . '.jpg', 'tmp_name' => $tmp );
+		$aid  = media_handle_sideload( $file, $p->ID, $p->post_title );
+		if ( is_wp_error( $aid ) ) {
+			@unlink( $tmp ); // phpcs:ignore
+			continue;
+		}
+		set_post_thumbnail( $p->ID, $aid );
+		++$n;
+	}
+	return $n;
+}
+add_action( 'ldk_site_sideload', 'ldk_site_sideload_posts' );
 
 function ldk_site_install( $force = false ) {
 	$ids = get_option( 'ldk_site_pages', array() );

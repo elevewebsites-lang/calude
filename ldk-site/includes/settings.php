@@ -45,6 +45,8 @@ function ldk_site_settings_page() {
 	$f( 'logo', 'Logo (versão clara)' );
 	echo '<tr><th>Animação de entrada</th><td><label><input type="checkbox" name="intro" value="1" ' . checked( ldk_site_opt( 'intro' ), '1', false ) . '> Mostrar a entrada com a logo (uma vez por visita)</label></td></tr></table>';
 	echo '<p><button class="button button-primary" name="ldk_save" value="1">Salvar</button> ';
-	echo '<button class="button" name="ldk_reinstall" value="1">Recriar páginas que faltam</button></p></form>';
+	echo '<button class="button" name="ldk_reinstall" value="1">Recriar páginas que faltam</button> ';
+	echo '<button class="button" name="ldk_relayout" value="1" onclick="return confirm(\'Substitui o layout das páginas do plugin pelo mais novo. Continuar?\')">Aplicar layout novo</button> ';
+	echo '<button class="button" name="ldk_images" value="1">Baixar imagens dos artigos</button></p></form>';
 	echo '<h2>Como editar</h2><p>Abra qualquer página em <b>Páginas → Editar com Elementor</b>. Os blocos da LDK estão na categoria <b>LDK</b>. O menu fica em <b>Aparência → Menus</b> (LDK Principal) e os artigos em <b>Posts</b>.</p></div>';
 }

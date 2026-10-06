@@ -107,6 +107,15 @@ function ldk_site_ico( $name ) {
 			'target'  => '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
 			'bolt'    => '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
 			'users'   => '<circle cx="9" cy="8" r="3.500"/><path d="M2 20c0-3.500 3-6 7-6s7 2.500 7 6M17 5a3.500 3.500 0 0 1 0 7M22 20c0-2.500-1.500-4.500-4-5.500"/>',
+			'heart'   => '<path d="M12 20.5s-8-4.9-8-11A4.600 4.600 0 0 1 12 7a4.600 4.600 0 0 1 8 2.500c0 6.100-8 11-8 11z"/>',
+			'comment' => '<path d="M20 11.500a8 8 0 0 1-11.800 7L4 20l1.300-4A8 8 0 1 1 20 11.500z"/>',
+			'send'    => '<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/>',
+			'save'    => '<path d="M6 3h12v18l-6-4.500L6 21z"/>',
+			'phone'   => '<path d="M5 4h4l2 5-2.500 1.500a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+			'clock'   => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.500 2"/>',
+			'camera'  => '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.500"/>',
+			'up'      => '<path d="M7 17 17 7M8 7h9v9"/>',
+			'spark'   => '<path d="M12 3v5M12 16v5M3 12h5M16 12h5M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3"/>',
 		);
 	}
 	$p = isset( $i[ $name ] ) ? $i[ $name ] : $i['star'];
@@ -122,4 +131,54 @@ function ldk_site_logo_html( $cls = 'ldk-logo' ) {
 /** Monograma em SVG embutido (nunca quebra, mesmo sem a imagem da logo). */
 function ldk_site_mark() {
 	return '<svg class="ldk-mark" viewBox="0 0 120 120" aria-label="LDK" role="img"><defs><linearGradient id="ldkg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14E9EC"/><stop offset="1" stop-color="#2f8cff"/></linearGradient></defs><rect x="3" y="3" width="114" height="114" rx="34" fill="#071826"/><rect x="3" y="3" width="114" height="114" rx="34" fill="none" stroke="url(#ldkg)" stroke-width="3"/><text x="60" y="73" text-anchor="middle" font-family="Montserrat,Arial,sans-serif" font-weight="800" font-size="40" fill="#fff" letter-spacing="-1">LDK</text><circle cx="60" cy="90" r="4" fill="#14E9EC"/></svg>';
+}
+
+
+/** Banco de imagens (Unsplash, uso livre). Se uma falhar, o bloco mostra o degradê da marca. */
+function ldk_site_stock( $k, $w = 1400 ) {
+	$ids = array(
+		'servicos'  => '1460925895917-afdab827c52f',
+		'painel'    => '1551288049-bebda4e38f71',
+		'sobre'     => '1522202176988-66273c2fd55f',
+		'blog'      => '1432888498266-38ffec3eaf0a',
+		'contato'   => '1556761175-5973dc0f32e7',
+		'diag'      => '1611162617213-7d7a39e9b1d7',
+		'social'    => '1611162617213-7d7a39e9b1d7',
+		'trafego'   => '1551288049-bebda4e38f71',
+		'video'     => '1492691527719-9d1e07e534b4',
+		'site'      => '1498050108023-c5249f4df085',
+		'brand'     => '1561070791-2526d30994b5',
+		'users'     => '1460925895917-afdab827c52f',
+		'feed1'     => '1611926653458-09294b3142bf',
+		'feed2'     => '1611162617213-7d7a39e9b1d7',
+		'feed3'     => '1557804506-669a67965ba0',
+		'feed4'     => '1533750349088-cd871a92f312',
+		'feed5'     => '1542744173-8e7e53415bb0',
+		'feed6'     => '1553877522-43269d4ea984',
+		'post0'     => '1432888498266-38ffec3eaf0a',
+		'post1'     => '1551288049-bebda4e38f71',
+		'post2'     => '1561070791-2526d30994b5',
+	);
+	$id = isset( $ids[ $k ] ) ? $ids[ $k ] : $ids['servicos'];
+	return 'https://images.unsplash.com/photo-' . $id . '?auto=format&fit=crop&q=70&w=' . (int) $w;
+}
+
+/** Imagem de reserva para artigos sem destaque (gira entre 3). */
+function ldk_site_post_fallback( $i = 0, $w = 1000 ) {
+	return ldk_site_stock( 'post' . ( abs( (int) $i ) % 3 ), $w );
+}
+
+/** Logo do Instagram em cores (SVG embutido). */
+function ldk_site_ig_logo( $cls = 'igl' ) {
+	return '<svg class="' . esc_attr( $cls ) . '" viewBox="0 0 48 48" aria-hidden="true"><defs><radialGradient id="ldkig" cx=".3" cy="1.05" r="1.15"><stop offset="0" stop-color="#ffd35a"/><stop offset=".28" stop-color="#ff7a3c"/><stop offset=".55" stop-color="#e1306c"/><stop offset=".85" stop-color="#833ab4"/><stop offset="1" stop-color="#405de6"/></radialGradient></defs><rect width="48" height="48" rx="13" fill="url(#ldkig)"/><rect x="11.500" y="11.500" width="25" height="25" rx="7.500" fill="none" stroke="#fff" stroke-width="2.600"/><circle cx="24" cy="24" r="6" fill="none" stroke="#fff" stroke-width="2.600"/><circle cx="31.500" cy="16.500" r="1.700" fill="#fff"/></svg>';
+}
+
+/** Logo do WhatsApp em cores (SVG embutido). */
+function ldk_site_wa_logo( $cls = 'wal' ) {
+	return '<svg class="' . esc_attr( $cls ) . '" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#25D366"/><path d="M24 10.500a13.500 13.500 0 0 0-11.600 20.300L10.500 37.500l6.900-1.800A13.500 13.500 0 1 0 24 10.500z" fill="none" stroke="#fff" stroke-width="2.600" stroke-linejoin="round"/><path d="M19.300 18.600c.4 4.300 4.400 8.300 8.700 8.700l1.800-2.100-3-1.600-1.200 1.200c-1.400-.6-3-2.200-3.600-3.600l1.200-1.200-1.600-3z" fill="#fff"/></svg>';
+}
+
+/** <img> que nunca deixa buraco: se não carregar, o contêiner mostra o degradê. */
+function ldk_site_imgtag( $src, $alt = '', $extra = '' ) {
+	return '<img src="' . esc_url( $src ) . '" alt="' . esc_attr( $alt ) . '" loading="lazy" decoding="async" ' . $extra . '>';
 }

@@ -32,32 +32,79 @@ function ldk_site_render( $key, $s = array() ) {
 	if ( ! function_exists( $fn ) ) {
 		return '';
 	}
-	return '<div class="ldk ldkw-' . esc_attr( $key ) . '">' . $fn( ldk_site_settings( $key, $s ) ) . '</div>';
+	$tones = array(
+		'hero' => 'dark', 'quick' => 'dark', 'pagehead' => 'dark', 'marquee' => 'cyan', 'stats' => 'cyan',
+		'services' => 'light', 'clients' => 'light', 'about' => 'light', 'testimonials' => 'light', 'faq' => 'light', 'posts' => 'light', 'contact' => 'light',
+		'steps' => 'dark', 'panel' => 'dark', 'feed' => 'dark', 'social' => 'dark', 'pains' => 'dark', 'diag' => 'dark', 'cta' => 'dark', 'links' => 'dark',
+	);
+	$tone  = isset( $tones[ $key ] ) ? $tones[ $key ] : 'dark';
+	return '<div class="ldk ldkw-' . esc_attr( $key ) . '" data-tone="' . esc_attr( $tone ) . '">' . $fn( ldk_site_settings( $key, $s ) ) . '</div>';
 }
 
 function ldk_site_r_pagehead( $s ) {
-	return '<section class="ldk-sec ldk-ph"><div class="ldk-wrap">' .
-		( $s['eyebrow'] ? '<span class="ldk-eyebrow" data-r>' . esc_html( $s['eyebrow'] ) . '</span>' : '' ) .
-		'<h1 class="ldk-h1 sm" data-r style="--d:.05s">' . ldk_site_hl( $s['title'] ) . '</h1>' .
-		( $s['text'] ? '<p class="ldk-lead" data-r style="--d:.1s">' . esc_html( $s['text'] ) . '</p>' : '' ) .
+	$img = ldk_site_img( $s['image'] );
+	$bg  = $img ? '<div class="phbg" aria-hidden="true">' . ldk_site_imgtag( $img, '', 'fetchpriority="high"' ) . '<i class="fall"></i></div>' : '';
+	return '<section class="ldk-sec ldk-ph' . ( $img ? ' hasimg' : '' ) . '">' . $bg . '<div class="ldk-wrap ldk-phin">' .
+		( $s['eyebrow'] ? '<span class="ldk-eyebrow">' . esc_html( $s['eyebrow'] ) . '</span>' : '' ) .
+		'<h1 class="ldk-h1 sm" data-split>' . ldk_site_hl( $s['title'] ) . '</h1>' .
+		( $s['text'] ? '<p class="ldk-lead" data-r style="--d:.35s">' . esc_html( $s['text'] ) . '</p>' : '' ) .
 		'</div></section>';
 }
 
 function ldk_site_r_hero( $s ) {
+	$mark  = ldk_site_mark();
+	$story = '<span class="st me">' . $mark . '</span>';
+	foreach ( array( 'feed2', 'feed3', 'feed4', 'feed5' ) as $k ) {
+		$story .= '<span class="st"><i>' . ldk_site_imgtag( ldk_site_stock( $k, 160 ) ) . '</i></span>';
+	}
 	return '<section class="ldk-sec ldk-herosec"><div class="ldk-wrap ldk-herogrid">' .
 		'<div class="ldk-herotxt">' .
 		'<span class="ldk-eyebrow" data-r>' . esc_html( $s['eyebrow'] ) . '</span>' .
-		'<h1 class="ldk-h1" data-r style="--d:.06s">' . ldk_site_hl( $s['title'] ) . '</h1>' .
-		'<p class="ldk-lead" data-r style="--d:.12s">' . esc_html( $s['text'] ) . '</p>' .
-		'<div class="ldk-actions" data-r style="--d:.18s">' . ldk_site_btn( $s['btn1'], $s['btn1_u'] ) . ldk_site_btn( $s['btn2'], $s['btn2_u'], true ) . '</div>' .
-		( $s['proof'] ? '<p class="ldk-proof" data-r style="--d:.24s">' . esc_html( $s['proof'] ) . '</p>' : '' ) .
+		'<h1 class="ldk-h1" data-split>' . ldk_site_hl( $s['title'] ) . '</h1>' .
+		'<p class="ldk-lead" data-r style="--d:.3s">' . esc_html( $s['text'] ) . '</p>' .
+		'<div class="ldk-actions" data-r style="--d:.4s">' . ldk_site_btn( $s['btn1'], $s['btn1_u'] ) . ldk_site_btn( $s['btn2'], $s['btn2_u'], true ) . '</div>' .
+		( $s['proof'] ? '<p class="ldk-proof" data-r style="--d:.5s">' . esc_html( $s['proof'] ) . '</p>' : '' ) .
 		'</div>' .
 		'<div class="ldk-herovis" data-r="zoom" aria-hidden="true">' .
-		'<div class="hv-glow" data-par="-.05"></div>' .
-		'<div class="hv-laptop" data-par=".03"><div class="bar"><i></i><i></i><i></i></div><img src="' . esc_url( ldk_site_img( $s['img_main'] ) ) . '" alt=""></div>' .
-		'<div class="hv-phone" data-par="-.04"><img src="' . esc_url( ldk_site_img( $s['img_phone'] ) ) . '" alt=""></div>' .
-		'<div class="hv-toast">' . ldk_site_ico( 'check' ) . '<span><b>Post aprovado</b><small>Publicação agendada</small></span></div>' .
+		'<div class="hv-card" data-par="-.05"><div class="bar"><i></i><i></i><i></i></div>' . ldk_site_imgtag( ldk_site_img( $s['img_main'] ) ) . '</div>' .
+		'<div class="hv-phone" data-par=".03"><div class="notch"></div>' .
+			'<div class="ig-top"><b>Instagram</b><span>' . ldk_site_ico( 'heart' ) . ldk_site_ico( 'send' ) . '</span></div>' .
+			'<div class="ig-stories">' . $story . '</div>' .
+			'<div class="ig-post"><div class="ph"><span class="av">' . $mark . '</span><span class="nm"><b>ldkmarketingdigital</b><small>Taubaté, SP</small></span></div>' .
+			'<div class="pimg">' . ldk_site_imgtag( ldk_site_img( $s['img_phone'] ) ) . '</div>' .
+			'<div class="pact">' . ldk_site_ico( 'heart' ) . ldk_site_ico( 'comment' ) . ldk_site_ico( 'send' ) . '<span>' . ldk_site_ico( 'save' ) . '</span></div>' .
+			'<p><b>ldkmarketingdigital</b> Marca forte aparece. Estratégia vira resultado.</p></div></div>' .
+		'<div class="fly f-ig" data-par="-.12">' . ldk_site_ig_logo() . '</div>' .
+		'<div class="fly f-wa" data-par=".1">' . ldk_site_wa_logo() . '</div>' .
+		'<div class="fly f-heart" data-par="-.18">' . ldk_site_ico( 'heart' ) . '</div>' .
+		'<div class="fly f-toast" data-par=".06">' . ldk_site_ico( 'check' ) . '<span><b>Post aprovado</b><small>Publicação agendada</small></span></div>' .
 		'</div></div></section>';
+}
+
+function ldk_site_r_quick( $s ) {
+	return '<section class="ldk-sec ldk-quicksec"><div class="ldk-wrap"><div class="ldk-quick" data-r>' .
+		'<div class="qt"><h2 class="ldk-h3">' . ldk_site_hl( $s['title'] ) . '</h2><p>' . esc_html( $s['text'] ) . '</p></div>' .
+		ldk_site_form_quick( $s['tipo'], $s['btn'] ) . '</div></div></section>';
+}
+
+function ldk_site_services_options() {
+	$svc = array( 'Gestão de redes sociais', 'Gestão de tráfego pago', 'Gravação de vídeos', 'Criação de site', 'Branding', 'Ainda não sei' );
+	$o   = '<option value="">Interesse</option>';
+	foreach ( $svc as $v ) {
+		$o .= '<option>' . esc_html( $v ) . '</option>';
+	}
+	return $o;
+}
+
+function ldk_site_form_quick( $tipo, $btn ) {
+	return '<form class="ldk-form quick" data-ldk-form data-wa="1" data-tipo="' . esc_attr( $tipo ) . '" novalidate>' .
+		'<label><span>Nome</span><input name="Nome" required autocomplete="name" placeholder="Seu nome"></label>' .
+		'<label><span>WhatsApp</span><input name="WhatsApp" type="tel" required autocomplete="tel" inputmode="tel" placeholder="(12) 90000-0000"></label>' .
+		'<label><span>Interesse</span><select name="Interesse">' . ldk_site_services_options() . '</select></label>' .
+		'<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' .
+		'<input type="hidden" name="lgpd" value="1">' .
+		'<button class="ldk-btn" type="submit"><span>' . esc_html( $btn ) . '</span>' . ldk_site_ico( 'wa' ) . '</button>' .
+		'<p class="fmsg" role="status" aria-live="polite"></p></form>';
 }
 
 function ldk_site_r_marquee( $s ) {
@@ -74,10 +121,11 @@ function ldk_site_r_services( $s ) {
 	foreach ( (array) $s['items'] as $i => $it ) {
 		$link = ! empty( $it['link'] ) ? ldk_site_link( $it['link'] ) : '';
 		$tag  = $link ? 'a' : 'div';
-		$h   .= '<' . $tag . ( $link ? ' href="' . esc_url( $link ) . '"' : '' ) . ' class="ldk-card" data-r style="--d:' . ( ( $i % 3 ) * 0.08 ) . 's">' .
-			'<span class="ldk-ico">' . ldk_site_ico( isset( $it['icon'] ) ? $it['icon'] : 'star' ) . '</span>' .
-			'<h3>' . esc_html( $it['title'] ) . '</h3><p>' . esc_html( $it['text'] ) . '</p>' .
-			( $link ? '<span class="more">Saiba mais ' . ldk_site_ico( 'arrow' ) . '</span>' : '' ) .
+		$img  = ! empty( $it['image'] ) ? ldk_site_img( $it['image'] ) : '';
+		$h   .= '<' . $tag . ( $link ? ' href="' . esc_url( $link ) . '"' : '' ) . ' class="ldk-card svc" data-r style="--d:' . ( ( $i % 3 ) * 0.08 ) . 's">' .
+			'<span class="im">' . ( $img ? ldk_site_imgtag( $img ) : '' ) . '<span class="ldk-ico">' . ldk_site_ico( isset( $it['icon'] ) ? $it['icon'] : 'star' ) . '</span></span>' .
+			'<span class="cb"><h3>' . esc_html( $it['title'] ) . '</h3><p>' . esc_html( $it['text'] ) . '</p>' .
+			( $link ? '<span class="more">Saiba mais ' . ldk_site_ico( 'arrow' ) . '</span>' : '' ) . '</span>' .
 			'</' . $tag . '>';
 	}
 	return $h . '</div></div></section>';
@@ -144,32 +192,40 @@ function ldk_site_r_cta( $s ) {
 }
 
 function ldk_site_form_fields_html( $tipo ) {
-	$svc = array( 'Gestão de redes sociais', 'Gestão de tráfego pago', 'Gravação de vídeos', 'Criação de site', 'Branding', 'Ainda não sei' );
-	$o   = '<option value="">Selecione</option>';
-	foreach ( $svc as $v ) {
-		$o .= '<option>' . esc_html( $v ) . '</option>';
-	}
-	return '<form class="ldk-form" data-ldk-form data-tipo="' . esc_attr( $tipo ) . '" novalidate>' .
-		'<div class="row2"><label>Nome<input name="Nome" required autocomplete="name" placeholder="Seu nome"></label>' .
-		'<label>Empresa<input name="Empresa" autocomplete="organization" placeholder="Nome da empresa"></label></div>' .
-		'<div class="row2"><label>E-mail<input name="E-mail" type="email" required autocomplete="email" placeholder="voce@empresa.com"></label>' .
-		'<label>WhatsApp<input name="WhatsApp" type="tel" required autocomplete="tel" inputmode="tel" placeholder="(12) 90000-0000"></label></div>' .
-		'<label>Interesse<select name="Interesse">' . $o . '</select></label>' .
-		'<label>Mensagem<textarea name="Mensagem" rows="4" placeholder="Conte um pouco sobre o seu negócio e o que você busca"></textarea></label>' .
+	return '<form class="ldk-form" data-ldk-form data-wa="1" data-tipo="' . esc_attr( $tipo ) . '" novalidate>' .
+		'<div class="row2"><label><span>Nome</span><input name="Nome" required autocomplete="name" placeholder="Seu nome"></label>' .
+		'<label><span>Empresa</span><input name="Empresa" autocomplete="organization" placeholder="Nome da empresa"></label></div>' .
+		'<div class="row2"><label><span>E-mail</span><input name="E-mail" type="email" autocomplete="email" placeholder="voce@empresa.com"></label>' .
+		'<label><span>WhatsApp</span><input name="WhatsApp" type="tel" required autocomplete="tel" inputmode="tel" placeholder="(12) 90000-0000"></label></div>' .
+		'<label><span>Interesse</span><select name="Interesse">' . ldk_site_services_options() . '</select></label>' .
+		'<label><span>Mensagem</span><textarea name="Mensagem" rows="4" placeholder="Conte um pouco sobre o seu negócio e o que você busca"></textarea></label>' .
 		'<input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' .
 		'<label class="chk"><input type="checkbox" name="lgpd" required><span>Concordo em ser contatado pela LDK sobre a minha solicitação.</span></label>' .
-		'<button class="ldk-btn" type="submit"><span>Enviar mensagem</span>' . ldk_site_ico( 'arrow' ) . '</button>' .
+		'<button class="ldk-btn" type="submit"><span>Enviar e chamar no WhatsApp</span>' . ldk_site_ico( 'wa' ) . '</button>' .
 		'<p class="fmsg" role="status" aria-live="polite"></p></form>';
 }
 
 function ldk_site_r_contact( $s ) {
-	$ig = ldk_site_opt( 'instagram' );
-	return '<section class="ldk-sec"><div class="ldk-wrap"><div class="ldk-contactgrid"><div>' . ldk_site_head( $s['eyebrow'], $s['title'], $s['text'] ) .
-		'<ul class="ldk-info" data-r>' .
-		'<li><a href="' . esc_url( ldk_site_wa( 'Olá! Vim pelo site da LDK.' ) ) . '">' . ldk_site_ico( 'wa' ) . '<span><b>WhatsApp</b>' . esc_html( ldk_site_opt( 'whatsapp_fmt', '(12) 98825-7644' ) ) . '</span></a></li>' .
-		'<li><a href="' . esc_url( $ig ) . '" target="_blank" rel="noopener">' . ldk_site_ico( 'ig' ) . '<span><b>Instagram</b>@ldkmarketingdigital</span></a></li>' .
-		'<li><span class="a">' . ldk_site_ico( 'pin' ) . '<span><b>Onde estamos</b>' . esc_html( ldk_site_opt( 'cidade' ) ) . ' · atendemos todo o Brasil</span></span></li>' .
-		'</ul></div><div class="ldk-formcard" data-r="right">' . ldk_site_form_fields_html( $s['tipo'] ) . '</div></div></div></section>';
+	$ig   = ldk_site_opt( 'instagram' );
+	$mail = ldk_site_opt( 'email' );
+	$tile = function ( $ico, $label, $val, $href = '', $ext = false ) {
+		$in = '<span class="ci">' . ldk_site_ico( $ico ) . '</span><span class="ct"><b>' . esc_html( $label ) . '</b><span>' . esc_html( $val ) . '</span></span>' . ( $href ? '<span class="go">' . ldk_site_ico( 'up' ) . '</span>' : '' );
+		return $href ? '<li><a href="' . esc_url( $href ) . '"' . ( $ext ? ' target="_blank" rel="noopener"' : '' ) . '>' . $in . '</a></li>' : '<li><span class="a">' . $in . '</span></li>';
+	};
+	$list  = $tile( 'wa', 'WhatsApp', ldk_site_opt( 'whatsapp_fmt', '(12) 98825-7644' ), ldk_site_wa( 'Olá! Vim pelo site da LDK.' ) );
+	$list .= $tile( 'ig', 'Instagram', '@ldkmarketingdigital', $ig, true );
+	if ( $mail ) {
+		$list .= $tile( 'mail', 'E-mail', $mail, 'mailto:' . $mail );
+	}
+	$list .= $tile( 'pin', 'Onde estamos', ldk_site_opt( 'cidade' ) . ' · atendemos todo o Brasil' );
+	$list .= $tile( 'clock', 'Retorno', 'Em até 1 dia útil' );
+	$map   = '';
+	if ( ! empty( $s['mapa'] ) ) {
+		$map = '<div class="ldk-map" data-r><iframe title="Mapa" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="' . esc_url( 'https://www.google.com/maps?q=' . rawurlencode( $s['mapa'] ) . '&output=embed' ) . '"></iframe></div>';
+	}
+	return '<section class="ldk-sec"><div class="ldk-wrap"><div class="ldk-contactgrid"><div class="cl">' . ldk_site_head( $s['eyebrow'], $s['title'], $s['text'] ) .
+		'<ul class="ldk-info" data-r>' . $list . '</ul>' . $map . '</div>' .
+		'<div class="ldk-formcard" data-r="right"><h3>Envie sua mensagem</h3><p class="sub">Os dados chegam para a equipe e a conversa abre no WhatsApp.</p>' . ldk_site_form_fields_html( $s['tipo'] ) . '</div></div></div></section>';
 }
 
 function ldk_site_diag_questions() {
@@ -225,7 +281,7 @@ function ldk_site_r_posts( $s ) {
 		$img = get_the_post_thumbnail_url( $p, 'large' );
 		$cat = get_the_category( $p->ID );
 		$h  .= '<a class="ldk-post" href="' . esc_url( get_permalink( $p ) ) . '" data-r style="--d:' . ( ( $i % 3 ) * 0.08 ) . 's">' .
-			'<span class="th">' . ( $img ? '<img src="' . esc_url( $img ) . '" alt="" loading="lazy">' : '<i class="ph">' . ldk_site_logo_html( 'ldk-logo ph-logo' ) . '</i>' ) . '</span>' .
+			'<span class="th">' . ldk_site_imgtag( $img ) . '</span>' .
 			'<span class="bd"><small>' . esc_html( ( $cat ? $cat[0]->name . ' · ' : '' ) . get_the_date( 'd/m/Y', $p ) ) . '</small>' .
 			'<h3>' . esc_html( get_the_title( $p ) ) . '</h3><p>' . esc_html( wp_trim_words( get_the_excerpt( $p ), 22 ) ) . '</p></span></a>';
 	}
@@ -272,4 +328,21 @@ function ldk_site_r_social( $s ) {
 	return '<section class="ldk-sec tight"><div class="ldk-wrap"><div class="ldk-social" data-r="zoom">' . ( $img ? '<img src="' . esc_url( $img ) . '" alt="" loading="lazy">' : '' ) .
 		'<div class="tx"><h2 class="ldk-h2">' . ldk_site_hl( $s['title'] ) . '</h2><p class="ldk-lead">' . esc_html( $s['text'] ) . '</p>' .
 		'<a class="ldk-btn" href="' . esc_url( ldk_site_opt( 'instagram' ) ) . '" target="_blank" rel="noopener"><span>' . esc_html( $s['btn'] ) . '</span>' . ldk_site_ico( 'ig' ) . '</a></div></div></div></section>';
+}
+
+function ldk_site_r_feed( $s ) {
+	$ig   = ldk_site_opt( 'instagram' );
+	$grid = '';
+	foreach ( (array) $s['items'] as $i => $it ) {
+		$im = ldk_site_img( isset( $it['image'] ) ? $it['image'] : '' );
+		if ( $im ) {
+			$grid .= '<a class="ft" href="' . esc_url( $ig ) . '" target="_blank" rel="noopener" aria-label="Ver no Instagram" data-r style="--d:' . ( ( $i % 3 ) * 0.07 ) . 's">' . ldk_site_imgtag( $im ) . '<span class="ov">' . ldk_site_ico( 'ig' ) . '</span></a>';
+		}
+	}
+	return '<section class="ldk-sec"><div class="ldk-wrap">' . ldk_site_head( $s['eyebrow'], $s['title'], $s['text'] ) .
+		'<div class="ldk-feed"><div class="fp" data-r><div class="fh"><span class="av">' . ldk_site_mark() . '</span><span><b>' . esc_html( $s['handle'] ) . '</b><small>LDK Marketing Digital</small></span></div>' .
+		'<p>Estratégia, criação e tráfego pago para marcas que querem aparecer.</p>' .
+		'<a class="ldk-btn" href="' . esc_url( $ig ) . '" target="_blank" rel="noopener"><span>' . esc_html( $s['btn'] ) . '</span>' . ldk_site_ico( 'ig' ) . '</a>' .
+		'<div class="fly f-ig" data-par="-.1">' . ldk_site_ig_logo() . '</div></div>' .
+		'<div class="fg">' . $grid . '</div></div></div></section>';
 }

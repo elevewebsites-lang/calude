@@ -160,3 +160,11 @@ class LDK_Site_W_social extends LDK_Site_Widget {
 class LDK_Site_W_pains extends LDK_Site_Widget {
 	protected $ldk_key = 'pains';
 }
+
+class LDK_Site_W_quick extends LDK_Site_Widget {
+	protected $ldk_key = 'quick';
+}
+
+class LDK_Site_W_feed extends LDK_Site_Widget {
+	protected $ldk_key = 'feed';
+}
