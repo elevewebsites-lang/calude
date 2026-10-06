@@ -1,0 +1,92 @@
+/* Marca AllPrint 1.2: tudo aqui usa as variáveis calculadas em includes/brand.php,
+   então ao trocar a cor do tema o contraste e a logo se ajustam sozinhos. */
+
+/* Logo: sem plaquinha branca; a versão certa já vem escolhida pelo fundo */
+.side-brand img, .auth-logo, .ctop-brand img, .pay-logo, .dv-logo, .oq-logo { background: none; padding: 0; border-radius: 0; box-sizing: border-box; }
+.side-brand { padding: 6px 10px 10px; }
+.side-brand img { height: auto; width: 100%; max-width: 168px; max-height: 44px; object-fit: contain; object-position: left center; }
+.auth-logo { height: auto; width: auto; max-height: 56px; max-width: 240px; }
+.ctop-brand img { height: auto; width: auto; max-height: 34px; max-width: 170px; }
+.pay-logo { height: auto; width: auto; max-height: 48px; max-width: 220px; }
+.dv-logo { height: auto; max-height: 46px; width: auto; max-width: 220px; }
+.oq-logo { height: auto; max-height: 34px; width: auto; max-width: 170px; }
+
+/* Menu lateral */
+.side { background: var(--side-bg); color: var(--side-text); }
+[data-theme="dark"] .side { background: var(--side-bg); }
+.side-search { border-color: var(--side-line); background: var(--side-hover); color: var(--side-muted); }
+.side-search:hover { border-color: var(--side-muted); color: var(--side-text); }
+.side-search kbd, .search-input kbd { border-color: var(--side-line); color: var(--side-muted); }
+.search-input kbd { border-color: var(--line-2); color: var(--muted); }
+.side-nav a { color: var(--side-muted); }
+.side-nav a:hover { background: var(--side-hover); color: var(--side-text); }
+.side-nav a.is-active { background: var(--side-active); color: var(--side-text); }
+.side-nav a.is-active::before { background: var(--side-accent); }
+.side-nav a.is-active .ic { color: var(--side-accent); }
+.side-count { background: var(--side-accent); color: var(--side-on-acc); }
+.side-count--wa { background: #25d366; color: #05250f; }
+.side-label { color: var(--side-faint); }
+.side-user, .side-tools { border-top-color: var(--side-line); }
+.side-user-name { color: var(--side-text); }
+.side-user-name small { color: var(--side-muted); }
+.side-out { color: var(--side-muted); }
+.side-out:hover { color: var(--side-text); background: var(--side-active); }
+.side-tools .money-btn, .side-tools .theme-btn { color: var(--side-muted); border-color: var(--side-line); }
+.side-tools .money-btn:hover, .side-tools .theme-btn:hover { color: var(--side-text); border-color: var(--side-muted); background: var(--side-hover); }
+.side-tools .money-btn.is-hidden-money { color: var(--side-text); border-color: var(--side-accent); }
+.side-user .avatar, .avatar--brand { background: var(--side-accent); color: var(--side-on-acc); }
+
+/* Topo da área do cliente */
+.ctop { background: var(--ctop-bg); color: var(--ctop-text); }
+[data-theme="dark"] .ctop { background: var(--ctop-bg); }
+.ctop-brand span { color: var(--ctop-muted); border-left-color: var(--ctop-line); }
+.ctop-nav a { color: var(--ctop-muted); }
+.ctop-nav a:hover { color: var(--ctop-text); background: var(--ctop-hover); }
+.ctop .theme-btn { border-color: var(--ctop-line); color: var(--ctop-muted); }
+.ctop-cta, .ctop-nav a.ctop-cta { background: var(--ctop-accent); color: var(--ctop-on-acc) !important; }
+.ctop-cta:hover, .ctop-nav a.ctop-cta:hover { background: var(--accent-hover); color: var(--on-accent) !important; }
+
+/* Botões e peças em amarelo: texto sempre legível sobre o destaque */
+::selection { background: var(--accent); color: var(--on-accent); }
+.preview-bar { background: var(--accent); color: var(--on-accent); }
+.preview-bar a { color: inherit; text-decoration: underline; }
+.btn--accent { background: var(--accent); color: var(--on-accent); }
+.btn--accent:hover, .autofill .btn--primary:hover { background: var(--accent-hover); color: var(--on-accent); }
+.autofill .btn--primary { background: var(--accent); color: var(--on-accent); }
+.fz-btn--main { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.price-tag, .hub-av, .hub-send { background: var(--accent); color: var(--on-accent); }
+
+/* Resquícios laranja da base viram a cor da marca */
+.card--accent { border-color: var(--brand-line); background: linear-gradient(180deg, var(--brand-soft) 0%, var(--card) 70%); }
+[data-theme="dark"] .card--accent { border-color: var(--brand-line); background: linear-gradient(180deg, var(--brand-soft) 0%, var(--card) 70%); }
+.badge--alta { background: var(--brand-soft); border-color: var(--brand-line); color: var(--accent-text); }
+
+/* Destaque usado como TEXTO em fundo claro: versão escurecida (contraste 4,5:1) */
+.search-item em, .task-desc a, .ph-main h2 a:hover, .bq-n, .due-group--today h4, .ref-link, .recur-tag,
+.idea-more, .rp-notes li span, .cal-add, .table-row a:hover, .health-body .link,
+.needs li > span .ic, .qa--main .ic, .chip--multi input:checked + span::before { color: var(--accent-text); }
+/* Destaque usado como INDICADOR (barras, abas, anéis): contraste 3:1 com o cartão */
+.tabs a.is-active::after, .bar-col.is-current .bar--in, .cat-list .progress span, .rp-bar-track i, .rp-col:hover i,
+.timeline li.is-comment .dot, .switch-row input:checked + .switch, .cflow li.is-current .cflow-dot { background: var(--accent-ui); }
+.cflow li.is-current .cflow-dot { border-color: var(--accent-ui); }
+.ring { background: conic-gradient(var(--accent-ui) calc(var(--p) * 1%), var(--line) 0); }
+.kcard--task.prio-alta { border-left-color: var(--accent-ui); }
+.choice:has(input:checked) { border-color: var(--accent-ui); }
+.muted, .small.muted { color: var(--muted); }
+
+/* Configurações → Marca */
+.brand-h { margin: 22px 0 6px; font-size: 15px; }
+.brand-colors { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 12px 0; }
+.brand-pick { display: flex; align-items: center; gap: 10px; }
+.brand-pick input[type=color] { width: 46px; height: 38px; padding: 2px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--card); cursor: pointer; }
+.brand-pick code { font-size: 12.5px; color: var(--muted); }
+.brand-proof { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin: 14px 0; }
+.brand-surf { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; justify-content: space-between; min-height: 92px; padding: 14px; border-radius: 12px; border: 1px solid var(--line-2); }
+.brand-surf img { height: 28px; width: auto; max-width: 100%; }
+.brand-surf small { font-size: 11.5px; opacity: .9; }
+.brand-report summary { cursor: pointer; font-weight: 600; font-size: 14px; padding: 6px 0; }
+@media (max-width: 720px) { .brand-colors { grid-template-columns: 1fr 1fr; } }
+
+/* Login e cadastro: o painel escuro segue a cor principal do tema (não um preto fixo) */
+.auth-side { background: var(--ink); color: var(--auth-text, #fff); }
+.auth-side h2 { color: inherit; }
