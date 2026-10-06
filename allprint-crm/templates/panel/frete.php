@@ -21,7 +21,7 @@ ap_panel_start( 'Frete', 'frete' );
 	</form>
 	<div class="freight-table" data-freight-page-out></div>
 </section>
-<p class="muted small hint">As caixas ficam em Configurações → Frete (Nome | comprimento | largura | altura). Pese a peça já embalada na sua balança para o valor bater.</p>
+<p class="muted small hint">As caixas ficam em Configurações → Frete (Nome | comprimento | largura | altura). Pese o pedido já embalado na sua balança para o valor bater.</p>
 <script>
 (function () {
 	var f = document.querySelector('[data-freight-page]'); if (!f) return;

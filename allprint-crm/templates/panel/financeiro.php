@@ -149,7 +149,7 @@ ap_panel_start( 'Financeiro', 'financeiro', ap_money_button_html() . $actions );
 		<span class="muted small">Por mês: <strong class="text-ok">+ <?php echo esc_html( ap_money( ap_recurring_monthly( 'in' ) ) ); ?></strong> · <strong class="text-late">− <?php echo esc_html( ap_money( ap_recurring_monthly( 'out' ) ) ); ?></strong></span>
 	</div>
 	<?php if ( ! $recs ) : ?>
-		<p class="muted small">Nenhuma ainda. Ao lançar uma receita ou saída, ligue a chave "Conta recorrente" (ex.: parcela da impressora, internet, ferramentas, aluguel) e os próximos meses aparecem sozinhos.</p>
+		<p class="muted small">Nenhuma ainda. Ao lançar uma receita ou saída, ligue a chave "Conta recorrente" (ex.: parcela da plotter, internet, ferramentas, aluguel) e os próximos meses aparecem sozinhos.</p>
 	<?php else : ?>
 		<div class="table table--recur">
 			<div class="table-row table-head"><span>Conta</span><span>Repete</span><span>Próximo</span><span>Valor</span><span></span></div>

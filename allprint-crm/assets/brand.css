@@ -170,3 +170,15 @@
 .cl-row .field{flex:1 1 180px;min-width:0;margin:0}
 .cl-row .btn{flex:0 0 auto;align-self:flex-end;height:44px;min-height:44px;padding:0 18px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
 .cl-row .field input,.cl-row .field select{height:44px}
+.quick-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 10px}
+.chip{border:1px solid var(--line,#ddd);background:var(--card,#fff);color:inherit;border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--accent-ui,#ab8a1c)}
+
+/* Veículos */
+.veh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:16px}
+.veh.is-sel{outline:2px solid var(--accent-ui,#ab8a1c)}
+.veh-nums{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.veh-nums span{display:block;font-size:.75rem;color:var(--muted,#707070)}
+.veh-nums strong{font-size:1rem}
+.table--veh .table-row{grid-template-columns:90px minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) 90px 110px auto}
+@media (max-width:900px){.table--veh .table-row{grid-template-columns:1fr 1fr}}

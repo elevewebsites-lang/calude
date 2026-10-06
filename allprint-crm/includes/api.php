@@ -249,17 +249,7 @@ function ap_api_search( WP_REST_Request $r ) {
 	}
 	if ( ap_can( 'orcamentos' ) ) {
 		foreach ( ap_rows( 'quotes', 'title LIKE %s', array( $like ), 'id DESC LIMIT 5' ) as $q ) {
-			$out[] = array( 'type' => 'Orçamento', 'title' => $q->title, 'sub' => ap_money( $q->total ), 'url' => ap_panel_url( 'orcamento', $q->id ) );
-		}
-	}
-	if ( ap_module( 'produtos' ) && ap_can( 'produtos' ) ) {
-		foreach ( ap_rows( 'products', 'name LIKE %s OR sku LIKE %s', array( $like, $like ), 'id DESC LIMIT 5' ) as $pr ) {
-			$out[] = array( 'type' => 'Produto', 'title' => $pr->name, 'sub' => ap_money( $pr->price ), 'url' => ap_panel_url( 'produto', $pr->id ) );
-		}
-	}
-	if ( ap_module( 'estoque' ) && ap_can( 'estoque' ) ) {
-		foreach ( ap_rows( 'filaments', 'brand LIKE %s OR color_name LIKE %s OR material LIKE %s', array( $like, $like, $like ), 'id DESC LIMIT 5' ) as $f ) {
-			$out[] = array( 'type' => 'Filamento', 'title' => ap_filament_label( $f ), 'sub' => round( $f->weight_g ) . ' g', 'url' => ap_panel_url( 'filamentos' ) );
+			$out[] = array( 'type' => 'Proposta', 'title' => $q->title, 'sub' => ap_money( $q->total ), 'url' => ap_panel_url( 'orcamento', $q->id ) );
 		}
 	}
 	$where = 't.title LIKE %s';

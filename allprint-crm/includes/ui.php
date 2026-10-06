@@ -101,23 +101,19 @@ function ap_panel_start( $title, $active = '', $actions = '' ) {
 			'clientes'    => array( 'Clientes', 'clientes', 'clientes' ),
 			'orcamentos'  => array( 'Propostas comerciais', 'proposta', 'orcamentos' ),
 			'cupons'      => array( 'Cupons e crédito', 'tag', 'clientes' ),
-			'calculadora' => array( 'Calculadora', 'calculadora', 'orcamentos' ),
 		),
 		'Estoque' => array(
-			'filamentos'  => array( 'Filamentos', 'carretel', 'estoque' ),
 			'insumos'     => array( 'Estoque e insumos', 'caixa', 'estoque' ),
-			'compras'     => array( 'Compras e desejos', 'carrinho', 'estoque' ),
-			'impressoras' => array( 'Impressoras', 'impressora', 'estoque' ),
+			'compras'     => array( 'Lista de compras', 'carrinho', 'estoque' ),
 			'frete'       => array( 'Frete', 'caminhao', 'projetos' ),
 		),
 		'Catálogo' => array(
 			'catalogo'    => array( 'Tabela de preços', 'tag', 'produtos_cat' ),
 			'emails'      => array( 'E-mails para clientes', 'email', 'emails' ),
-			'produtos'    => array( 'Produtos', 'tag', 'produtos' ),
-			'marketing'   => array( 'Marketing', 'megafone', 'leads' ),
 		),
 		'Gestão'  => array(
 			'financeiro'  => array( 'Financeiro', 'financeiro', 'financeiro' ),
+			'veiculos'    => array( 'Veículos', 'caminhao', 'financeiro' ),
 			'tarefas'     => array( 'Tarefas', 'tarefas', 'tarefas' ),
 			'apontamentos' => array( 'Apontamentos', 'alvo', '' ),
 			'importar'    => array( 'Importar planilha', 'caixa', 'admin' ),
@@ -201,7 +197,7 @@ function ap_panel_end() {
 </div>
 <div class="search" id="search" hidden>
 	<div class="search-box">
-		<div class="search-input"><?php echo ap_icon( 'busca', 18 ); // phpcs:ignore ?><input type="text" placeholder="Buscar pedido, cliente, orçamento, produto, filamento… ou digite um comando" autocomplete="off"><kbd>Esc</kbd></div>
+		<div class="search-input"><?php echo ap_icon( 'busca', 18 ); // phpcs:ignore ?><input type="text" placeholder="Buscar pedido, cliente, proposta… ou digite um comando" autocomplete="off"><kbd>Esc</kbd></div>
 		<div class="search-results"></div>
 	</div>
 </div>
@@ -546,29 +542,24 @@ function ap_quick_commands() {
 	};
 	if ( ap_can( 'orcamentos' ) ) {
 		$add( 'Nova proposta comercial', 'orcamento proposta cliente preco', ap_panel_url( 'orcamento' ) );
-		$add( 'Calcular preço de uma peça', 'calculadora custo preco filamento gramas', ap_panel_url( 'calculadora' ) );
 	}
 	if ( ap_can( 'projetos' ) ) {
-		$add( 'Novo pedido (balcão / marketplace)', 'pedido venda manual', ap_panel_url( 'pedidos', 0, array( 'abrir' => 'novo-pedido' ) ) );
+		$add( 'Novo pedido (balcão / WhatsApp)', 'pedido venda manual', ap_panel_url( 'pedidos', 0, array( 'abrir' => 'novo-pedido' ) ) );
 		$add( 'Calcular frete', 'frete correios jadlog envio cep', ap_panel_url( 'frete' ) );
 	}
 	if ( ap_can( 'estoque' ) ) {
-		$add( 'Cadastrar carretel de filamento', 'filamento carretel estoque pla petg', ap_panel_url( 'filamentos', 0, array( 'abrir' => 'novo-filamento' ) ) );
-		$add( 'Registrar compra de insumo', 'insumo sacola caixa compra', ap_panel_url( 'insumos' ) );
-		$add( 'Adicionar à lista de compras', 'comprar desejo mercado livre link', ap_panel_url( 'compras', 0, array( 'abrir' => 'novo-item' ) ) );
+		$add( 'Registrar entrada de insumo', 'insumo bobina tinta compra estoque', ap_panel_url( 'insumos' ) );
+		$add( 'Adicionar à lista de compras', 'comprar repor fornecedor link', ap_panel_url( 'compras', 0, array( 'abrir' => 'novo-item' ) ) );
 	}
 	if ( ap_can( 'clientes' ) ) {
 		$add( 'Novo cliente', 'cadastrar cliente', ap_panel_url( 'clientes', 0, array( 'abrir' => 'novo-cliente' ) ) );
 	}
 	if ( ap_can( 'leads' ) ) {
 		$add( 'Novo lead', 'funil contato interessado', ap_panel_url( 'leads', 0, array( 'abrir' => 'novo-lead' ) ) );
-		$add( 'Ideias de post', 'marketing instagram reels conteudo', ap_panel_url( 'marketing' ) );
-	}
-	if ( ap_can( 'produtos' ) ) {
-		$add( 'Importar modelo do MakerWorld', 'makerworld modelo produto importar link', ap_panel_url( 'produtos', 0, array( 'abrir' => 'importar' ) ) );
 	}
 	if ( ap_can( 'financeiro' ) ) {
 		$add( 'Novo lançamento no financeiro', 'despesa receita conta pagar', ap_panel_url( 'financeiro', 0, array( 'abrir' => 'novo-lancamento' ) ) );
+		$add( 'Lançar custo do veículo (gasolina, IPVA…)', 'carro veiculo gasolina combustivel ipva seguro multa', ap_panel_url( 'veiculos', 0, array( 'abrir' => 'vei-custo' ) ) );
 	}
 	if ( ap_is_team() ) {
 		$add( 'Nova tarefa', 'criar tarefa afazer', ap_panel_url( 'tarefas', 0, array( 'abrir' => 'nova-tarefa' ) ) );
@@ -581,12 +572,10 @@ function ap_quick_commands() {
 		array( 'orcamentos', 'Propostas', 'orcamentos' ),
 		array( 'pedidos', 'Pedidos', 'projetos' ),
 		array( 'clientes', 'Clientes', 'clientes' ),
-		array( 'filamentos', 'Filamentos', 'estoque' ),
 		array( 'insumos', 'Insumos', 'estoque' ),
-		array( 'compras', 'Compras e desejos', 'estoque' ),
-		array( 'impressoras', 'Impressoras', 'estoque' ),
-		array( 'produtos', 'Produtos', 'produtos' ),
+		array( 'compras', 'Lista de compras', 'estoque' ),
 		array( 'financeiro', 'Financeiro', 'financeiro' ),
+		array( 'veiculos', 'Veículos', 'financeiro' ),
 		array( 'tarefas', 'Tarefas', '' ),
 	);
 	foreach ( $pages as $pg ) {

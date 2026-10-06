@@ -75,7 +75,6 @@ if ( '' === $view ) :
 								<span class="badge">#<?php echo (int) $p->id; ?></span>
 								<?php if ( $p->urgent ) : ?><span class="badge badge--late">URGENTE</span><?php endif; ?>
 								<?php if ( 'problema' === $p->art_status ) : ?><span class="badge badge--warn">arte com ajuste</span><?php elseif ( 'aprovada' === $p->art_status ) : ?><span class="badge badge--ok">arte ok</span><?php endif; ?>
-								<?php if ( 'pedido' !== $p->kind && '' !== $p->kind ) : ?><span class="badge badge--channel"><?php echo esc_html( ap_channels()[ $p->kind ]['name'] ?? $p->kind ); ?></span><?php endif; ?>
 								<span class="badge badge--<?php echo 'envio' === $p->delivery_mode ? 'ship' : 'pickup'; ?>"><?php echo 'envio' === $p->delivery_mode ? 'Envio' : 'Retirada'; ?></span>
 								<?php if ( 'internal' === $kind && isset( $cols[ $p->status ] ) ) : ?><span class="badge"><?php echo esc_html( $cols[ $p->status ] ); ?></span><?php endif; ?>
 							</div>
@@ -139,8 +138,8 @@ endif;
 ap_modal_start( 'novo-pedido', 'Pedido manual' );
 ap_form( 'order_create', 'stack' );
 ?>
-	<p class="muted small">Para venda de balcão, feira ou marketplace (sem orçamento online).</p>
-	<?php ap_input( 'title', 'O que é', '', 'text', 'required placeholder="Ex.: 10 chaveiros personalizados"' ); ?>
+	<p class="muted small">Para venda de balcão ou WhatsApp (sem proposta online).</p>
+	<?php ap_input( 'title', 'O que é', '', 'text', 'required placeholder="Ex.: 20 cartões de visita"' ); ?>
 	<?php ap_select( 'client_id', 'Cliente', ap_client_options( '+ Cliente novo / sem cadastro' ), isset( $_GET['cliente'] ) ? absint( $_GET['cliente'] ) : '', 'data-new-client' ); // phpcs:ignore ?>
 	<div class="new-client grid-2">
 		<?php ap_input( 'new_name', 'Nome' ); ?>
@@ -151,7 +150,6 @@ ap_form( 'order_create', 'stack' );
 	<div class="grid-2">
 		<?php ap_input( 'value', 'Valor (R$)', '', 'text', 'inputmode="decimal" data-money' ); ?>
 		<?php ap_select( 'method', 'Forma de pagamento', ap_list_options( 'metodos' ) ); ?>
-		<?php ap_select( 'channel', 'Canal', array( 'pedido' => 'Direto (loja própria, WhatsApp, balcão)' ) + array_map( function ( $c ) { return $c['name']; }, ap_channels() ) ); ?>
 		<?php ap_select( 'delivery_mode', 'Entrega', array( 'retirada' => 'Retirada', 'envio' => 'Envio' ) ); ?>
 		<?php ap_input( 'due_date', 'Prazo', '', 'date' ); ?>
 	</div>

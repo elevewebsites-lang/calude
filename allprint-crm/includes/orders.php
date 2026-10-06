@@ -4,7 +4,7 @@
  * Aguardando pagamento → Na fila → Imprimindo → Acabamento → Fotos → Pronto → Entregue.
  *
  * - Pagou: sai de "Aguardando pagamento" para a coluna seguinte.
- * - Registrar consumo: gramas por carretel + insumos + horas → baixa do estoque, custo real e horas da impressora.
+ * - Registrar consumo: insumos usados → baixa do estoque e custo real.
  * - Chegou em "Pronto": e-mail automático para o cliente + botão de WhatsApp com a mensagem pronta.
  * - Salvar no portfólio: vira produto (fotos, preço cobrado, custo, gramas, tempo).
  */
@@ -112,7 +112,7 @@ function ap_owner_id() {
 }
 
 /* -----------------------------------------------------------------------
- * Pedido manual (venda de balcão, marketplace…)
+ * Pedido manual (venda de balcão, WhatsApp…)
  * -------------------------------------------------------------------- */
 
 function ap_do_order_create() {
@@ -138,7 +138,6 @@ function ap_do_order_create() {
 		'projects',
 		array(
 			'client_id'     => $client_id,
-			'product_id'    => ap_in( 'product_id', 'int' ),
 			'title'         => ap_in( 'title' ) ? ap_in( 'title' ) : 'Pedido',
 			'status'        => $paid && isset( $cols[1] ) ? $cols[1] : $cols[0],
 			'value'         => $value,
@@ -146,7 +145,6 @@ function ap_do_order_create() {
 			'start_date'    => ap_today(),
 			'due_date'      => ap_in( 'due_date', 'date' ),
 			'notes'         => ap_in( 'notes', 'textarea' ),
-			'kind'          => ap_in( 'channel' ) ? sanitize_key( ap_in( 'channel' ) ) : 'pedido',
 		)
 	);
 	if ( $value > 0 ) {
@@ -156,7 +154,7 @@ function ap_do_order_create() {
 				'type'        => 'in',
 				'project_id'  => $id,
 				'client_id'   => $client_id,
-				'category'    => ap_in( 'channel' ) && 'pedido' !== ap_in( 'channel' ) ? 'Venda marketplace' : 'Pedido',
+				'category'    => 'Pedido',
 				'description' => 'Pedido #' . $id . ' · ' . ( ap_in( 'title' ) ? ap_in( 'title' ) : 'Pedido' ),
 				'amount'      => $value,
 				'due_date'    => ap_today(),
@@ -196,7 +194,7 @@ function ap_do_order_save() {
 }
 
 /**
- * Registrar consumo: o que realmente gastou (a balança manda).
+ * Registrar consumo de insumos do pedido (o que realmente gastou): baixa o estoque e soma no custo real.
  */
 function ap_do_order_consume() {
 	ap_require( 'projetos' );
@@ -205,42 +203,18 @@ function ap_do_order_consume() {
 		ap_back();
 	}
 	$raw  = isset( $_POST['u'] ) ? (array) wp_unslash( $_POST['u'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput
-	$pair = function ( $ids, $vals ) {
-		$out = array();
-		foreach ( (array) $ids as $i => $id ) {
-			$v = (float) str_replace( ',', '.', (string) ( $vals[ $i ] ?? 0 ) );
-			if ( absint( $id ) && $v > 0 ) {
-				$out[] = array( absint( $id ), $v );
-			}
+	$sups = array();
+	foreach ( (array) ( $raw['sup_id'] ?? array() ) as $i => $id ) {
+		$v = (float) str_replace( ',', '.', (string) ( $raw['sup_qty'][ $i ] ?? 0 ) );
+		if ( absint( $id ) && $v > 0 ) {
+			$sups[] = array( absint( $id ), $v );
 		}
-		return $out;
-	};
-	$fils  = $pair( $raw['fil_id'] ?? array(), $raw['fil_g'] ?? array() );
-	$sups  = $pair( $raw['sup_id'] ?? array(), $raw['sup_qty'] ?? array() );
-	$hours = (float) str_replace( ',', '.', (string) ( $raw['hours'] ?? 0 ) ) + (float) ( $raw['minutes'] ?? 0 ) / 60;
-	$pid   = absint( $raw['printer'] ?? 0 );
-
-	$material = ap_stock_consume( $p->id, $fils, $sups );
-	$machine  = 0;
-	$printer  = $pid ? ap_get( 'printers', $pid ) : null;
-	if ( $printer && $hours > 0 ) {
-		ap_update( 'printers', $printer->id, array( 'hours_used' => $printer->hours_used + $hours ) );
-		$machine = $hours * ( $printer->watts / 1000 * ap_num_setting( 'kwh' ) + ( $printer->life_hours > 0 ? $printer->price / $printer->life_hours : 0 ) );
 	}
-	$labor  = (float) str_replace( ',', '.', (string) ( $raw['labor_min'] ?? 0 ) ) / 60 * ap_num_setting( 'mao_obra_hora' );
-	$grams  = array_sum( array_column( $fils, 1 ) );
-	$cost   = round( $p->cost_real + $material + $machine + $labor, 2 );
-	ap_update(
-		'projects',
-		$p->id,
-		array(
-			'cost_real'   => $cost,
-			'grams_used'  => $p->grams_used + $grams,
-			'print_hours' => $p->print_hours + $hours,
-			'printer_id'  => $pid ? $pid : $p->printer_id,
-		)
-	);
-	ap_log( $p->id, 'Consumo registrado: ' . round( $grams ) . ' g de filamento' . ( $hours ? ', ' . round( $hours, 1 ) . ' h de impressão' : '' ) . ' · custo ' . ap_money( $material + $machine + $labor ) . '.' );
+	$material = ap_stock_consume( $p->id, $sups );
+	$labor    = (float) str_replace( ',', '.', (string) ( $raw['labor_min'] ?? 0 ) ) / 60 * ap_num_setting( 'mao_obra_hora' );
+	$cost     = round( $p->cost_real + $material + $labor, 2 );
+	ap_update( 'projects', $p->id, array( 'cost_real' => $cost ) );
+	ap_log( $p->id, 'Consumo registrado: insumos ' . ap_money( $material ) . ( $labor ? ' + mão de obra ' . ap_money( $labor ) : '' ) . '.' );
 	ap_back( 'Consumo registrado e estoque atualizado. Custo real do pedido: ' . ap_money( $cost ) . '.' );
 }
 
@@ -249,7 +223,7 @@ function ap_do_order_unconsume() {
 	$p = ap_get( 'projects', ap_in( 'id', 'int' ) );
 	if ( $p ) {
 		ap_stock_unconsume( $p->id );
-		ap_update( 'projects', $p->id, array( 'cost_real' => 0, 'grams_used' => 0 ) );
+		ap_update( 'projects', $p->id, array( 'cost_real' => 0 ) );
 		ap_log( $p->id, 'Consumo desfeito (material devolvido ao estoque).' );
 	}
 	ap_back( 'Consumo desfeito.' );
@@ -355,57 +329,6 @@ function ap_do_order_notify_ready() {
 	ap_require( 'projetos' );
 	$ok = ap_order_send_ready( ap_in( 'id', 'int' ) );
 	ap_back( $ok ? 'E-mail enviado ao cliente.' : 'Não deu para enviar: confira o e-mail do cliente e o SMTP em Configurações.', $ok ? 'ok' : 'erro' );
-}
-
-/* -----------------------------------------------------------------------
- * Portfólio / produto
- * -------------------------------------------------------------------- */
-
-function ap_do_order_to_product() {
-	ap_require( 'produtos' );
-	$p = ap_get( 'projects', ap_in( 'id', 'int' ) );
-	if ( ! $p ) {
-		ap_back();
-	}
-	$items  = ap_order_items( $p );
-	$qty    = 0;
-	foreach ( $items as $it ) {
-		if ( 'impressao' === ( $it['kind'] ?? 'impressao' ) ) {
-			$qty += (int) ( $it['qty'] ?? 1 );
-		}
-	}
-	$qty    = max( 1, $qty );
-	$photos = ap_order_photos( $p );
-	if ( ! $photos && $p->quote_id && ( $q = ap_get( 'quotes', $p->quote_id ) ) ) { // phpcs:ignore
-		$photos = ap_json( $q->images );
-	}
-	$calc_id = 0;
-	foreach ( $items as $it ) {
-		if ( ! empty( $it['calc'] ) ) {
-			$calc_id = (int) $it['calc'];
-			break;
-		}
-	}
-	$calc = $calc_id ? ap_get( 'calcs', $calc_id ) : null;
-	$id   = ap_insert(
-		'products',
-		array(
-			'name'           => $p->title,
-			'description'    => implode( "\n", array_filter( array_map( function ( $it ) { return $it['desc'] ?? ''; }, $items ) ) ),
-			'photos'         => wp_json_encode( $photos ),
-			'calc'           => $calc ? $calc->data : '',
-			'cost'           => round( ( $p->cost_real > 0 ? $p->cost_real : $p->cost_estimated ) / $qty, 2 ),
-			'price'          => $calc ? $calc->price : round( $p->value / $qty, 2 ),
-			'sold_price'     => round( $p->value / $qty, 2 ),
-			'sold_count'     => $qty,
-			'grams'          => $p->grams_used > 0 ? round( $p->grams_used / $qty, 1 ) : 0,
-			'print_hours'    => $p->print_hours > 0 ? round( $p->print_hours / $qty, 2 ) : 0,
-			'source_project' => $p->id,
-			'portfolio'      => 1,
-		)
-	);
-	ap_update( 'projects', $p->id, array( 'product_id' => $id ) );
-	ap_back( 'Salvo em Produtos. Ajuste o preço de venda e publique nos canais.', 'ok', ap_panel_url( 'produto', $id ) );
 }
 
 /**

@@ -69,39 +69,25 @@ ap_panel_start( 'Configurações', 'config' );
 	</section>
 
 	<section class="card step" id="preco">
-		<div class="step-head"><span class="step-n">03</span><div><h3>Calculadora e preço</h3><p class="muted small">Valores de partida baseados em pesquisa de mercado (makers no Brasil cobram de +50% a +150% sobre o custo; peças únicas 2,5 a 3×, lotes simples 2×). Ajuste à medida que for vendendo.</p></div></div>
+		<div class="step-head"><span class="step-n">03</span><div><h3>Preço e pedido</h3><p class="muted small">Regras que valem para o pedido online e para a proposta. Os preços por material ficam em "Tabela de preços".</p></div></div>
 		<div class="grid-4">
-			<?php ap_input( 'kwh', 'Energia (R$/kWh)', $s['kwh'], 'text', 'inputmode="decimal"' ); ?>
+			<?php ap_input( 'area_minima', 'Mínimo por material (m²)', $s['area_minima'], 'text', 'inputmode="decimal"' ); ?>
+			<?php ap_input( 'preco_ilhos', 'Reforço e ilhós (R$ por lado)', $s['preco_ilhos'], 'text', 'inputmode="decimal"' ); ?>
+			<?php ap_input( 'preco_laminacao', 'Laminação (R$ por m²)', $s['preco_laminacao'], 'text', 'inputmode="decimal"' ); ?>
+			<?php ap_input( 'prazo_dias', 'Prazo padrão (dias úteis)', $s['prazo_dias'], 'number', 'min="0"' ); ?>
 			<?php ap_input( 'mao_obra_hora', 'Sua hora de trabalho (R$)', $s['mao_obra_hora'], 'text', 'inputmode="decimal"' ); ?>
-			<?php ap_input( 'modelagem_hora', 'Hora de modelagem 3D (R$)', $s['modelagem_hora'], 'text', 'inputmode="decimal"' ); ?>
-			<?php ap_input( 'falha', 'Reserva para falhas (%)', $s['falha'], 'text', 'inputmode="decimal"' ); ?>
-			<?php ap_input( 'perda_filamento', 'Perda de filamento (purga, brim) %', $s['perda_filamento'], 'text', 'inputmode="decimal"' ); ?>
-			<?php ap_input( 'piso_markup', 'Nunca vender abaixo de (× custo)', $s['piso_markup'], 'text', 'inputmode="decimal"' ); ?>
-			<?php ap_input( 'urgencia', 'Urgência (+%)', $s['urgencia'], 'text', 'inputmode="decimal"' ); ?>
 			<?php ap_input( 'pedido_minimo', 'Pedido mínimo (R$)', $s['pedido_minimo'], 'text', 'inputmode="decimal"' ); ?>
 		</div>
-		<p class="muted small">Energia: a EDP São Paulo (Taubaté) cobra ~R$ 0,79/kWh sem impostos; com ICMS e PIS/COFINS fica perto de R$ 1,05. Confira o valor na sua conta de luz.</p>
-		<div class="grid-3">
-			<?php ap_input( 'tipos_preco', 'Tipo de peça | multiplicador sobre o custo', $s['tipos_preco'], 'textarea', 'rows="6" class="mono"' ); ?>
-			<?php ap_input( 'dificuldades', 'Dificuldade | acréscimo %', $s['dificuldades'], 'textarea', 'rows="6" class="mono"' ); ?>
-			<?php ap_input( 'descontos_qtd', 'Quantidade | desconto % (cliente final/empresa)', $s['descontos_qtd'], 'textarea', 'rows="6" class="mono"' ); ?>
-		</div>
-		<div class="grid-4">
-			<?php ap_input( 'revenda_descontos', 'Revendedor: quantidade | desconto %', $s['revenda_descontos'], 'textarea', 'rows="5" class="mono"' ); ?>
-			<?php ap_input( 'revenda_sugerido', 'Preço sugerido de revenda (× o seu preço)', $s['revenda_sugerido'], 'text', 'inputmode="decimal"' ); ?>
-			<?php ap_input( 'revenda_piso', 'Revendedor: nunca abaixo de (× custo)', $s['revenda_piso'], 'text', 'inputmode="decimal"' ); ?>
-			<?php ap_select( 'arredondar', 'Arredondar o preço', array( '90' => 'Terminar em ,90', '99' => 'Terminar em ,99', '0' => 'Não arredondar' ), $s['arredondar'] ); ?>
-		</div>
-		<?php ap_input( 'empresa_nota', 'Observação para empresas e revendedores (aparece no orçamento)', $s['empresa_nota'] ); ?>
+		<?php ap_input( 'empresa_nota', 'Observação para empresas e terceirizados (aparece na proposta)', $s['empresa_nota'] ); ?>
 	</section>
 
 	<section class="card step" id="pagamento">
 		<div class="step-head"><span class="step-n">04</span><div><h3>Pagamento (InfinitePay)</h3><p class="muted small">Links de pagamento com Pix ou cartão. A baixa é automática quando o cliente paga.</p></div></div>
 		<div class="grid-4">
-			<?php ap_input( 'infinitepay', 'InfiniteTag (sem o $)', $s['infinitepay'], 'text', 'placeholder="cardonstudio3d"' ); ?>
+			<?php ap_input( 'infinitepay', 'InfiniteTag (sem o $)', $s['infinitepay'], 'text', 'placeholder="sua-infinitetag"' ); ?>
 			<?php ap_input( 'desconto_pix', 'Desconto no Pix/à vista (%)', $s['desconto_pix'], 'text', 'inputmode="decimal"' ); ?>
 			<?php ap_input( 'parcelas_max', 'Cartão em até (vezes)', $s['parcelas_max'], 'number', 'min="1" max="12"' ); ?>
-			<?php ap_input( 'validade_dias', 'Validade do orçamento (dias)', $s['validade_dias'], 'number', 'min="1"' ); ?>
+			<?php ap_input( 'validade_dias', 'Validade da proposta (dias)', $s['validade_dias'], 'number', 'min="1"' ); ?>
 		</div>
 		<input type="hidden" name="parcelas_sem_juros" value="<?php echo esc_attr( $s['parcelas_max'] ); ?>">
 		<input type="hidden" name="infinitepay_token" value="<?php echo esc_attr( $s['infinitepay_token'] ); ?>">
@@ -123,9 +109,7 @@ ap_panel_start( 'Configurações', 'config' );
 	</section>
 
 	<section class="card step" id="canais">
-		<div class="step-head"><span class="step-n">06</span><div><h3>Canais de venda</h3><p class="muted small">Canal | comissão % | taxa fixa R$. O preço de cada canal é calculado para você receber o mesmo que na venda direta. Confira as taxas atuais de cada marketplace na sua categoria.</p></div></div>
-		<?php ap_input( 'taxas_canais', 'Canais', $s['taxas_canais'], 'textarea', 'rows="6" class="mono"' ); ?>
-		<p class="muted small">Categorias financeiras:</p>
+		<div class="step-head"><span class="step-n">06</span><div><h3>Categorias financeiras</h3><p class="muted small">Listas usadas nos lançamentos do financeiro.</p></div></div>
 		<div class="grid-3">
 			<?php ap_input( 'categorias_in', 'Entradas', $s['categorias_in'], 'textarea', 'rows="5" class="mono"' ); ?>
 			<?php ap_input( 'categorias_out', 'Saídas', $s['categorias_out'], 'textarea', 'rows="5" class="mono"' ); ?>
@@ -136,10 +120,10 @@ ap_panel_start( 'Configurações', 'config' );
 	<section class="card step" id="email">
 		<div class="step-head"><span class="step-n">07</span><div><h3>E-mail (SMTP)</h3><p class="muted small">Os dados estão no painel da hospedagem, em E-mails. Assim os e-mails saem do seu endereço e não caem no spam.</p></div></div>
 		<div class="grid-3">
-			<?php ap_input( 'smtp_host', 'Servidor SMTP', $s['smtp_host'], 'text', 'placeholder="mail.cardonstudio3d.com.br"' ); ?>
+			<?php ap_input( 'smtp_host', 'Servidor SMTP', $s['smtp_host'], 'text', 'placeholder="mail.seudominio.com.br"' ); ?>
 			<?php ap_input( 'smtp_port', 'Porta', $s['smtp_port'], 'number', 'placeholder="465"' ); ?>
 			<?php ap_select( 'smtp_secure', 'Segurança', array( 'ssl' => 'SSL (porta 465)', 'tls' => 'TLS (porta 587)', '' => 'Nenhuma' ), $s['smtp_secure'] ); ?>
-			<?php ap_input( 'smtp_user', 'Usuário (e-mail completo)', $s['smtp_user'], 'email', 'placeholder="contato@cardonstudio3d.com.br" autocomplete="off"' ); ?>
+			<?php ap_input( 'smtp_user', 'Usuário (e-mail completo)', $s['smtp_user'], 'email', 'placeholder="contato@seudominio.com.br" autocomplete="off"' ); ?>
 			<?php ap_input( 'smtp_pass', 'Senha do e-mail', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'smtp_pass' ) ) . '"' ); ?>
 			<?php ap_input( 'mail_from_name', 'Nome do remetente', $s['mail_from_name'] ); ?>
 		</div>
@@ -152,7 +136,7 @@ ap_panel_start( 'Configurações', 'config' );
 	</section>
 
 	<section class="card step" id="google">
-		<div class="step-head"><span class="step-n">08</span><div><h3>Google Drive</h3><p class="muted small">Tudo que você sobe (fotos, arquivos 3D) é copiado para o seu Drive, organizado em Orçamentos / Pedidos / Produtos.</p></div></div>
+		<div class="step-head"><span class="step-n">08</span><div><h3>Google Drive</h3><p class="muted small">Tudo que você sobe (artes, fotos e arquivos dos clientes) é copiado para o seu Drive, organizado em Orçamentos / Pedidos / Produtos.</p></div></div>
 		<?php $g = ap_google_state(); ?>
 		<?php if ( ap_google_connected() ) : ?>
 			<div class="flash">Conectado<?php echo ! empty( $g['email'] ) ? ' como ' . esc_html( $g['email'] ) : ''; ?>.</div>
@@ -175,21 +159,8 @@ ap_panel_start( 'Configurações', 'config' );
 		</div>
 	</section>
 
-	<section class="card step" id="ia">
-		<div class="step-head"><span class="step-n">09</span><div><h3>IA (Claude) e marketplaces</h3><p class="muted small">Opcional. A IA lê prints do fatiador e sugere ideias de post. Custa centavos por uso, cobrados pela Anthropic.</p></div></div>
-		<div class="grid-2">
-			<?php ap_input( 'anthropic_key', 'Chave da API da Anthropic', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'anthropic_key' ) ?: 'sk-ant-…' ) . '"' ); ?>
-			<?php ap_input( 'ai_model', 'Modelo', $s['ai_model'] ); ?>
-		</div>
-		<p class="muted small">Mercado Livre / Shopee: para publicar e puxar pedidos automaticamente é preciso criar um app de desenvolvedor em cada plataforma (developers.mercadolivre.com.br e open.shopee.com). Enquanto isso, o painel calcula o preço de cada canal, gera o texto do anúncio e registra as vendas.</p>
-		<div class="grid-2">
-			<?php ap_input( 'ml_app_id', 'Mercado Livre: App ID (futuro)', $s['ml_app_id'] ); ?>
-			<?php ap_input( 'ml_secret', 'Mercado Livre: Secret', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'ml_secret' ) ) . '"' ); ?>
-		</div>
-	</section>
-
 	<section class="card step" id="seguranca">
-		<div class="step-head"><span class="step-n">10</span><div><h3>Segurança</h3></div></div>
+		<div class="step-head"><span class="step-n">09</span><div><h3>Segurança</h3></div></div>
 		<?php ap_select( 'seg_2fa', 'Verificação em duas etapas (código por e-mail no login da equipe)', array( '1' => 'Ligada (recomendado)', '0' => 'Desligada' ), $s['seg_2fa'] ); ?>
 		<p class="muted small">Se um dia ficar sem acesso ao e-mail, coloque <code>define( 'AP_DISABLE_2FA', true );</code> no wp-config.php pela hospedagem.</p>
 	</section>
@@ -217,7 +188,7 @@ ap_panel_start( 'Configurações', 'config' );
 
 <section class="card" id="planilha-google">
 	<div class="card-head"><h3>Planilha do Google (pedidos)</h3><?php $sh = ap_sheets_state(); ?><?php if ( ! empty( $sh['id'] ) ) : ?><em class="badge badge--ok">sincronizando</em><?php endif; ?></div>
-	<p class="muted small">Cria uma planilha na sua conta Google com todos os pedidos (uma linha por item, no mesmo formato da planilha de controle) e uma aba de clientes. Cada mudança no sistema, como pedido novo, etapa, pagamento ou entrega, atualiza as linhas dela sozinha. Os arquivos dos clientes ficam no Google Drive, numa pasta por cliente e por pedido.</p>
+	<p class="muted small">Cria uma planilha na sua conta Google com todos os pedidos (uma linha por item, no mesmo formato da planilha de controle) , uma aba de clientes e uma aba de custos (todas as saídas do financeiro, inclusive veículos). Cada mudança no sistema, como pedido novo, etapa, pagamento ou entrega, atualiza as linhas dela sozinha. Os arquivos dos clientes ficam no Google Drive, numa pasta por cliente e por pedido.</p>
 	<?php if ( ! ap_google_connected() ) : ?>
 		<p class="flash flash--warn">Conecte o Google acima primeiro.</p>
 	<?php elseif ( ! ap_sheets_scope_ok() ) : ?>

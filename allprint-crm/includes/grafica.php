@@ -563,7 +563,7 @@ function ap_stage_stock( $id, $status ) {
 		foreach ( $use as $sid => $a ) {
 			$pairs[] = array( $sid, round( $a, 3 ) );
 		}
-		$cost = ap_stock_consume( $id, array(), $pairs );
+		$cost = ap_stock_consume( $id, $pairs );
 		ap_update( 'projects', $id, array( 'stock_done' => 1, 'cost_real' => $p->cost_real + $cost ) );
 		ap_log( $id, 'Estoque: baixa de ' . number_format( array_sum( $use ), 2, ',', '.' ) . ' m² de material (inclui ' . round( ( ap_stock_loss_factor() - 1 ) * 100 ) . '% de perda da máquina).' );
 	}

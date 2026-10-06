@@ -25,31 +25,18 @@ function ap_default_settings() {
 		'whatsapp'       => '',
 		'email'          => '',
 		'instagram'      => '',
-		'colunas'        => "Aguardando pagamento\nNa fila\nImprimindo\nAcabamento\nFotos\nPronto\nEntregue",
-		'coluna_pronto'  => 'pronto',
-		'funil'          => "Novo contato\nOrçamento enviado\nNegociando\nFechado\nPerdido",
-		'origens'        => "Instagram\nIndicação\nSite\nWhatsApp\nGoogle\nMercado Livre\nShopee\nFeira/evento\nOutro",
-		'categorias_in'  => "Pedido\nVenda marketplace\nOutros",
-		'categorias_out' => "Filamento\nInsumos\nEquipamento\nManutenção\nFrete\nMarketing\nImpostos\nTaxas\nOutros",
-		'metodos'        => "Pix\nCartão de crédito\nDinheiro\nTransferência\nMarketplace",
+		'colunas'        => "Aguardando pagamento\nRevisão da arte\nProdução\nAcabamento\nPronto para retirada\nEntregue",
+		'coluna_pronto'  => 'pronto-para-retirada',
+		'funil'          => "Novo contato\nProposta enviada\nNegociando\nFechado\nPerdido",
+		'origens'        => "Instagram\nIndicação\nSite\nWhatsApp\nGoogle\nVisita\nOutro",
+		'categorias_in'  => "Pedido\nOutros",
+		'categorias_out' => "Material\nTinta\nInsumos\nVeículos\nEquipamento\nManutenção\nFrete\nMarketing\nImpostos\nTaxas\nOutros",
+		'metodos'        => "Pix\nCartão de crédito\nCartão de débito\nDinheiro\nTransferência",
 		'aviso_dias'     => '7',
-		// Calculadora.
-		'kwh'            => '1,05',
+		// Preço e pedido.
 		'mao_obra_hora'  => '35',
-		'modelagem_hora' => '50',
-		'falha'          => '10',
-		'perda_filamento' => '5',
-		'tipos_preco'    => "Brinde/corporativo | 2,0\nDecoração e presentes | 2,5\nGeek/colecionável | 3,0\nPeça técnica/protótipo | 3,0",
-		'dificuldades'   => "Fácil | 0\nMédia | 10\nDifícil | 25",
-		'descontos_qtd'  => "1 | 0\n10 | 10\n20 | 15\n50 | 20\n100 | 25",
-		'piso_markup'    => '1,5',
-		'revenda_descontos' => "10 | 15\n30 | 25\n50 | 30\n100 | 35",
-		'revenda_sugerido' => '2,0',
-		'revenda_piso'   => '1,3',
 		'empresa_nota'   => 'Emitimos recibo. Prazo de produção a partir da aprovação da arte/modelo.',
-		'urgencia'       => '30',
 		'pedido_minimo'  => '30',
-		'arredondar'     => '90',
 		// Pagamento.
 		'infinitepay'    => '',
 		'infinitepay_token' => '',
@@ -80,13 +67,6 @@ function ap_default_settings() {
 		'google_client_id' => '',
 		'google_client_secret' => '',
 		'google_pasta'   => '',
-		'anthropic_key'  => '',
-		'ai_model'       => 'claude-sonnet-5',
-		'ml_app_id'      => '',
-		'ml_secret'      => '',
-		'shopee_partner_id' => '',
-		'shopee_key'     => '',
-		'taxas_canais'   => "Loja própria | 0 | 0\nMercado Livre | 14 | 6,75\nShopee | 20 | 4\nElo7 | 18 | 0\nAmazon | 15 | 0",
 		'endereco'       => '',
 		'area_minima'    => '1',
 		'preco_ilhos'    => '10',
@@ -218,7 +198,7 @@ function ap_areas() {
 		'orcamentos' => 'Propostas',
 		'projetos'   => 'Pedidos',
 		'estoque'    => 'Estoque, insumos e compras',
-		'produtos'   => 'Produtos e marketplaces',
+		
 		'produtos_cat' => 'Tabela de preços',
 		'emails'     => 'E-mails para clientes',
 		'tarefas'    => 'Tarefas',
@@ -507,7 +487,6 @@ function ap_icon( $name, $size = 18 ) {
 		'carretel'  => '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/>',
 		'caixa'     => '<path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/>',
 		'carrinho'  => '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/>',
-		'impressora' => '<path d="M4 3h16v4H4z"/><path d="M6 7v6h12V7"/><path d="M3 13h18v8H3z"/><path d="M10 10h4M7 17h3"/>',
 		'calculadora' => '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/>',
 		'tag'       => '<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/>',
 		'caminhao'  => '<path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
@@ -592,7 +571,7 @@ function ap_qty_label( $qty, $unit ) {
 }
 
 /**
- * Nome a partir do link do Mercado Livre / Shopee (o trecho do endereço com o título).
+ * Nome a partir do link de uma loja (o trecho do endereço com o título).
  */
 function ap_link_title( $url ) {
 	$path = (string) wp_parse_url( $url, PHP_URL_PATH );

@@ -191,13 +191,13 @@ function ap_health_checks() {
 	}
 	$low = ap_stock_low();
 	if ( ap_module( 'estoque' ) ) {
-	$c['estoque'] = array(
-		$low['filaments'] || $low['supplies'] ? 'warn' : 'ok',
-		'Estoque',
-		$low['filaments'] || $low['supplies'] ? 'Abaixo do mínimo: ' . implode( ', ', array_merge( array_map( 'ap_filament_label', $low['filaments'] ), wp_list_pluck( $low['supplies'], 'name' ) ) ) . '.' : 'Filamentos e insumos acima do mínimo.',
-		$low['filaments'] || $low['supplies'] ? 'Os itens já estão na lista de compras.' : '',
-		ap_panel_url( 'compras' ),
-	);
+		$c['estoque'] = array(
+			$low['supplies'] ? 'warn' : 'ok',
+			'Estoque',
+			$low['supplies'] ? 'Abaixo do mínimo: ' . implode( ', ', wp_list_pluck( $low['supplies'], 'name' ) ) . '.' : 'Insumos acima do mínimo.',
+			$low['supplies'] ? 'Os itens já estão na lista de compras.' : '',
+			ap_panel_url( 'compras' ),
+		);
 	}
 	if ( ap_setting( 'google_client_id' ) ) {
 		$c['google'] = array(

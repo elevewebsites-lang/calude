@@ -50,8 +50,7 @@ foreach ( ap_projects( 'p.delivered_at LIKE %s', array( $month . '%' ) ) as $o )
 }
 
 $qt   = ap_can( 'orcamentos' ) ? ap_quote_totals() : null;
-$low  = ap_module( 'estoque' ) && ap_can( 'estoque' ) ? ap_stock_low() : array( 'filaments' => array(), 'supplies' => array() );
-$fil_kg = (float) $wpdb->get_var( 'SELECT SUM(weight_g) FROM ' . $T( 'filaments' ) . ' WHERE active = 1' ) / 1000; // phpcs:ignore WordPress.DB.PreparedSQL
+$low  = ap_module( 'estoque' ) && ap_can( 'estoque' ) ? ap_stock_low() : array( 'supplies' => array() );
 
 // Tarefas de hoje e atrasadas.
 $where = "t.status <> 'done' AND t.due_date IS NOT NULL AND t.due_date <= %s";
@@ -62,14 +61,13 @@ if ( ! ap_is_admin() ) {
 }
 $tasks = ap_tasks( $where, $args, "t.due_date, FIELD(t.priority, 'urgente', 'alta', 'normal', 'baixa'), t.id" );
 $follow = ap_can( 'leads' ) ? ap_leads( "l.next_at IS NOT NULL AND DATE(l.next_at) <= %s AND l.stage NOT IN (%s, %s)", array( $today, ap_funnel_won(), ap_funnel_lost() ) ) : array();
-$printers = ap_module( 'estoque' ) && ap_can( 'estoque' ) ? array_filter( ap_rows( 'printers', 'active = 1' ), 'ap_printer_maint_due' ) : array();
 
 $hour  = (int) current_time( 'G' );
 $hello = $hour < 12 ? 'Bom dia' : ( $hour < 18 ? 'Boa tarde' : 'Boa noite' );
 $name  = wp_get_current_user()->first_name ? wp_get_current_user()->first_name : wp_get_current_user()->display_name;
 
 $actions  = ap_money_button_html();
-$actions .= ap_can( 'orcamentos' ) ? ( ap_module( 'estoque' ) ? '<a class="btn btn--ghost" href="' . esc_url( ap_panel_url( 'calculadora' ) ) . '">' . ap_icon( 'calculadora', 16 ) . '<span>Calcular</span></a>' : '' ) . '<a class="btn btn--primary" href="' . esc_url( ap_panel_url( 'orcamento' ) ) . '">' . ap_icon( 'mais', 16 ) . '<span>Orçamento</span></a>' : '';
+$actions .= ap_can( 'orcamentos' ) ? '<a class="btn btn--primary" href="' . esc_url( ap_panel_url( 'orcamento' ) ) . '">' . ap_icon( 'mais', 16 ) . '<span>Proposta</span></a>' : '';
 ap_panel_start( 'Dashboard', '', $actions );
 ?>
 <div class="hello">
@@ -160,14 +158,12 @@ ap_panel_start( 'Dashboard', '', $actions );
 
 	<?php if ( ap_module( 'estoque' ) && ap_can( 'estoque' ) ) : ?>
 		<section class="card">
-			<div class="card-head"><h3>Estoque</h3><a class="small" href="<?php echo esc_url( ap_panel_url( 'filamentos' ) ); ?>"><?php echo esc_html( number_format( $fil_kg, 2, ',', '.' ) ); ?> kg de filamento</a></div>
-			<?php if ( ! $low['filaments'] && ! $low['supplies'] && ! $printers ) : ?>
-				<p class="muted small">Filamentos e insumos acima do mínimo.</p>
+			<div class="card-head"><h3>Estoque</h3><a class="small" href="<?php echo esc_url( ap_panel_url( 'insumos' ) ); ?>">ver insumos</a></div>
+			<?php if ( ! $low['supplies'] ) : ?>
+				<p class="muted small">Todos os insumos acima do mínimo.</p>
 			<?php else : ?>
 				<ul class="mini-list">
-					<?php foreach ( $low['filaments'] as $f ) : ?><li><a href="<?php echo esc_url( ap_panel_url( 'filamentos' ) ); ?>"><span class="swatch swatch--sm" style="background:<?php echo esc_attr( $f->color_hex ); ?>"></span><strong><?php echo esc_html( ap_filament_label( $f ) ); ?></strong><small class="text-late">restam <?php echo (int) round( $f->weight_g ); ?> g</small></a></li><?php endforeach; ?>
 					<?php foreach ( $low['supplies'] as $s ) : ?><li><a href="<?php echo esc_url( ap_panel_url( 'insumos' ) ); ?>"><strong><?php echo esc_html( $s->name ); ?></strong><small class="text-late">restam <?php echo esc_html( ap_qty_label( $s->qty, $s->unit ) ); ?></small></a></li><?php endforeach; ?>
-					<?php foreach ( $printers as $p ) : ?><li><a href="<?php echo esc_url( ap_panel_url( 'impressoras' ) ); ?>"><strong>Manutenção: <?php echo esc_html( $p->name ); ?></strong><small><?php echo esc_html( number_format( $p->hours_used, 0, ',', '.' ) ); ?> h impressas</small></a></li><?php endforeach; ?>
 				</ul>
 				<a class="small" href="<?php echo esc_url( ap_panel_url( 'compras' ) ); ?>">lista de compras →</a>
 			<?php endif; ?>

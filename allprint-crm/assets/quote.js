@@ -77,9 +77,22 @@
 		var row = e.target.closest('[data-qitem]');
 		if (row && e.target.matches('[data-q=material]')) { var nm = $('.qitem-name', row), old = nm.value; var prev = nm.dataset.auto; if (!old || old === prev) nm.value = ''; delete row.dataset.manual; sync(row, true); var m = D.catalog[e.target.value]; if (m) nm.dataset.auto = m.name; }
 		if (e.target.matches('[name=client_id], [name=audience]')) $$('[data-qitem]', list).forEach(function (r) { sync(r, false); });
+		if (e.target.matches('[name=client_id]')) autofill(e.target.value);
 		render();
 	});
+	// Cliente escolhido: mensagem e título preenchidos sozinhos (enquanto você não mexer neles).
+	function autofill(cid) {
+		var info = (D.info || {})[cid]; if (!info) return;
+		var intro = $('[data-intro]', root), title = $('[name=title]', root);
+		if (intro && intro.dataset.auto) intro.value = 'Olá' + (info.first ? ', ' + info.first : '') + '! Segue a proposta comercial da ' + (D.company || '') + ' com o que conversamos: material, medidas, valor e prazo. Qualquer ajuste é só me chamar.';
+		if (title && (!title.value || title.dataset.auto)) { title.value = 'Proposta para ' + info.label; title.dataset.auto = '1'; }
+		var wa = $('[data-send-wa]', root); if (wa) { wa.title = info.wa ? '' : 'Este cliente ainda não tem WhatsApp cadastrado'; }
+	}
+	var introEl = $('[data-intro]', root); if (introEl) introEl.addEventListener('input', function () { delete introEl.dataset.auto; });
+	var titleEl = $('[name=title]', root); var idEl = $('[name=id]', root); if (titleEl && idEl && (!idEl.value || idEl.value === '0') && /^Proposta para /.test(titleEl.value)) titleEl.dataset.auto = '1'; if (titleEl) titleEl.addEventListener('input', function () { delete titleEl.dataset.auto; });
 	root.addEventListener('click', function (e) {
+		var qk = e.target.closest('[data-qitem-quick]');
+		if (qk) { var r0 = addRow(); var sel = $('[data-q=material]', r0); sel.value = qk.getAttribute('data-qitem-quick'); sel.dispatchEvent(new Event('change', { bubbles: true })); var wf = $('[data-q=w]', r0); if (wf && !wf.closest('[hidden]')) wf.focus(); }
 		var add = e.target.closest('[data-qitem-add]');
 		if (add) { var r = addRow(); $('[data-q=material]', r).focus(); }
 		var rp = e.target.closest('[data-qitem-reprice]');

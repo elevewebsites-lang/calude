@@ -1,10 +1,10 @@
 <?php
 /**
- * Uploads (fotos e arquivos 3D) + cópia automática no Google Drive.
+ * Uploads (imagens da proposta e fotos do pedido) + cópia automática no Google Drive.
  *
  * Tudo que sobe pelo painel vai para a biblioteca de mídia do WordPress (para mostrar nas páginas)
- * e entra numa fila que copia para o Drive: "Cardon Studio 3D / Orçamentos / Cliente - Peça",
- * "Cardon Studio 3D / Pedidos / #12 Cliente - Peça", "Cardon Studio 3D / Produtos / …".
+ * e entra numa fila que copia para o Drive: "AllPrint / Propostas / Cliente - Título",
+ * "AllPrint / Pedidos / #12 Cliente - Título".
  *
  * Conexão OAuth em Configurações → Google Drive (Client ID e Secret de um app do Google Cloud,
  * escopo drive.file: o painel só enxerga os arquivos que ele mesmo criou).
@@ -17,23 +17,21 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Uploads
  * -------------------------------------------------------------------- */
 
-function ap_3d_mimes() {
+/** Arquivos de arte que a equipe pode subir na biblioteca (o WordPress não conhece CDR, AI, EPS e PSD). */
+function ap_art_mimes() {
 	return array(
-		'stl' => 'model/stl',
-		'3mf' => 'model/3mf',
-		'obj' => 'model/obj',
-		'glb' => 'model/gltf-binary',
+		'cdr' => 'application/octet-stream',
+		'ai'  => 'application/postscript',
+		'eps' => 'application/postscript',
+		'psd' => 'image/vnd.adobe.photoshop',
 	);
 }
 
-/**
- * Libera STL/3MF/OBJ/GLB só para quem é da equipe.
- */
 add_filter(
 	'upload_mimes',
 	function ( $mimes ) {
 		if ( function_exists( 'ap_is_team' ) && ap_is_team() ) {
-			$mimes = array_merge( $mimes, ap_3d_mimes() );
+			$mimes = array_merge( $mimes, ap_art_mimes() );
 		}
 		return $mimes;
 	}
@@ -42,7 +40,7 @@ add_filter(
 	'wp_check_filetype_and_ext',
 	function ( $data, $file, $filename, $mimes ) {
 		$ext = strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) );
-		$map = ap_3d_mimes();
+		$map = ap_art_mimes();
 		if ( isset( $map[ $ext ] ) && function_exists( 'ap_is_team' ) && ap_is_team() ) {
 			return array( 'ext' => $ext, 'type' => $map[ $ext ], 'proper_filename' => false );
 		}
@@ -79,9 +77,6 @@ function ap_store_uploads( $field, $folder = array(), $kind = 'image' ) {
 		);
 		$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
 		if ( 'image' === $kind && ! in_array( $ext, array( 'jpg', 'jpeg', 'png', 'webp', 'gif', 'heic' ), true ) ) {
-			continue;
-		}
-		if ( '3d' === $kind && ! isset( ap_3d_mimes()[ $ext ] ) ) {
 			continue;
 		}
 		if ( $file['size'] > 60 * MB_IN_BYTES ) {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Formulários do site (cardonstudio3d.com.br) → painel (funil de leads, origem "Site").
+ * Formulários do site (site da empresa) → painel (funil de leads, origem "Site").
  *
  * No Elementor Pro: Formulário → Ações após o envio → Webhook, com a URL mostrada em
  * Configurações. O envio para o WhatsApp continua funcionando normalmente.

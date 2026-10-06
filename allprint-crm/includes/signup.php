@@ -87,7 +87,7 @@ function ap_handle_signup() {
 			'approved' => 0,
 		)
 	);
-	ap_insert( 'leads', array( 'name' => $name, 'company' => ap_in( 'company' ), 'email' => $email, 'whatsapp' => ap_in( 'whatsapp' ), 'source' => 'Cadastro no painel', 'stage' => array_keys( ap_funnel() )[1] ?? '', 'client_id' => $cid, 'notes' => ap_in( 'about', 'textarea' ) ) );
+	ap_insert( 'leads', array( 'name' => $name, 'company' => ap_in( 'company' ), 'email' => $email, 'whatsapp' => ap_in( 'whatsapp' ), 'source' => 'Cadastro no painel', 'stage' => ap_funnel_signup_stage(), 'client_id' => $cid, 'notes' => ap_in( 'about', 'textarea' ) ) );
 	$to = ap_setting( 'email' ) ? ap_setting( 'email' ) : get_option( 'admin_email' );
 	if ( is_email( $to ) ) {
 		ap_mail( $to, 'Cadastro novo para aprovar: ' . ap_in( 'company' ), 'Cadastro novo para aprovar', '<p>' . esc_html( $name . ' (' . ap_in( 'company' ) . ') se cadastrou no painel e aguarda aprovação para ver os preços e fazer pedidos.' ) . '</p>', array( array( 'Telefone', esc_html( ap_in( 'whatsapp' ) ) ), array( 'CPF/CNPJ', esc_html( ap_in( 'cnpj' ) ) ), array( 'Endereço', esc_html( ap_in( 'address' ) ) ) ), 'Aprovar no painel', ap_panel_url( 'cliente', $cid ) );
@@ -142,4 +142,15 @@ function ap_do_client_pay_later() {
 		ap_update( 'clients', $c->id, array( 'pay_later' => $c->pay_later ? 0 : 1 ) );
 	}
 	ap_back( 'Atualizado.' );
+}
+
+/** Etapa do funil para quem acabou de se cadastrar (a que fala em cadastro/análise; senão a primeira). */
+function ap_funnel_signup_stage() {
+	foreach ( ap_funnel() as $slug => $name ) {
+		if ( preg_match( '/cadastr|an[aá]lise/iu', $name ) ) {
+			return $slug;
+		}
+	}
+	$keys = array_keys( ap_funnel() );
+	return $keys ? $keys[0] : '';
 }

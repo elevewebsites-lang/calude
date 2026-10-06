@@ -11,10 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function ap_module_map() {
 	return array(
-		'estoque'   => array( array( 'stock', 'slicer' ), array( 'filamentos', 'insumos', 'compras', 'impressoras', 'calculadora' ) ),
-		'frete'     => array( array( 'shipping' ), array( 'frete' ) ),
-		'produtos'  => array( array( 'products' ), array( 'produtos', 'produto' ) ),
-		'marketing' => array( array( 'marketing' ), array( 'marketing' ) ),
+		'estoque' => array( array( 'stock' ), array( 'insumos', 'compras' ) ),
+		'frete'   => array( array( 'shipping' ), array( 'frete' ) ),
 	);
 }
 

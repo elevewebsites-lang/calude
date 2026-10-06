@@ -19,7 +19,7 @@ ap_panel_start( 'Compras e desejos', 'compras', '<button type="button" class="bt
 	</div>
 	<span class="muted small">Total da lista: <strong class="money"><?php echo esc_html( ap_money( $sum ) ); ?></strong></span>
 </div>
-<p class="muted small hint"><?php echo 'desejo' === $tab ? 'Upgrades e equipamentos que você quer (outra impressora, AMS, secador de filamento, bico endurecido…). Cole o link do Mercado Livre ou da Shopee e o nome vem sozinho.' : 'Reposição: filamentos e insumos abaixo do mínimo entram aqui sozinhos. Ao marcar "Comprei", sai daqui, vai para o financeiro e o estoque é atualizado.'; ?></p>
+<p class="muted small hint"><?php echo 'desejo' === $tab ? 'Equipamentos e melhorias que você quer para a gráfica (plotter, laminadora, mesa de corte…). Cole o link da loja e o nome vem sozinho.' : 'Reposição: insumos abaixo do mínimo (bobinas, tintas, lonas…) entram aqui sozinhos. Ao marcar "Comprei", sai daqui, vai para o financeiro e o estoque é atualizado.'; ?></p>
 
 <?php if ( ! $items ) : ?>
 	<div class="empty"><?php echo ap_icon( 'carrinho', 26 ); // phpcs:ignore ?><h3><?php echo 'desejo' === $tab ? 'Nenhum desejo por enquanto' : 'Nada para comprar agora'; ?></h3></div>

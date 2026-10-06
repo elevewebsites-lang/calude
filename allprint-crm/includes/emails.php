@@ -1,6 +1,6 @@
 <?php
 /**
- * E-mails automáticos para o cliente (identidade da Cardon):
+ * E-mails automáticos para o cliente (identidade da empresa):
  *   pedido recebido · etapa avançou · pronto (com fotos) · pagamento confirmado
  * Cada um pode ser desligado em Configurações.
  */
@@ -10,8 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function ap_email_types() {
 	return array(
-		'email_boasvindas' => 'Pedido recebido (quando o cliente aprova o orçamento)',
-		'email_etapas'     => 'Pedido mudou de etapa (na fila, imprimindo, acabamento…)',
+		'email_boasvindas' => 'Pedido recebido (quando o cliente aprova a proposta)',
+		'email_etapas'     => 'Pedido mudou de etapa (revisão da arte, produção, acabamento…)',
 		'email_pronto'     => 'Pedido pronto para retirar/enviar (com as fotos)',
 		'email_pagamento'  => 'Pagamento confirmado (recibo)',
 	);
@@ -22,7 +22,7 @@ function ap_email_on( $type ) {
 }
 
 /**
- * Envia um e-mail HTML no padrão visual da Cardon (preto e branco).
+ * Envia um e-mail HTML no padrão visual da empresa.
  * $rows: [ [rótulo, valor], ... ] mostrado como tabela.
  */
 function ap_mail( $to, $subject, $title, $intro, $rows = array(), $cta_text = '', $cta_url = '', $after = '' ) {
@@ -112,7 +112,7 @@ function ap_email_welcome( $project_id ) {
 		$client->email,
 		'Recebemos seu pedido! · ' . ap_setting( 'empresa' ),
 		'Recebemos seu pedido!',
-		'<p>Olá, ' . esc_html( $first ) . '! Obrigado pela confiança. Assim que o pagamento for confirmado, seu pedido entra na fila de produção. Você acompanha cada etapa (impressão, acabamento, fotos) pela sua área do cliente.</p>',
+		'<p>Olá, ' . esc_html( $first ) . '! Obrigado pela confiança. Assim que o pagamento for confirmado, seu pedido entra na fila de produção. Você acompanha cada etapa (revisão da arte, produção, acabamento) pela sua área do cliente.</p>',
 		$rows,
 		'Acompanhar meu pedido',
 		ap_client_entry_url( $client, 'projeto', $p->id )
@@ -134,11 +134,10 @@ function ap_email_stage( $project_id, $status ) {
 	list( $client, $first ) = $contact;
 	$cols  = ap_columns();
 	$texts = array(
-		'na-fila'    => 'Seu pedido entrou na fila de produção.',
-		'imprimindo' => 'Sua peça está sendo impressa agora! 🖨️',
-		'acabamento' => 'A impressão terminou e sua peça está no acabamento.',
-		'fotos'      => 'Estamos fotografando sua peça pronta.',
-		'entregue'   => 'Pedido entregue. Esperamos que você ame! 💛',
+		'revisao-da-arte' => 'Estamos revisando a sua arte para garantir a melhor impressão.',
+		'producao'        => 'Seu pedido está em produção.',
+		'acabamento'      => 'A impressão terminou e seu pedido está no acabamento.',
+		'entregue'        => 'Pedido entregue. Obrigado pela confiança! 💛',
 	);
 	ap_mail(
 		$client->email,

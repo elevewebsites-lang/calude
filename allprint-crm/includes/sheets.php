@@ -41,6 +41,38 @@ function ap_sheets_client_headers() {
 	return array( 'Nome / Empresa', 'Apelido / Nome curto', 'Tipo', 'CNPJ/CPF', 'Contato (WhatsApp)', 'E-mail', 'Cidade', 'Como chegou', 'Ativo?', 'Observações', 'ID Cliente', 'Crédito na loja (R$)', 'Pedidos', 'Total comprado (R$)', 'Pasta no Drive' );
 }
 
+function ap_sheets_cost_headers() {
+	return array( 'Data', 'Categoria', 'Descrição', 'Veículo', 'Tipo (veículo)', 'Valor (R$)', 'Status', 'Pago em', 'Vencimento', 'Forma de pagamento', 'Km', 'Litros', 'ID' );
+}
+
+/** Todas as saídas do financeiro (custos fixos, insumos, veículos…): é a "planilha de custos". */
+function ap_sheets_cost_rows() {
+	global $wpdb;
+	$veh = array();
+	foreach ( ap_vehicles( false ) as $v ) {
+		$veh[ $v->id ] = ap_vehicle_label( $v );
+	}
+	$rows = array();
+	foreach ( $wpdb->get_results( 'SELECT * FROM ' . ap_table( 'transactions' ) . " WHERE type = 'out' ORDER BY COALESCE(paid_at, due_date), id" ) as $t ) { // phpcs:ignore WordPress.DB.PreparedSQL
+		$rows[] = array(
+			(string) ( $t->paid_at ? $t->paid_at : $t->due_date ),
+			(string) $t->category,
+			(string) $t->description,
+			$t->vehicle_id && isset( $veh[ $t->vehicle_id ] ) ? $veh[ $t->vehicle_id ] : '',
+			(string) $t->vtype,
+			round( (float) $t->amount, 2 ),
+			'pago' === $t->status ? 'Pago' : 'A pagar',
+			(string) $t->paid_at,
+			(string) $t->due_date,
+			(string) $t->method,
+			$t->odometer ? (int) $t->odometer : '',
+			$t->liters > 0 ? (float) $t->liters : '',
+			$t->external_id ? $t->external_id : 'CUS-' . $t->id,
+		);
+	}
+	return $rows;
+}
+
 /* -----------------------------------------------------------------------
  * Linhas
  * -------------------------------------------------------------------- */
@@ -192,6 +224,7 @@ function ap_sheets_ensure() {
 			'sheets'     => array(
 				array( 'properties' => array( 'title' => 'Pedidos', 'gridProperties' => array( 'rowCount' => 20000, 'columnCount' => 26, 'frozenRowCount' => 1 ) ) ),
 				array( 'properties' => array( 'title' => 'Clientes', 'gridProperties' => array( 'rowCount' => 3000, 'columnCount' => 16, 'frozenRowCount' => 1 ) ) ),
+				array( 'properties' => array( 'title' => 'Custos', 'gridProperties' => array( 'rowCount' => 5000, 'columnCount' => 14, 'frozenRowCount' => 1 ) ) ),
 			),
 		)
 	);
@@ -247,6 +280,10 @@ function ap_sheets_full() {
 	if ( is_wp_error( $c ) ) {
 		return $c;
 	}
+	$k = ap_sheets_sync_costs();
+	if ( is_wp_error( $k ) ) {
+		return $k;
+	}
 	update_option( 'ap_sheet', array_merge( ap_sheets_state(), array( 'full_at' => ap_now(), 'rows' => count( $rows ) - 1 ) ), false );
 	return count( $rows ) - 1;
 }
@@ -261,6 +298,44 @@ function ap_sheets_sync_clients() {
 	foreach ( array_chunk( $rows, 500 ) as $i => $chunk ) {
 		$start = $i * 500 + 1;
 		$r     = ap_sheets_call( 'PUT', '/values/' . rawurlencode( 'Clientes!A' . $start . ':' . $last . ( $start + count( $chunk ) - 1 ) ) . '?valueInputOption=USER_ENTERED', array( 'values' => $chunk ) );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+	}
+	return true;
+}
+
+/** Garante a aba "Custos" (planilhas criadas antes dela não têm). */
+function ap_sheets_ensure_costs_tab() {
+	$st = ap_sheets_state();
+	if ( ! empty( $st['sheets']['Custos'] ) ) {
+		return true;
+	}
+	$r = ap_sheets_call( 'POST', ':batchUpdate', array( 'requests' => array( array( 'addSheet' => array( 'properties' => array( 'title' => 'Custos', 'gridProperties' => array( 'rowCount' => 5000, 'columnCount' => 14, 'frozenRowCount' => 1 ) ) ) ) ) ) );
+	if ( is_wp_error( $r ) ) {
+		return $r;
+	}
+	$id = (int) ( $r['replies'][0]['addSheet']['properties']['sheetId'] ?? 0 );
+	$st['sheets']['Custos'] = $id ? $id : 1;
+	update_option( 'ap_sheet', $st, false );
+	return true;
+}
+
+/** Reescreve a aba Custos com todas as saídas do financeiro. */
+function ap_sheets_sync_costs() {
+	$ok = ap_sheets_ensure_costs_tab();
+	if ( is_wp_error( $ok ) ) {
+		return $ok;
+	}
+	$rows = array_merge( array( ap_sheets_cost_headers() ), ap_sheets_cost_rows() );
+	$last = ap_sheets_col( count( ap_sheets_cost_headers() ) );
+	$r    = ap_sheets_call( 'POST', '/values:batchClear', array( 'ranges' => array( 'Custos!A1:Z' ) ) );
+	if ( is_wp_error( $r ) ) {
+		return $r;
+	}
+	foreach ( array_chunk( $rows, 500 ) as $i => $chunk ) {
+		$start = $i * 500 + 1;
+		$r     = ap_sheets_call( 'PUT', '/values/' . rawurlencode( 'Custos!A' . $start . ':' . $last . ( $start + count( $chunk ) - 1 ) ) . '?valueInputOption=USER_ENTERED', array( 'values' => $chunk ) );
 		if ( is_wp_error( $r ) ) {
 			return $r;
 		}
@@ -346,6 +421,17 @@ function ap_sheet_touch( $project_id ) {
 	$ap_sheet_pending['p'][ (int) $project_id ] = true;
 }
 
+function ap_sheet_touch_costs() {
+	global $ap_sheet_pending;
+	if ( ! empty( $GLOBALS['ap_sheets_pause'] ) ) {
+		return;
+	}
+	if ( ! isset( $ap_sheet_pending ) ) {
+		$ap_sheet_pending = array( 'p' => array(), 'c' => false );
+	}
+	$ap_sheet_pending['k'] = true;
+}
+
 function ap_sheet_touch_clients() {
 	global $ap_sheet_pending;
 	if ( ! empty( $GLOBALS['ap_sheets_pause'] ) ) {
@@ -368,6 +454,14 @@ function ap_sheet_hook( $table, $id, $data = array() ) {
 			$pid = $t ? (int) $t->project_id : 0;
 		}
 		ap_sheet_touch( $pid );
+		$type = isset( $data['type'] ) ? $data['type'] : '';
+		if ( ! $type && $id ) {
+			$t    = isset( $t ) ? $t : ap_get( 'transactions', $id );
+			$type = $t ? $t->type : '';
+		}
+		if ( 'out' === $type ) {
+			ap_sheet_touch_costs();
+		}
 	} elseif ( 'clients' === $table || 'credits' === $table ) {
 		ap_sheet_touch_clients();
 	}
@@ -377,15 +471,16 @@ function ap_sheet_hook( $table, $id, $data = array() ) {
 add_action( 'shutdown', 'ap_sheets_flush', 99 );
 function ap_sheets_flush() {
 	global $ap_sheet_pending;
-	$queue = get_option( 'ap_sheet_queue', array( 'p' => array(), 'c' => false ) );
-	$queue = is_array( $queue ) ? $queue : array( 'p' => array(), 'c' => false );
+	$queue = get_option( 'ap_sheet_queue', array( 'p' => array(), 'c' => false, 'k' => false ) );
+	$queue = is_array( $queue ) ? $queue + array( 'k' => false ) : array( 'p' => array(), 'c' => false, 'k' => false );
 	if ( ! empty( $ap_sheet_pending ) && ap_sheets_enabled() ) {
 		$queue['p'] = array_unique( array_merge( (array) $queue['p'], array_keys( $ap_sheet_pending['p'] ) ) );
 		$queue['c'] = $queue['c'] || $ap_sheet_pending['c'];
+		$queue['k'] = ! empty( $queue['k'] ) || ! empty( $ap_sheet_pending['k'] );
 		update_option( 'ap_sheet_queue', $queue, false );
 		$ap_sheet_pending = null;
 	}
-	if ( empty( $queue['p'] ) && empty( $queue['c'] ) ) {
+	if ( empty( $queue['p'] ) && empty( $queue['c'] ) && empty( $queue['k'] ) ) {
 		return;
 	}
 	if ( ! ap_sheets_enabled() ) {
@@ -403,8 +498,8 @@ function ap_sheets_process() {
 	if ( ! ap_sheets_enabled() ) {
 		return 0;
 	}
-	$queue = get_option( 'ap_sheet_queue', array( 'p' => array(), 'c' => false ) );
-	if ( empty( $queue['p'] ) && empty( $queue['c'] ) ) {
+	$queue = get_option( 'ap_sheet_queue', array( 'p' => array(), 'c' => false, 'k' => false ) );
+	if ( empty( $queue['p'] ) && empty( $queue['c'] ) && empty( $queue['k'] ) ) {
 		return 0;
 	}
 	if ( get_transient( 'ap_sheet_lock' ) ) {
@@ -429,8 +524,13 @@ function ap_sheets_process() {
 		$r = ap_sheets_sync_clients();
 		$cl = is_wp_error( $r );
 	}
-	update_option( 'ap_sheet_queue', array( 'p' => array_values( $left ), 'c' => $cl ), false );
-	if ( ! $left && ! $cl ) {
+	$kc = ! empty( $queue['k'] );
+	if ( $kc && ! $left ) {
+		$r  = ap_sheets_sync_costs();
+		$kc = is_wp_error( $r );
+	}
+	update_option( 'ap_sheet_queue', array( 'p' => array_values( $left ), 'c' => $cl, 'k' => $kc ), false );
+	if ( ! $left && ! $cl && ! $kc ) {
 		$st = ap_sheets_state();
 		unset( $st['error'], $st['error_at'] );
 		$st['last_sync'] = ap_now();

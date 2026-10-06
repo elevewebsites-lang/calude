@@ -27,11 +27,22 @@ foreach ( ap_catalog( true ) as $c ) {
 	);
 }
 $clients_tier = array();
+$clients_info = array();
 foreach ( ap_clients() as $cl ) {
 	$clients_tier[ $cl->id ] = ap_client_tier( $cl );
+	$clients_info[ $cl->id ] = array( 'first' => $cl->name ? strtok( $cl->name, ' ' ) : '', 'label' => ap_client_label( $cl ), 'wa' => (string) ( $cl->whatsapp ? $cl->whatsapp : $cl->phone ) );
 }
+// Proposta nova: o sistema já preenche mensagem, condições e prazo.
+$auto_intro = static function ( $first ) {
+	return 'Olá' . ( $first ? ', ' . $first : '' ) . '! Segue a proposta comercial da ' . ap_setting( 'empresa' ) . ' com o que conversamos: material, medidas, valor e prazo. Qualquer ajuste é só me chamar.';
+};
+$first0   = $client && $client->name ? strtok( $client->name, ' ' ) : ( $lead && $lead->name ? strtok( $lead->name, ' ' ) : '' );
+$def_title = $client ? 'Proposta para ' . ap_client_label( $client ) : '';
+$def_intro = $auto_intro( $first0 );
+$def_notes = (string) ap_setting( 'empresa_nota' );
+$def_days  = max( 1, (int) ap_setting( 'prazo_dias' ) );
 
-$title = $q ? $q->title : ( $items[0]['name'] ? $items[0]['name'] : '' );
+$title = $q ? $q->title : ( $items[0]['name'] ? $items[0]['name'] : $def_title );
 ap_panel_start( $q ? 'Proposta nº ' . ap_quote_number( $q ) . ' · ' . $q->title : 'Nova proposta comercial', 'orcamentos' );
 ?>
 <a class="back" href="<?php echo esc_url( ap_panel_url( 'orcamentos' ) ); ?>"><?php echo ap_icon( 'voltar', 16 ); // phpcs:ignore ?> Propostas</a>
@@ -39,7 +50,7 @@ ap_panel_start( $q ? 'Proposta nº ' . ap_quote_number( $q ) . ' · ' . $q->titl
 <?php if ( $q && 'rascunho' !== $q->status ) : ?>
 	<?php
 	$url = ap_quote_url( $q );
-	$wa  = $client && $client->whatsapp ? ap_wa_link( $client->whatsapp, 'Olá' . ( $client->name ? ', ' . strtok( $client->name, ' ' ) : '' ) . '! Preparei a proposta comercial de "' . $q->title . '". Dá para ver todos os detalhes, baixar em PDF, aprovar e pagar por aqui (Pix com ' . str_replace( '.', ',', ap_num_setting( 'desconto_pix' ) ) . '% de desconto ou cartão em até ' . (int) ap_setting( 'parcelas_max' ) . 'x): ' . $url ) : '';
+	$wa  = false && $client && $client->whatsapp ? ap_wa_link( $client->whatsapp, 'Olá' . ( $client->name ? ', ' . strtok( $client->name, ' ' ) : '' ) . '! Preparei a proposta comercial de "' . $q->title . '". Dá para ver todos os detalhes, baixar em PDF, aprovar e pagar por aqui (Pix com ' . str_replace( '.', ',', ap_num_setting( 'desconto_pix' ) ) . '% de desconto ou cartão em até ' . (int) ap_setting( 'parcelas_max' ) . 'x): ' . $url ) : '';
 	?>
 	<section class="card card--accent">
 		<div class="card-head"><h3>Link da proposta</h3><span class="badge"><?php echo esc_html( ap_quote_statuses()[ $q->status ] ?? $q->status ); ?></span><?php if ( $q->views ) : ?><span class="muted small">visto <?php echo (int) $q->views; ?>× · <?php echo esc_html( ap_ago( $q->last_view ) ); ?></span><?php endif; ?></div>
@@ -49,13 +60,23 @@ ap_panel_start( $q ? 'Proposta nº ' . ap_quote_number( $q ) . ' · ' . $q->titl
 			<a class="btn btn--ghost" href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener"><?php echo ap_icon( 'olho', 16 ); // phpcs:ignore ?><span>Ver</span></a>
 			<a class="btn btn--ghost" href="<?php echo esc_url( add_query_arg( 'pdf', 1, $url ) ); ?>" target="_blank" rel="noopener"><?php echo ap_icon( 'download', 16 ); // phpcs:ignore ?><span>PDF</span></a>
 			<?php ap_action_button( 'quote_refresh', array( 'id' => $q->id ), 'Atualizar dados', 'btn btn--ghost' ); ?>
-			<?php if ( $wa ) : ?><a class="btn btn--wa" href="<?php echo esc_url( $wa ); ?>" target="_blank" rel="noopener"><?php echo ap_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>Enviar no WhatsApp</span></a><?php endif; ?>
+			<?php ap_action_button( 'quote_send_wa', array( 'id' => $q->id ), 'Enviar no WhatsApp', 'btn btn--wa' ); ?>
 		</div>
 		<?php if ( $q->project_id ) : ?><p class="small" style="margin-top:10px;">Aprovado → <a href="<?php echo esc_url( ap_panel_url( 'pedido', $q->project_id ) ); ?>">pedido #<?php echo (int) $q->project_id; ?></a></p><?php endif; ?>
 	</section>
 <?php endif; ?>
 
-<script>window.AP_QUOTE = <?php echo wp_json_encode( array( 'catalog' => $cat, 'clients' => $clients_tier, 'pixOff' => ap_num_setting( 'desconto_pix' ) ) ); ?>;</script>
+<?php if ( $q && 'rascunho' === $q->status ) : ?>
+	<section class="card">
+		<div class="card-head"><h3>Rascunho</h3><span class="badge">ainda não enviada</span></div>
+		<div class="copy-row">
+			<?php ap_action_button( 'quote_send_wa', array( 'id' => $q->id ), 'Enviar no WhatsApp', 'btn btn--wa' ); ?>
+			<?php ap_action_button( 'quote_refresh', array( 'id' => $q->id ), 'Atualizar dados', 'btn btn--ghost' ); ?>
+		</div>
+	</section>
+<?php endif; ?>
+
+<script>window.AP_QUOTE = <?php echo wp_json_encode( array( 'catalog' => $cat, 'clients' => $clients_tier, 'info' => $clients_info, 'company' => ap_setting( 'empresa' ), 'pixOff' => ap_num_setting( 'desconto_pix' ) ) ); ?>;</script>
 
 <?php ap_form( 'quote_save', 'quote-grid', true ); ?>
 	<input type="hidden" name="id" value="<?php echo (int) ( $q ? $q->id : 0 ); ?>">
@@ -82,7 +103,7 @@ ap_panel_start( $q ? 'Proposta nº ' . ap_quote_number( $q ) . ' · ' . $q->titl
 		<section class="card step">
 			<div class="step-head"><span class="step-n">02</span><div><h3>Apresentação</h3><p class="muted small">O título e a mensagem abrem a proposta. As imagens (arte, layout, fotos de trabalhos parecidos) aparecem na proposta.</p></div></div>
 			<?php ap_input( 'title', 'Título da proposta', $title, 'text', 'required placeholder="Ex.: Fachada com ACM e letreiro luminoso"' ); ?>
-			<?php ap_input( 'intro', 'Mensagem para o cliente', $q ? $q->intro : '', 'textarea', 'rows="3" placeholder="Ex.: Olá, Ana! Segue a proposta com o que conversamos: material, medidas e prazo."' ); ?>
+			<?php ap_input( 'intro', 'Mensagem para o cliente (já vem preenchida, edite se quiser)', $q ? $q->intro : $def_intro, 'textarea', 'rows="3" data-intro' . ( $q ? '' : ' data-auto="1"' ) ); ?>
 			<?php if ( $images ) : ?>
 				<div class="thumbs thumbs--edit">
 					<?php foreach ( $images as $img ) : ?>
@@ -121,6 +142,12 @@ ap_panel_start( $q ? 'Proposta nº ' . ap_quote_number( $q ) . ' · ' . $q->titl
 					</div>
 				<?php endforeach; ?>
 			</div>
+			<?php $quick = array_slice( $cat, 0, 8, true ); ?>
+			<?php if ( $quick ) : ?>
+				<div class="quick-chips"><span class="muted small">Atalhos:</span>
+					<?php foreach ( $quick as $mid => $mc ) : ?><button type="button" class="chip" data-qitem-quick="<?php echo (int) $mid; ?>">+ <?php echo esc_html( $mc['name'] ); ?></button><?php endforeach; ?>
+				</div>
+			<?php endif; ?>
 			<div class="row-btns">
 				<button type="button" class="btn btn--ghost btn--sm" data-qitem-add="impressao"><?php echo ap_icon( 'mais', 14 ); // phpcs:ignore ?><span>Item do catálogo ou serviço</span></button>
 				<button type="button" class="btn btn--ghost btn--sm" data-qitem-reprice><?php echo ap_icon( 'rotinas', 14 ); // phpcs:ignore ?><span>Atualizar preços do catálogo</span></button>
@@ -132,7 +159,7 @@ ap_panel_start( $q ? 'Proposta nº ' . ap_quote_number( $q ) . ' · ' . $q->titl
 			<div class="step-head"><span class="step-n">04</span><div><h3>Condições</h3></div></div>
 			<div class="grid-3">
 				<?php ap_input( 'discount', 'Desconto (R$)', $q && $q->discount > 0 ? number_format( $q->discount, 2, ',', '.' ) : '', 'text', 'inputmode="decimal" data-money data-q-discount' ); ?>
-				<?php ap_input( 'deadline_days', 'Prazo de produção (dias)', $q ? $q->deadline_days : 7, 'number', 'min="0"' ); ?>
+				<?php ap_input( 'deadline_days', 'Prazo de produção (dias)', $q ? $q->deadline_days : $def_days, 'number', 'min="0"' ); ?>
 				<?php ap_input( 'valid_until', 'Válido até', $q ? $q->valid_until : gmdate( 'Y-m-d', strtotime( ap_today() . ' +' . max( 1, (int) ap_setting( 'validade_dias' ) ) . ' day' ) ), 'date' ); ?>
 			</div>
 			<div class="grid-3">
@@ -140,7 +167,7 @@ ap_panel_start( $q ? 'Proposta nº ' . ap_quote_number( $q ) . ' · ' . $q->titl
 				<?php ap_input( 'freight_label', 'Serviço do frete', $q ? $q->freight_label : '', 'text', 'placeholder="Ex.: Correios PAC · 5 dias úteis"' ); ?>
 				<div class="field"<?php echo ap_module( 'frete' ) ? '' : ' hidden'; ?>><span>&nbsp;</span><button type="button" class="btn btn--ghost" data-open="calc-frete"><?php echo ap_icon( 'caminhao', 16 ); // phpcs:ignore ?><span>Calcular frete</span></button></div>
 			</div>
-			<?php ap_input( 'notes', 'Condições e observações (aparecem na proposta)', $q ? $q->notes : '', 'textarea', 'rows="3" placeholder="Ex.: Arte por conta do cliente em PDF ou CDR em curvas. Instalação não inclusa."' ); ?>
+			<?php ap_input( 'notes', 'Condições e observações (aparecem na proposta)', $q ? $q->notes : $def_notes, 'textarea', 'rows="3" placeholder="Ex.: Arte por conta do cliente em PDF ou CDR em curvas. Instalação não inclusa."' ); ?>
 			<p class="muted small">Com frete preenchido, o cliente escolhe entre retirar na loja (grátis) ou receber em casa. Sem frete, só retirada.</p>
 		</section>
 	</div>
@@ -162,8 +189,10 @@ ap_panel_start( $q ? 'Proposta nº ' . ap_quote_number( $q ) . ' · ' . $q->titl
 				<div><span>Margem</span><b data-qo="margin">—</b></div>
 			</div>
 			<div class="stack-btns">
-				<?php if ( ! $q || 'rascunho' === $q->status ) : ?><?php ap_check( 'publicar', 'Liberar o link para o cliente', true ); ?><?php endif; ?>
+				<?php if ( ! $q || 'rascunho' === $q->status ) : ?><?php ap_check( 'publicar', 'Só salvar: liberar o link e colocar no funil', false ); ?><?php endif; ?>
 				<button type="submit" class="btn btn--primary btn--block">Salvar proposta</button>
+				<button type="submit" name="send_wa" value="1" class="btn btn--wa btn--block" data-send-wa><?php echo ap_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>Salvar e enviar no WhatsApp</span></button>
+				<p class="muted small">Um clique: salva, libera o link, abre o WhatsApp do cliente com a mensagem pronta e coloca ele no funil como "Proposta enviada".</p>
 			</div>
 		</div>
 		<?php if ( $q ) : ?>

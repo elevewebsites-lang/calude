@@ -38,21 +38,19 @@ function ap_identity() {
 		),
 
 		// Módulos opcionais: comente para desligar.
-		//   estoque     → filamentos/materiais, insumos com custo médio, lista de compras, máquinas, calculadora, leitura do fatiador
+		//   estoque     → insumos (bobinas, tintas, revenda), contagem de estoque e lista de compras
 		//   frete       → cotação Melhor Envio (Correios, Jadlog…)
-		//   produtos    → portfólio/catálogo, importar por link, preço por canal (Mercado Livre, Shopee…)
-		//   marketing   → ideias de post (modelos + IA)
 		'modulos'  => array( 'estoque' ),
-		'paginas_off' => array( 'filamentos', 'impressoras', 'calculadora' ), // do módulo estoque só ficam Insumos e Compras
+		'paginas_off' => array(),
 
 		// Configurações padrão específicas do projeto (chaves de ap_default_settings()).
 		'config'   => array(
 			'colunas'        => "Aguardando pagamento\nRevisão AllPrint\nProdução\nAcabamento\nPronto para retirada\nEntregue",
 			'coluna_pronto'  => 'pronto-para-retirada',
-			'funil'          => "Novo contato\nCadastro em análise\nCliente aprovado\nPrimeiro pedido\nPerdido",
+			'funil'          => "Novo contato\nProposta enviada\nCadastro em análise\nCliente aprovado\nPrimeiro pedido\nPerdido",
 			'origens'        => "Indicação\nSite\nWhatsApp\nInstagram\nVisita\nOutro",
 			'categorias_in'  => "Pedido\nOrçamento\nOutros",
-			'categorias_out' => "Material\nTinta\nManutenção\nEquipamento\nImpostos\nTaxas\nOutros",
+			'categorias_out' => "Material\nTinta\nVeículos\nManutenção\nEquipamento\nImpostos\nTaxas\nOutros",
 			'retirada_texto' => 'Retirada no balcão em horário comercial, sem agendamento. Se preferir, envie um motoboy ou app de entrega: liberamos o material após a confirmação do pagamento.',
 			'validade_dias'  => '7',
 			'desconto_pix'   => '0',

@@ -4,7 +4,7 @@
  * condições e link público /orcamento/<token>/ com aceite, cadastro do cliente e pagamento na hora
  * (Pix com desconto ou cartão até N vezes). Aceitou → vira pedido no Kanban.
  *
- * Os insumos (sacola, cartão…) entram só no custo interno: o cliente nunca vê.
+ * Os custos (material, insumos) entram só no custo interno: o cliente nunca vê.
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -189,7 +189,7 @@ function ap_do_quote_save() {
 	);
 	$title  = ap_in( 'title' ) ? ap_in( 'title' ) : ( $items ? $items[0]['name'] : 'Proposta comercial' );
 	$client = $client_id ? ap_get( 'clients', $client_id ) : null;
-	$folder = array( 'Orçamentos', ( $client ? ap_client_label( $client ) . ' - ' : '' ) . $title );
+	$folder = array( 'Propostas', ( $client ? ap_client_label( $client ) . ' - ' : '' ) . $title );
 	$images = array_merge( $images, ap_store_uploads( 'photos', $folder, 'image' ) );
 
 	$valid = max( 1, (int) ap_setting( 'validade_dias' ) );
@@ -211,7 +211,8 @@ function ap_do_quote_save() {
 		'deadline_days' => ap_in( 'deadline_days', 'int' ),
 		'valid_until'   => ap_in( 'valid_until', 'date' ) ? ap_in( 'valid_until', 'date' ) : gmdate( 'Y-m-d', strtotime( ap_today() . ' +' . $valid . ' day' ) ),
 	);
-	if ( ap_in( 'publicar', 'bool' ) && ( ! $old || 'rascunho' === $old->status ) ) {
+	$send_wa = ap_in( 'send_wa', 'bool' );
+	if ( ( ap_in( 'publicar', 'bool' ) || $send_wa ) && ( ! $old || 'rascunho' === $old->status ) ) {
 		$data['status'] = 'enviado';
 	}
 	if ( $old ) {
@@ -224,6 +225,13 @@ function ap_do_quote_save() {
 	}
 	if ( $data['lead_id'] ) {
 		ap_update( 'leads', $data['lead_id'], array( 'client_id' => $client_id, 'value' => $data['total'] ) );
+	}
+	$saved = ap_get( 'quotes', $id );
+	if ( $send_wa && $saved ) {
+		ap_quote_send_whatsapp( $saved );
+	}
+	if ( $saved && 'enviado' === $saved->status && ( ! $old || 'rascunho' === $old->status ) ) {
+		ap_quote_mark_sent( $saved );
 	}
 	ap_back( 'Proposta salva.', 'ok', ap_panel_url( 'orcamento', $id, array( 'pronto' => 1 ) ) );
 }
@@ -485,4 +493,104 @@ function ap_do_quote_refresh() {
 		)
 	);
 	ap_back( $changed ? 'Dados atualizados: ' . $changed . ' item(ns) com preço novo e validade renovada.' : 'Dados atualizados: os preços continuam os mesmos; a validade foi renovada.' );
+}
+
+
+/* -----------------------------------------------------------------------
+ * Enviar ao cliente: WhatsApp com um clique + lead "Proposta enviada"
+ * -------------------------------------------------------------------- */
+
+/** Etapa do funil para "proposta enviada" (cria na segunda posição se o funil ainda não tiver). */
+function ap_funnel_proposal_stage() {
+	foreach ( ap_funnel() as $slug => $name ) {
+		if ( preg_match( '/proposta|or[cç]amento/iu', $name ) ) {
+			return $slug;
+		}
+	}
+	$lines = ap_list( ap_setting( 'funil' ) );
+	array_splice( $lines, min( 1, count( $lines ) ), 0, array( 'Proposta enviada' ) );
+	$saved           = get_option( 'ap_settings', array() );
+	$saved           = is_array( $saved ) ? $saved : array();
+	$saved['funil'] = implode( "\n", $lines );
+	update_option( 'ap_settings', $saved );
+	return sanitize_title( 'Proposta enviada' );
+}
+
+/** Texto padrão da mensagem de WhatsApp. */
+function ap_quote_wa_text( $q, $client = null ) {
+	$client = $client ? $client : ( $q->client_id ? ap_get( 'clients', $q->client_id ) : null );
+	$first  = $client && $client->name ? strtok( $client->name, ' ' ) : '';
+	return 'Olá' . ( $first ? ', ' . $first : '' ) . '! Segue a proposta comercial nº ' . ap_quote_number( $q ) . ' da ' . ap_setting( 'empresa' ) . ' - "' . $q->title . '" - no valor de ' . ap_money( max( 0, (float) $q->subtotal - (float) $q->discount ) ) . '. Veja os detalhes, baixe o PDF e aprove por aqui: ' . ap_quote_url( $q );
+}
+
+/**
+ * A proposta saiu: o cliente entra no funil como lead em "Proposta enviada" (cria o lead se não existir).
+ */
+function ap_quote_mark_sent( $q ) {
+	$client = $q->client_id ? ap_get( 'clients', $q->client_id ) : null;
+	$stage  = ap_funnel_proposal_stage();
+	$lead   = $q->lead_id ? ap_get( 'leads', $q->lead_id ) : null;
+	if ( ! $lead && $client ) {
+		$found = ap_rows( 'leads', 'client_id = %d', array( $client->id ), 'id DESC LIMIT 1' );
+		if ( ! $found && ( $client->whatsapp || $client->email ) ) {
+			$found = ap_rows( 'leads', '(whatsapp <> %s AND whatsapp = %s) OR (email <> %s AND email = %s)', array( '', (string) $client->whatsapp, '', (string) $client->email ), 'id DESC LIMIT 1' );
+		}
+		$lead = $found ? $found[0] : null;
+	}
+	$total = max( 0, (float) $q->subtotal - (float) $q->discount );
+	if ( ! $lead ) {
+		$lid  = ap_insert(
+			'leads',
+			array(
+				'name'      => $client ? ( $client->name ? $client->name : ap_client_label( $client ) ) : $q->title,
+				'company'   => $client ? $client->company : '',
+				'email'     => $client ? $client->email : '',
+				'whatsapp'  => $client ? ( $client->whatsapp ? $client->whatsapp : $client->phone ) : '',
+				'source'    => $client && $client->source ? $client->source : 'Proposta',
+				'stage'     => $stage,
+				'value'     => $total,
+				'client_id' => $client ? (int) $client->id : 0,
+			)
+		);
+		$lead = ap_get( 'leads', $lid );
+		ap_lead_log( $lead->id, 'Lead criado ao enviar a proposta.' );
+	} elseif ( ap_funnel_won() !== $lead->stage ) {
+		ap_update( 'leads', $lead->id, array( 'stage' => $stage, 'value' => $total, 'client_id' => $client ? (int) $client->id : (int) $lead->client_id ) );
+	}
+	if ( (int) $q->lead_id !== (int) $lead->id ) {
+		ap_update( 'quotes', $q->id, array( 'lead_id' => (int) $lead->id ) );
+	}
+	ap_lead_log( $lead->id, 'Proposta nº ' . ap_quote_number( $q ) . ' enviada: ' . ap_money( $total ) . '.' );
+	if ( ap_funnel_won() !== $lead->stage && function_exists( 'ap_set_lead_reminder' ) ) {
+		ap_set_lead_reminder( $lead, 'Perguntar se viu a proposta', gmdate( 'Y-m-d', strtotime( ap_today() . ' +2 day' ) ) );
+	}
+	do_action( 'ap_quote_sent', $q->id, $lead->id );
+	return $lead;
+}
+
+/** Marca como enviada (se ainda rascunho) e manda para o WhatsApp do cliente. Termina a requisição. */
+function ap_quote_send_whatsapp( $q ) {
+	$client = $q->client_id ? ap_get( 'clients', $q->client_id ) : null;
+	$phone  = $client ? ( $client->whatsapp ? $client->whatsapp : $client->phone ) : '';
+	if ( 'rascunho' === $q->status ) {
+		ap_update( 'quotes', $q->id, array( 'status' => 'enviado' ) );
+		$q = ap_get( 'quotes', $q->id );
+		ap_quote_mark_sent( $q );
+	} else {
+		ap_quote_mark_sent( $q );
+	}
+	if ( ! $phone ) {
+		ap_back( 'A proposta foi marcada como enviada, mas o cliente não tem WhatsApp cadastrado. Copie o link e mande por onde preferir.', 'erro', ap_panel_url( 'orcamento', $q->id ) );
+	}
+	wp_redirect( ap_wa_link( $phone, ap_quote_wa_text( $q, $client ) ) ); // phpcs:ignore WordPress.Security.SafeRedirect
+	exit;
+}
+
+function ap_do_quote_send_wa() {
+	ap_require( 'orcamentos' );
+	$q = ap_get( 'quotes', ap_in( 'id', 'int' ) );
+	if ( ! $q ) {
+		ap_back();
+	}
+	ap_quote_send_whatsapp( $q );
 }

@@ -15,9 +15,7 @@ $qimgs   = $quote ? ap_json( $quote->images ) : array();
 $trans   = ap_rows( 'transactions', 'project_id = %d', array( $p->id ), 'due_date, id' );
 $moves   = ap_rows( 'stock_moves', "project_id = %d AND kind = 'uso'", array( $p->id ), 'id' );
 $log     = ap_rows( 'activity', 'project_id = %d', array( $p->id ), 'id DESC LIMIT 40' );
-$fils    = ap_rows( 'filaments', 'active = 1', array(), 'material, color_name' );
 $sups    = ap_rows( 'supplies', 'active = 1', array(), 'name' );
-$prns    = ap_rows( 'printers', 'active = 1' );
 $cost    = $p->cost_real > 0 ? $p->cost_real : $p->cost_estimated;
 $profit  = $p->value - $p->ship_price - $cost;
 $ready   = ap_ready_column();
@@ -124,16 +122,9 @@ ap_panel_start( '#' . $p->id . ' · ' . $p->title, 'pedidos', $actions );
 
 		<?php if ( ap_module( 'estoque' ) ) : ?>
 		<section class="card">
-			<div class="card-head"><h3>Registrar consumo</h3><span class="muted small">o que realmente gastou: baixa o estoque e calcula o custo real</span></div>
+			<div class="card-head"><h3>Registrar consumo</h3><span class="muted small">insumos que realmente gastou: baixa o estoque e calcula o custo real</span></div>
 			<?php ap_form( 'order_consume', 'stack consume-form' ); ?>
 				<input type="hidden" name="id" value="<?php echo (int) $p->id; ?>">
-				<div class="rows" data-rows="fil">
-					<div class="row-line">
-						<label class="field"><span>Filamento</span><select name="u[fil_id][]"><option value="">—</option><?php foreach ( $fils as $f ) : ?><option value="<?php echo (int) $f->id; ?>"><?php echo esc_html( ap_filament_label( $f ) . ' · ' . round( $f->weight_g ) . ' g' ); ?></option><?php endforeach; ?></select></label>
-						<label class="field field--sm"><span>Gramas</span><input type="text" name="u[fil_g][]" inputmode="decimal" placeholder="0"></label>
-					</div>
-				</div>
-				<button type="button" class="btn btn--ghost btn--sm" data-row-add="fil"><?php echo ap_icon( 'mais', 14 ); // phpcs:ignore ?><span>Outro filamento</span></button>
 				<div class="rows" data-rows="sup">
 					<div class="row-line">
 						<label class="field"><span>Insumo</span><select name="u[sup_id][]"><option value="">—</option><?php foreach ( $sups as $s ) : ?><option value="<?php echo (int) $s->id; ?>"><?php echo esc_html( $s->name . ' · ' . ap_qty_label( $s->qty, $s->unit ) ); ?></option><?php endforeach; ?></select></label>
@@ -141,19 +132,14 @@ ap_panel_start( '#' . $p->id . ' · ' . $p->title, 'pedidos', $actions );
 					</div>
 				</div>
 				<button type="button" class="btn btn--ghost btn--sm" data-row-add="sup"><?php echo ap_icon( 'mais', 14 ); // phpcs:ignore ?><span>Outro insumo</span></button>
-				<div class="grid-4">
-					<?php ap_select( 'u[printer]', 'Impressora', array_combine( wp_list_pluck( $prns, 'id' ), wp_list_pluck( $prns, 'name' ) ) ?: array( '' => '—' ), $p->printer_id ); ?>
-					<?php ap_input( 'u[hours]', 'Horas', '', 'number', 'min="0" step="1"' ); ?>
-					<?php ap_input( 'u[minutes]', 'Minutos', '', 'number', 'min="0" max="59"' ); ?>
-					<?php ap_input( 'u[labor_min]', 'Mão de obra (min)', '', 'number', 'min="0"' ); ?>
-				</div>
+				<?php ap_input( 'u[labor_min]', 'Mão de obra (minutos, opcional)', '', 'number', 'min="0"' ); ?>
 				<div class="form-actions"><button type="submit" class="btn btn--primary">Registrar e baixar do estoque</button></div>
 			</form>
 			<?php if ( $moves ) : ?>
 				<div class="items-list" style="margin-top:16px;">
 					<?php foreach ( $moves as $m ) : ?>
-						<?php $item = ap_get( 'filament' === $m->item_type ? 'filaments' : 'supplies', $m->item_id ); ?>
-						<div class="items-row"><span><?php echo esc_html( $item ? ( 'filament' === $m->item_type ? ap_filament_label( $item ) : $item->name ) : '—' ); ?></span><span class="muted small"><?php echo esc_html( 'filament' === $m->item_type ? round( abs( $m->qty ) ) . ' g' : ap_qty_label( abs( $m->qty ), $item ? $item->unit : 'un' ) ); ?></span><?php if ( $fin ) : ?><span class="money"><?php echo esc_html( ap_money( $m->total ) ); ?></span><?php endif; ?></div>
+						<?php $item = ap_get( 'supplies', $m->item_id ); ?>
+						<div class="items-row"><span><?php echo esc_html( $item ? $item->name : '—' ); ?></span><span class="muted small"><?php echo esc_html( ap_qty_label( abs( $m->qty ), $item ? $item->unit : 'un' ) ); ?></span><?php if ( $fin ) : ?><span class="money"><?php echo esc_html( ap_money( $m->total ) ); ?></span><?php endif; ?></div>
 					<?php endforeach; ?>
 				</div>
 				<?php ap_action_button( 'order_unconsume', array( 'id' => $p->id ), 'Desfazer consumo', 'btn btn--ghost btn--sm', 'Devolver todo o material deste pedido ao estoque?' ); ?>
@@ -184,7 +170,7 @@ ap_panel_start( '#' . $p->id . ' · ' . $p->title, 'pedidos', $actions );
 				<?php if ( $client->whatsapp ) : ?><a class="btn btn--wa btn--sm" href="<?php echo esc_url( ap_wa_link( $client->whatsapp, 'Olá, ' . strtok( (string) $client->name, ' ' ) . '! Sobre o seu pedido "' . $p->title . '": ' ) ); ?>" target="_blank" rel="noopener"><?php echo ap_icon( 'whatsapp', 14 ); // phpcs:ignore ?><span>WhatsApp</span></a><?php endif; ?>
 				<a class="btn btn--ghost btn--sm" href="<?php echo esc_url( ap_client_url( '', 0, array( 'como' => $client->id ) ) ); ?>">Ver como cliente</a>
 			<?php else : ?>
-				<p class="muted small">Sem cliente cadastrado (venda avulsa/marketplace).</p>
+				<p class="muted small">Sem cliente cadastrado (venda avulsa).</p>
 			<?php endif; ?>
 		</section>
 
@@ -236,13 +222,6 @@ ap_panel_start( '#' . $p->id . ' · ' . $p->title, 'pedidos', $actions );
 		<section class="card">
 			<div class="card-head"><h3>Mais</h3></div>
 			<div class="stack-btns">
-				<?php if ( ap_module( 'produtos' ) && ap_can( 'produtos' ) ) : ?>
-					<?php if ( $p->product_id ) : ?>
-						<a class="btn btn--ghost btn--block" href="<?php echo esc_url( ap_panel_url( 'produto', $p->product_id ) ); ?>"><?php echo ap_icon( 'tag', 16 ); // phpcs:ignore ?><span>Ver no portfólio</span></a>
-					<?php else : ?>
-						<?php ap_action_button( 'order_to_product', array( 'id' => $p->id ), ap_icon( 'tag', 16 ) . '<span>Salvar no portfólio / vender</span>', 'btn btn--ghost btn--block' ); ?>
-					<?php endif; ?>
-				<?php endif; ?>
 				<?php if ( ap_google_connected() && ap_drive_folder_link( array( 'Pedidos', '#' . $p->id . ' ' . ( $client ? ap_client_label( $client ) . ' - ' : '' ) . $p->title ) ) ) : ?>
 					<a class="btn btn--ghost btn--block" target="_blank" rel="noopener" href="<?php echo esc_url( ap_drive_folder_link( array( 'Pedidos', '#' . $p->id . ' ' . ( $client ? ap_client_label( $client ) . ' - ' : '' ) . $p->title ) ) ); ?>"><?php echo ap_icon( 'drive', 16 ); // phpcs:ignore ?><span>Abrir no Drive</span></a>
 				<?php endif; ?>

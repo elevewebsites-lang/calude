@@ -190,12 +190,32 @@ function ap_install_tables() {
 			external_id varchar(120) NOT NULL DEFAULT '',
 			bank_ref varchar(190) NOT NULL DEFAULT '',
 			recur_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			vehicle_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			vtype varchar(40) NOT NULL DEFAULT '',
+			odometer int(11) NOT NULL DEFAULT 0,
+			liters decimal(8,2) NOT NULL DEFAULT 0,
 			created_at datetime NOT NULL,
 			PRIMARY KEY  (id),
+			KEY vehicle_id (vehicle_id),
 			KEY bank_ref (bank_ref),
 			KEY project_id (project_id),
 			KEY due_date (due_date),
 			KEY status (status)
+		) $c;"
+	);
+	dbDelta(
+		'CREATE TABLE ' . ap_table( 'vehicles' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			name varchar(120) NOT NULL DEFAULT '',
+			plate varchar(12) NOT NULL DEFAULT '',
+			model varchar(120) NOT NULL DEFAULT '',
+			year varchar(9) NOT NULL DEFAULT '',
+			fuel varchar(30) NOT NULL DEFAULT 'Gasolina',
+			odometer int(11) NOT NULL DEFAULT 0,
+			notes varchar(255) NOT NULL DEFAULT '',
+			active tinyint(1) NOT NULL DEFAULT 1,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id)
 		) $c;"
 	);
 	dbDelta(
@@ -297,26 +317,6 @@ function ap_install_tables() {
 		) $c;"
 	);
 	dbDelta(
-		'CREATE TABLE ' . ap_table( 'filaments' ) . " (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			brand varchar(120) NOT NULL DEFAULT '',
-			material varchar(40) NOT NULL DEFAULT 'PLA',
-			color_name varchar(80) NOT NULL DEFAULT '',
-			color_hex varchar(9) NOT NULL DEFAULT '#cccccc',
-			spool_g int(11) NOT NULL DEFAULT 1000,
-			price decimal(12,2) NOT NULL DEFAULT 0,
-			weight_g decimal(10,1) NOT NULL DEFAULT 0,
-			tare_g int(11) NOT NULL DEFAULT 0,
-			min_g int(11) NOT NULL DEFAULT 200,
-			link varchar(255) NOT NULL DEFAULT '',
-			notes varchar(255) NOT NULL DEFAULT '',
-			active tinyint(1) NOT NULL DEFAULT 1,
-			created_at datetime NOT NULL,
-			PRIMARY KEY  (id),
-			KEY material (material)
-		) $c;"
-	);
-	dbDelta(
 		'CREATE TABLE ' . ap_table( 'supplies' ) . " (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			name varchar(160) NOT NULL DEFAULT '',
@@ -360,24 +360,6 @@ function ap_install_tables() {
 		) $c;"
 	);
 	dbDelta(
-		'CREATE TABLE ' . ap_table( 'printers' ) . " (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			name varchar(120) NOT NULL DEFAULT '',
-			model varchar(120) NOT NULL DEFAULT '',
-			watts int(11) NOT NULL DEFAULT 95,
-			price decimal(12,2) NOT NULL DEFAULT 0,
-			life_hours int(11) NOT NULL DEFAULT 5000,
-			hours_used decimal(10,2) NOT NULL DEFAULT 0,
-			maint_every int(11) NOT NULL DEFAULT 500,
-			maint_last decimal(10,2) NOT NULL DEFAULT 0,
-			bought_at date NULL,
-			notes varchar(255) NOT NULL DEFAULT '',
-			active tinyint(1) NOT NULL DEFAULT 1,
-			created_at datetime NOT NULL,
-			PRIMARY KEY  (id)
-		) $c;"
-	);
-	dbDelta(
 		'CREATE TABLE ' . ap_table( 'shopping' ) . " (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			kind varchar(10) NOT NULL DEFAULT 'compra',
@@ -391,60 +373,6 @@ function ap_install_tables() {
 			status varchar(20) NOT NULL DEFAULT 'aberto',
 			bought_at datetime NULL,
 			notes varchar(255) NOT NULL DEFAULT '',
-			created_at datetime NOT NULL,
-			PRIMARY KEY  (id),
-			KEY status (status)
-		) $c;"
-	);
-	dbDelta(
-		'CREATE TABLE ' . ap_table( 'calcs' ) . " (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			name varchar(190) NOT NULL DEFAULT '',
-			data longtext NULL,
-			cost decimal(12,2) NOT NULL DEFAULT 0,
-			price decimal(12,2) NOT NULL DEFAULT 0,
-			created_by bigint(20) unsigned NOT NULL DEFAULT 0,
-			created_at datetime NOT NULL,
-			PRIMARY KEY  (id)
-		) $c;"
-	);
-	dbDelta(
-		'CREATE TABLE ' . ap_table( 'products' ) . " (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			name varchar(190) NOT NULL DEFAULT '',
-			sku varchar(60) NOT NULL DEFAULT '',
-			description longtext NULL,
-			photos longtext NULL,
-			calc longtext NULL,
-			cost decimal(12,2) NOT NULL DEFAULT 0,
-			price decimal(12,2) NOT NULL DEFAULT 0,
-			grams decimal(10,1) NOT NULL DEFAULT 0,
-			print_hours decimal(8,2) NOT NULL DEFAULT 0,
-			weight_g int(11) NOT NULL DEFAULT 0,
-			dims varchar(40) NOT NULL DEFAULT '',
-			stock int(11) NOT NULL DEFAULT 0,
-			source_project bigint(20) unsigned NOT NULL DEFAULT 0,
-			source_url varchar(500) NOT NULL DEFAULT '',
-			license varchar(60) NOT NULL DEFAULT '',
-			category varchar(80) NOT NULL DEFAULT '',
-			sold_price decimal(12,2) NOT NULL DEFAULT 0,
-			sold_count int(11) NOT NULL DEFAULT 0,
-			portfolio tinyint(1) NOT NULL DEFAULT 1,
-			active tinyint(1) NOT NULL DEFAULT 1,
-			created_at datetime NOT NULL,
-			PRIMARY KEY  (id)
-		) $c;"
-	);
-	dbDelta(
-		'CREATE TABLE ' . ap_table( 'ideas' ) . " (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			title varchar(190) NOT NULL DEFAULT '',
-			body text NULL,
-			format varchar(30) NOT NULL DEFAULT 'post',
-			status varchar(20) NOT NULL DEFAULT 'ideia',
-			post_date date NULL,
-			product_id bigint(20) unsigned NOT NULL DEFAULT 0,
-			project_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			created_at datetime NOT NULL,
 			PRIMARY KEY  (id),
 			KEY status (status)

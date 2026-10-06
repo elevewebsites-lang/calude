@@ -17,7 +17,7 @@ ap_head( 'Cadastro de cliente' );
 			<h2>Sua gráfica parceira<br><strong>de grande formato.</strong></h2>
 			<ul class="auth-list">
 				<li><?php echo ap_icon( 'check', 16 ); // phpcs:ignore ?> Tabela de preços por m²</li>
-				<li><?php echo ap_icon( 'check', 16 ); // phpcs:ignore ?> Calculadora, acabamentos e previsão de entrega</li>
+				<li><?php echo ap_icon( 'check', 16 ); // phpcs:ignore ?> Acabamentos e previsão de entrega</li>
 				<li><?php echo ap_icon( 'check', 16 ); // phpcs:ignore ?> Envio de arquivos pesados e pagamento no Pix</li>
 				<li><?php echo ap_icon( 'check', 16 ); // phpcs:ignore ?> Acompanhe cada pedido até a retirada</li>
 			</ul>
