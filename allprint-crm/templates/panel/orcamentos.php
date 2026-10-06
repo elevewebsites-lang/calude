@@ -7,8 +7,8 @@ $st     = ap_quote_statuses();
 $where  = $status && isset( $st[ $status ] ) ? $status : '';
 $quotes = $where ? ap_rows( 'quotes', 'status = %s', array( $where ), 'id DESC' ) : ap_rows( 'quotes', '1=1', array(), 'id DESC LIMIT 200' );
 $tot    = ap_quote_totals();
-$actions = ( ap_module( 'estoque' ) ? '<a class="btn btn--ghost" href="' . esc_url( ap_panel_url( 'calculadora' ) ) . '">' . ap_icon( 'calculadora', 16 ) . '<span>Calculadora</span></a>' : '' ) . '<a class="btn btn--primary" href="' . esc_url( ap_panel_url( 'orcamento' ) ) . '">' . ap_icon( 'mais', 16 ) . '<span>Novo orçamento</span></a>';
-ap_panel_start( 'Orçamentos', 'orcamentos', $actions );
+$actions = '<a class="btn btn--primary" href="' . esc_url( ap_panel_url( 'orcamento' ) ) . '">' . ap_icon( 'mais', 16 ) . '<span>Nova proposta</span></a>';
+ap_panel_start( 'Propostas comerciais', 'orcamentos', $actions );
 ?>
 <section class="stats stats--4">
 	<div class="stat"><span class="stat-label">Em aberto</span><strong><?php echo (int) $tot['open']; ?></strong><small class="money"><?php echo esc_html( ap_money( $tot['open_value'] ) ); ?></small></div>
@@ -26,10 +26,10 @@ ap_panel_start( 'Orçamentos', 'orcamentos', $actions );
 </div>
 
 <?php if ( ! $quotes ) : ?>
-	<div class="empty empty--big"><?php echo ap_icon( 'proposta', 28 ); // phpcs:ignore ?><h3>Nenhum orçamento ainda</h3><p>Monte o preço na calculadora e transforme em orçamento com fotos, 3D e pagamento na hora.</p><a class="btn btn--primary" href="<?php echo esc_url( ap_panel_url( 'calculadora' ) ); ?>">Abrir a calculadora</a></div>
+	<div class="empty empty--big"><?php echo ap_icon( 'proposta', 28 ); // phpcs:ignore ?><h3>Nenhuma proposta ainda</h3><p>Escolha o cliente, os materiais e as medidas: o sistema monta uma proposta bonita com link, aprovação, pagamento e PDF.</p><a class="btn btn--primary" href="<?php echo esc_url( ap_panel_url( 'orcamento' ) ); ?>">Criar a primeira proposta</a></div>
 <?php else : ?>
 	<div class="table table--quotes">
-		<div class="table-row table-head"><span>Orçamento</span><span>Público</span><span>Status</span><span>Total</span><span>Lucro</span><span></span></div>
+		<div class="table-row table-head"><span>Proposta</span><span>Tabela</span><span>Status</span><span>Total</span><span>Lucro</span><span></span></div>
 		<?php foreach ( $quotes as $q ) : ?>
 			<?php
 			$cl  = $q->client_id ? ap_get( 'clients', $q->client_id ) : null;
@@ -37,15 +37,15 @@ ap_panel_start( 'Orçamentos', 'orcamentos', $actions );
 			?>
 			<div class="table-row">
 				<a class="cell-main" href="<?php echo esc_url( ap_panel_url( 'orcamento', $q->id ) ); ?>">
-					<?php if ( $img ) : ?><img class="row-thumb" src="<?php echo esc_url( $img[0]['thumb'] ?? $img[0]['url'] ); ?>" alt=""><?php else : ?><span class="row-thumb row-thumb--empty"><?php echo ap_icon( 'cubo', 16 ); // phpcs:ignore ?></span><?php endif; ?>
-					<span><strong><?php echo esc_html( $q->title ); ?></strong><small><?php echo esc_html( ( $cl ? ap_client_label( $cl ) . ' · ' : '' ) . ap_date( $q->created_at ) ); ?></small></span>
+					<?php if ( $img ) : ?><img class="row-thumb" src="<?php echo esc_url( $img[0]['thumb'] ?? $img[0]['url'] ); ?>" alt=""><?php else : ?><span class="row-thumb row-thumb--empty"><?php echo ap_icon( 'proposta', 16 ); // phpcs:ignore ?></span><?php endif; ?>
+					<span><strong>Nº <?php echo esc_html( ap_quote_number( $q ) ); ?> · <?php echo esc_html( $q->title ); ?></strong><small><?php echo esc_html( ( $cl ? ap_client_label( $cl ) . ' · ' : '' ) . ap_date( $q->created_at ) ); ?></small></span>
 				</a>
 				<span data-label="Público"><?php echo esc_html( ap_audiences()[ $q->audience ] ?? '' ); ?></span>
 				<span data-label="Status"><em class="badge badge--q-<?php echo esc_attr( $q->status ); ?>"><?php echo esc_html( $st[ $q->status ] ?? $q->status ); ?></em><?php echo $q->views ? ' <small class="muted">' . (int) $q->views . '×</small>' : ''; ?></span>
 				<span data-label="Total" class="money"><?php echo esc_html( ap_money( $q->total ) ); ?></span>
 				<span data-label="Lucro" class="money"><?php echo $q->cost_total > 0 ? esc_html( ap_money( $q->total - $q->cost_total ) ) : '—'; ?></span>
 				<span class="row-btns">
-					<?php if ( 'rascunho' !== $q->status ) : ?><button type="button" class="btn btn--ghost btn--sm" data-copy="<?php echo esc_attr( ap_quote_url( $q ) ); ?>">Copiar link</button><?php endif; ?>
+					<?php if ( 'rascunho' !== $q->status ) : ?><button type="button" class="btn btn--ghost btn--sm" data-copy="<?php echo esc_attr( ap_quote_url( $q ) ); ?>">Copiar link</button><a class="btn btn--ghost btn--sm" href="<?php echo esc_url( add_query_arg( 'pdf', 1, ap_quote_url( $q ) ) ); ?>" target="_blank" rel="noopener">PDF</a><?php endif; ?>
 				</span>
 			</div>
 		<?php endforeach; ?>

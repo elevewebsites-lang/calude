@@ -33,13 +33,13 @@ ap_panel_start( $label, 'clientes', $actions );
 		</section>
 		<section class="card">
 			<div class="card-head"><h3>Tabela de preço e crédito na loja</h3><em class="badge badge--ok"><?php echo esc_html( 'Crédito: ' . ap_money( ap_credit_balance( $c->id ) ) ); ?></em></div>
-			<?php ap_form( 'client_kind', 'inline-form' ); ?>
+			<?php ap_form( 'client_kind', 'inline-form cl-row' ); ?>
 				<input type="hidden" name="id" value="<?php echo (int) $c->id; ?>">
 				<?php ap_select( 'kind', 'Tipo de cliente (define a tabela de preço)', array( '' => 'Não informado (tabela de terceirizado)', 'Terceirizado' => 'Terceirizado (revenda)', 'Empresa' => 'Empresa', 'Cliente P/F' => 'Pessoa física', 'Uso interno' => 'Uso interno' ), $c->kind ); ?>
 				<button class="btn btn--ghost btn--sm" type="submit">Salvar tipo</button>
 			</form>
 			<?php if ( ap_can( 'clientes' ) ) : ?>
-				<?php ap_form( 'credit_add', 'inline-form' ); ?>
+				<?php ap_form( 'credit_add', 'inline-form cl-row' ); ?>
 					<input type="hidden" name="client_id" value="<?php echo (int) $c->id; ?>">
 					<input type="hidden" name="op" value="dar">
 					<?php ap_input( 'amount', 'Dar crédito (R$)', '', 'text', 'inputmode="decimal" placeholder="50,00"' ); ?>

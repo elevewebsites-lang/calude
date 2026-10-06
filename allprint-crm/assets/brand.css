@@ -164,3 +164,9 @@
 .order-items,.oitem,.order-sum,.mo-client,.mo-new>*{min-width:0}
 .oitem .grid-3,.oitem .grid-2{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
 .seg{max-width:100%;overflow-x:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+
+/* Linhas de formulário com campos + botões alinhados pela base */
+.cl-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 12px;width:100%;margin:0 0 12px}
+.cl-row .field{flex:1 1 180px;min-width:0;margin:0}
+.cl-row .btn{flex:0 0 auto;align-self:flex-end;height:44px;min-height:44px;padding:0 18px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+.cl-row .field input,.cl-row .field select{height:44px}

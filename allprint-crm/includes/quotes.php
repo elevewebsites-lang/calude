@@ -1,7 +1,7 @@
 <?php
 /**
- * Orçamentos: fotos + arquivo 3D + itens (peças impressas e extras), público (final / empresa / revendedor),
- * link público /orcamento/<token>/ com aceite, cadastro do cliente e pagamento na hora
+ * Propostas comerciais: itens do catálogo (material + medidas) e serviços avulsos, imagens de referência,
+ * condições e link público /orcamento/<token>/ com aceite, cadastro do cliente e pagamento na hora
  * (Pix com desconto ou cartão até N vezes). Aceitou → vira pedido no Kanban.
  *
  * Os insumos (sacola, cartão…) entram só no custo interno: o cliente nunca vê.
@@ -92,7 +92,7 @@ function ap_quote_items( $q ) {
 	foreach ( ap_json( $q->items ) as $it ) {
 		$out[] = wp_parse_args(
 			$it,
-			array( 'kind' => 'impressao', 'name' => '', 'desc' => '', 'qty' => 1, 'unit' => 0, 'cost' => 0, 'calc' => 0, 'resale' => 0, 'grams' => 0, 'hours' => 0 )
+			array( 'kind' => 'impressao', 'name' => '', 'desc' => '', 'qty' => 1, 'unit' => 0, 'cost' => 0, 'resale' => 0, 'material' => 0, 'w' => 0, 'h' => 0 )
 		);
 	}
 	return $out;
@@ -155,16 +155,16 @@ function ap_do_quote_save() {
 		}
 		$qty     = max( 1, (int) ( $in['qty'][ $i ] ?? 1 ) );
 		$items[] = array(
-			'kind'   => 'extra' === ( $in['kind'][ $i ] ?? '' ) ? 'extra' : 'impressao',
-			'name'   => $name,
-			'desc'   => sanitize_textarea_field( $in['desc'][ $i ] ?? '' ),
-			'qty'    => $qty,
-			'unit'   => ap_parse_money( $in['unit'][ $i ] ?? 0 ),
-			'cost'   => ap_parse_money( $in['cost'][ $i ] ?? 0 ),
-			'resale' => ap_parse_money( $in['resale'][ $i ] ?? 0 ),
-			'calc'   => absint( $in['calc'][ $i ] ?? 0 ),
-			'grams'  => (float) str_replace( ',', '.', (string) ( $in['grams'][ $i ] ?? 0 ) ),
-			'hours'  => (float) str_replace( ',', '.', (string) ( $in['hours'][ $i ] ?? 0 ) ),
+			'kind'     => 'extra' === ( $in['kind'][ $i ] ?? '' ) ? 'extra' : 'impressao',
+			'name'     => $name,
+			'desc'     => sanitize_textarea_field( $in['desc'][ $i ] ?? '' ),
+			'qty'      => $qty,
+			'unit'     => ap_parse_money( $in['unit'][ $i ] ?? 0 ),
+			'cost'     => ap_parse_money( $in['cost'][ $i ] ?? 0 ),
+			'resale'   => ap_parse_money( $in['resale'][ $i ] ?? 0 ),
+			'material' => absint( $in['material'][ $i ] ?? 0 ),
+			'w'        => (float) str_replace( ',', '.', (string) ( $in['w'][ $i ] ?? 0 ) ),
+			'h'        => (float) str_replace( ',', '.', (string) ( $in['h'][ $i ] ?? 0 ) ),
 		);
 	}
 	$subtotal = 0;
@@ -176,7 +176,7 @@ function ap_do_quote_save() {
 	$discount = ap_in( 'discount', 'money' );
 	$freight  = ap_in( 'freight', 'money' );
 
-	// Fotos e arquivo 3D.
+	// Imagens de referência.
 	$images = $old ? ap_json( $old->images ) : array();
 	$remove = isset( $_POST['remove_img'] ) ? array_map( 'absint', (array) $_POST['remove_img'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification
 	$images = array_values(
@@ -187,18 +187,10 @@ function ap_do_quote_save() {
 			}
 		)
 	);
-	$title  = ap_in( 'title' ) ? ap_in( 'title' ) : ( $items ? $items[0]['name'] : 'Orçamento' );
+	$title  = ap_in( 'title' ) ? ap_in( 'title' ) : ( $items ? $items[0]['name'] : 'Proposta comercial' );
 	$client = $client_id ? ap_get( 'clients', $client_id ) : null;
 	$folder = array( 'Orçamentos', ( $client ? ap_client_label( $client ) . ' - ' : '' ) . $title );
 	$images = array_merge( $images, ap_store_uploads( 'photos', $folder, 'image' ) );
-	$model  = $old ? ap_json( $old->model3d ) : array();
-	if ( ap_in( 'remove_model', 'bool' ) ) {
-		$model = array();
-	}
-	$up = ap_store_uploads( 'model3d', $folder, '3d' );
-	if ( $up ) {
-		$model = $up[0];
-	}
 
 	$valid = max( 1, (int) ap_setting( 'validade_dias' ) );
 	$data  = array(
@@ -207,9 +199,9 @@ function ap_do_quote_save() {
 		'audience'      => isset( ap_audiences()[ ap_in( 'audience' ) ] ) ? ap_in( 'audience' ) : 'final',
 		'title'         => $title,
 		'intro'         => ap_in( 'intro', 'textarea' ),
+		'notes'         => ap_in( 'notes', 'textarea' ),
 		'items'         => wp_json_encode( $items ),
 		'images'        => wp_json_encode( $images ),
-		'model3d'       => wp_json_encode( $model ),
 		'freight'       => $freight,
 		'freight_label' => ap_in( 'freight_label' ),
 		'discount'      => $discount,
@@ -233,7 +225,7 @@ function ap_do_quote_save() {
 	if ( $data['lead_id'] ) {
 		ap_update( 'leads', $data['lead_id'], array( 'client_id' => $client_id, 'value' => $data['total'] ) );
 	}
-	ap_back( 'Orçamento salvo.', 'ok', ap_panel_url( 'orcamento', $id, array( 'pronto' => 1 ) ) );
+	ap_back( 'Proposta salva.', 'ok', ap_panel_url( 'orcamento', $id, array( 'pronto' => 1 ) ) );
 }
 
 function ap_do_quote_status() {
@@ -263,13 +255,13 @@ function ap_do_quote_duplicate() {
 	$data['pay_option']  = '';
 	$data['created_at']  = ap_now();
 	$id                  = ap_insert( 'quotes', $data );
-	ap_back( 'Orçamento duplicado.', 'ok', ap_panel_url( 'orcamento', $id ) );
+	ap_back( 'Proposta duplicada.', 'ok', ap_panel_url( 'orcamento', $id ) );
 }
 
 function ap_do_quote_delete() {
 	ap_require( 'orcamentos' );
 	ap_delete( 'quotes', ap_in( 'id', 'int' ) );
-	ap_back( 'Orçamento excluído.', 'ok', ap_panel_url( 'orcamentos' ) );
+	ap_back( 'Proposta excluída.', 'ok', ap_panel_url( 'orcamentos' ) );
 }
 
 /**
@@ -419,4 +411,78 @@ function ap_handle_quote_accept( $q ) {
 	do_action( 'ap_quote_accepted', $q->id, $client->id, $project );
 	wp_safe_redirect( ap_pay_url( $trans ) );
 	exit;
+}
+
+
+/** Número da proposta: 0012. */
+function ap_quote_number( $q ) {
+	return str_pad( (string) (int) $q->id, 4, '0', STR_PAD_LEFT );
+}
+
+/**
+ * Preço de um item do catálogo para a tabela do cliente (por m², unidade ou metro), com as medidas em cm.
+ * Devolve array( unit, cost ) por peça.
+ */
+function ap_quote_item_price( $material_id, $w, $h, $tier ) {
+	$c = $material_id ? ap_get( 'catalog', $material_id ) : null;
+	if ( ! $c ) {
+		return null;
+	}
+	$unit = $c->unit ? $c->unit : 'm2';
+	if ( 'm2' === $unit ) {
+		$area = max( 0, $w * $h / 10000 );
+		return array( 'unit' => round( ap_row_price( $c, $tier ) * $area, 2 ), 'cost' => round( (float) $c->cost_material * $area, 2 ) );
+	}
+	return array( 'unit' => round( ap_row_price( $c, $tier ), 2 ), 'cost' => round( (float) $c->cost_material, 2 ) );
+}
+
+/** Tabela de preço pela audiência da proposta (ou pelo tipo do cliente, se houver). */
+function ap_quote_tier( $q ) {
+	$client = $q->client_id ? ap_get( 'clients', $q->client_id ) : null;
+	if ( $client ) {
+		return ap_client_tier( $client );
+	}
+	return array( 'final' => 'pf', 'empresa' => 'empresa', 'revenda' => 'parceiro' )[ $q->audience ] ?? 'pf';
+}
+
+/**
+ * "Atualizar dados": reprecifica os itens do catálogo com os preços de hoje, renova a validade
+ * e atualiza o total. Itens avulsos (sem material) ficam como estão.
+ */
+function ap_do_quote_refresh() {
+	ap_require( 'orcamentos' );
+	$q = ap_get( 'quotes', ap_in( 'id', 'int' ) );
+	if ( ! $q ) {
+		ap_back();
+	}
+	$tier     = ap_quote_tier( $q );
+	$items    = ap_quote_items( $q );
+	$changed  = 0;
+	$subtotal = 0;
+	$cost     = 0;
+	foreach ( $items as $k => $it ) {
+		if ( $it['material'] ) {
+			$pr = ap_quote_item_price( (int) $it['material'], (float) $it['w'], (float) $it['h'], $tier );
+			if ( $pr && ( abs( $pr['unit'] - $it['unit'] ) > 0.004 || abs( $pr['cost'] - $it['cost'] ) > 0.004 ) ) {
+				$items[ $k ]['unit'] = $pr['unit'];
+				$items[ $k ]['cost'] = $pr['cost'];
+				$changed++;
+			}
+		}
+		$subtotal += $items[ $k ]['unit'] * $items[ $k ]['qty'];
+		$cost     += $items[ $k ]['cost'] * $items[ $k ]['qty'];
+	}
+	$valid = max( 1, (int) ap_setting( 'validade_dias' ) );
+	ap_update(
+		'quotes',
+		$q->id,
+		array(
+			'items'       => wp_json_encode( $items ),
+			'subtotal'    => round( $subtotal, 2 ),
+			'total'       => round( max( 0, $subtotal - (float) $q->discount ), 2 ),
+			'cost_total'  => round( $cost, 2 ),
+			'valid_until' => gmdate( 'Y-m-d', strtotime( ap_today() . ' +' . $valid . ' day' ) ),
+		)
+	);
+	ap_back( $changed ? 'Dados atualizados: ' . $changed . ' item(ns) com preço novo e validade renovada.' : 'Dados atualizados: os preços continuam os mesmos; a validade foi renovada.' );
 }

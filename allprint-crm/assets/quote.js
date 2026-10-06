@@ -13,19 +13,40 @@
 	var list = $('[data-qitems]', form);
 
 	function audience() { var r = $('[name=audience]:checked', root); return r ? r.value : 'final'; }
+	// Tabela de preço: do tipo do cliente (se escolhido) ou da audiência da proposta.
+	function tier() {
+		var sel = $('[name=client_id]', root), t = sel && D.clients ? D.clients[sel.value] : '';
+		return t || { final: 'pf', empresa: 'empresa', revenda: 'parceiro' }[audience()] || 'pf';
+	}
+	function priceOf(row) {
+		var m = D.catalog && D.catalog[$('[data-q=material]', row).value];
+		if (!m) return null;
+		var w = num($('[data-q=w]', row).value), h = num($('[data-q=h]', row).value), p = m.p[tier()] || m.p.parceiro;
+		if (m.unit === 'm2') { var a = w * h / 10000; return { unit: Math.round(p * a * 100) / 100, cost: Math.round(m.cost * a * 100) / 100 }; }
+		return { unit: p, cost: m.cost };
+	}
+	function sync(row, force) {
+		var mat = $('[data-q=material]', row).value, m = D.catalog && D.catalog[mat];
+		$$('[data-sizes]', row).forEach(function (z) { z.hidden = !m || m.unit !== 'm2'; });
+		$('input[name="it[kind][]"]', row).value = m ? 'impressao' : 'extra';
+		var inc = $('[data-q=inc]', row); if (inc) inc.textContent = m && m.inc ? 'Já incluso: ' + m.inc : '';
+		var nm = $('.qitem-name', row);
+		if (m && !nm.value) nm.value = m.name;
+		if (m && (force || !row.dataset.manual)) {
+			var pr = priceOf(row);
+			if (pr && (m.unit !== 'm2' || (num($('[data-q=w]', row).value) && num($('[data-q=h]', row).value)))) { $('[data-q=unit]', row).value = fmt(pr.unit); $('[data-q=cost]', row).value = fmt(pr.cost); }
+		}
+	}
 
 	function render() {
-		var sub = 0, cost = 0, isResale = audience() === 'revenda';
+		var sub = 0, cost = 0;
 		$$('[data-qitem]', list).forEach(function (row) {
 			var q = parseInt($('[data-q=qty]', row).value, 10) || 1;
 			var u = num($('[data-q=unit]', row).value), c = num($('[data-q=cost]', row).value);
 			sub += u * q; cost += c * q;
-			var sum = $('[data-q=sum]', row);
-			var r = num($('[data-q=resale]', row).value);
-			sum.innerHTML = money(u * q) + (c ? '<small>lucro ' + money((u - c) * q) + '</small>' : '') + (isResale && r > u ? '<small>revenda: ' + money(r) + ' (' + Math.round((r - u) / r * 100) + '% p/ a loja)</small>' : '');
-			row.classList.toggle('is-extra', $('.qitem-kind', row).value === 'extra');
+			$('[data-q=sum]', row).innerHTML = money(u * q) + (c ? '<small>lucro ' + money((u - c) * q) + '</small>' : '');
+			row.classList.toggle('is-extra', !$('[data-q=material]', row).value || $('[data-q=material]', row).value === '0');
 		});
-		root.classList.toggle('is-resale', isResale);
 		var disc = num(($('[data-q-discount]', root) || {}).value), fr = num(($('[data-q-freight]', root) || {}).value);
 		var total = Math.max(0, sub - disc), pix = total * (1 - (D.pixOff || 0) / 100);
 		var set = function (k, v) { var el = $('[data-qo="' + k + '"]', root); if (el) el.textContent = v; };
@@ -34,63 +55,43 @@
 		set('margin', pix > 0 ? Math.round((pix - cost) / pix * 100) + '%' : '—');
 	}
 
-	function addRow(kind, data) {
-		var first = $('[data-qitem]', list);
-		var row = first.cloneNode(true);
-		$$('input, textarea', row).forEach(function (i) { i.value = ''; });
-		$('[data-q=qty]', row).value = 1;
-		$('.qitem-kind', row).value = kind || 'impressao';
-		// Se a primeira linha está vazia, usa ela.
-		var target = !$('.qitem-name', first).value && !num($('[data-q=unit]', first).value) && $$('[data-qitem]', list).length === 1 ? first : list.appendChild(row);
-		if (data) {
-			$('.qitem-name', target).value = data.name || '';
-			if (data.desc) $('textarea', target).value = data.desc;
-			$('[data-q=qty]', target).value = data.qty || 1;
-			$('[data-q=unit]', target).value = fmt(data.unit);
-			$('[data-q=cost]', target).value = fmt(data.cost);
-			$('[data-q=resale]', target).value = fmt(data.resale || (audience() === 'revenda' ? data.unit * (D.resaleMult || 2) : 0));
-			$('[data-q=calc]', target).value = data.calc || 0;
-			$('[data-q=grams]', target).value = data.grams || 0;
-			$('[data-q=hours]', target).value = data.hours || 0;
-		}
-		render();
+	function addRow() {
+		var first = $('[data-qitem]', list), row = first.cloneNode(true);
+		$$('input[type=text], input[type=number], textarea', row).forEach(function (i) { i.value = ''; });
+		$('[data-q=qty]', row).value = 1; $('[data-q=material]', row).value = '0'; delete row.dataset.manual;
+		var empty = !$('.qitem-name', first).value && !num($('[data-q=unit]', first).value) && $$('[data-qitem]', list).length === 1;
+		var target = empty ? first : list.appendChild(row);
+		sync(target, true); render();
 		return target;
 	}
 
-	root.addEventListener('input', render);
-	root.addEventListener('change', render);
+	root.addEventListener('input', function (e) {
+		var row = e.target.closest('[data-qitem]');
+		if (row) {
+			if (e.target.matches('[data-q=unit]')) row.dataset.manual = '1';
+			if (e.target.matches('[data-q=w],[data-q=h]')) sync(row, false);
+		}
+		render();
+	});
+	root.addEventListener('change', function (e) {
+		var row = e.target.closest('[data-qitem]');
+		if (row && e.target.matches('[data-q=material]')) { var nm = $('.qitem-name', row), old = nm.value; var prev = nm.dataset.auto; if (!old || old === prev) nm.value = ''; delete row.dataset.manual; sync(row, true); var m = D.catalog[e.target.value]; if (m) nm.dataset.auto = m.name; }
+		if (e.target.matches('[name=client_id], [name=audience]')) $$('[data-qitem]', list).forEach(function (r) { sync(r, false); });
+		render();
+	});
 	root.addEventListener('click', function (e) {
 		var add = e.target.closest('[data-qitem-add]');
-		if (add) { var r = addRow(add.getAttribute('data-qitem-add')); $('.qitem-name', r).focus(); }
+		if (add) { var r = addRow(); $('[data-q=material]', r).focus(); }
+		var rp = e.target.closest('[data-qitem-reprice]');
+		if (rp) { $$('[data-qitem]', list).forEach(function (r) { delete r.dataset.manual; sync(r, true); }); render(); }
 		var del = e.target.closest('[data-qitem-del]');
 		if (del) {
 			var row = del.closest('[data-qitem]');
-			if ($$('[data-qitem]', list).length > 1) row.remove(); else $$('input, textarea', row).forEach(function (i) { i.value = i.matches('[data-q=qty]') ? 1 : ''; });
+			if ($$('[data-qitem]', list).length > 1) row.remove(); else { $$('input[type=text], input[type=number], textarea', row).forEach(function (i) { i.value = i.matches('[data-q=qty]') ? 1 : ''; }); $('[data-q=material]', row).value = '0'; sync(row, false); }
 			render();
 		}
 	});
-	// Revenda: sugere o preço de revenda quando o preço unitário muda e o campo está vazio.
-	list.addEventListener('change', function (e) {
-		if (e.target.matches('[data-q=unit]') && audience() === 'revenda') {
-			var row = e.target.closest('[data-qitem]'), rs = $('[data-q=resale]', row);
-			if (!num(rs.value)) rs.value = fmt(num(e.target.value) * (D.resaleMult || 2));
-			render();
-		}
-	});
-	document.addEventListener('click', function (e) {
-		var pc = e.target.closest('[data-pick-calc]');
-		if (pc) {
-			var c = D.calcs[pc.getAttribute('data-pick-calc')];
-			if (c) addRow('impressao', { name: c.name, qty: c.qty, unit: c.unit, cost: c.cost, resale: c.resale, calc: pc.getAttribute('data-pick-calc'), grams: c.grams, hours: c.hours });
-			pc.closest('dialog').close();
-		}
-		var pp = e.target.closest('[data-pick-product]');
-		if (pp) {
-			var p = D.products[pp.getAttribute('data-pick-product')];
-			if (p) addRow('impressao', { name: p.name, desc: p.desc, qty: 1, unit: p.unit, cost: p.cost, grams: p.grams, hours: p.hours });
-			pp.closest('dialog').close();
-		}
-	});
+	$$('[data-qitem]', list).forEach(function (r) { r.dataset.manual = '1'; sync(r, false); });
 
 	// Frete (Melhor Envio).
 	var ff = document.querySelector('[data-freight]');

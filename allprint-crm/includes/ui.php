@@ -545,7 +545,7 @@ function ap_quick_commands() {
 		$c[] = array( 'label' => $label, 'keys' => $keys, 'target' => $target, 'group' => $group );
 	};
 	if ( ap_can( 'orcamentos' ) ) {
-		$add( 'Novo orçamento', 'orcamento proposta cliente preco', ap_panel_url( 'orcamento' ) );
+		$add( 'Nova proposta comercial', 'orcamento proposta cliente preco', ap_panel_url( 'orcamento' ) );
 		$add( 'Calcular preço de uma peça', 'calculadora custo preco filamento gramas', ap_panel_url( 'calculadora' ) );
 	}
 	if ( ap_can( 'projetos' ) ) {
@@ -578,7 +578,7 @@ function ap_quick_commands() {
 	$pages = array(
 		array( '', 'Dashboard', '' ),
 		array( 'leads', 'Funil', 'leads' ),
-		array( 'orcamentos', 'Orçamentos', 'orcamentos' ),
+		array( 'orcamentos', 'Propostas', 'orcamentos' ),
 		array( 'pedidos', 'Pedidos', 'projetos' ),
 		array( 'clientes', 'Clientes', 'clientes' ),
 		array( 'filamentos', 'Filamentos', 'estoque' ),

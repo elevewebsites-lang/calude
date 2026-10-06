@@ -215,7 +215,7 @@ function ap_areas() {
 	return array(
 		'clientes'   => 'Clientes',
 		'leads'      => 'Funil de leads',
-		'orcamentos' => 'Orçamentos',
+		'orcamentos' => 'Propostas',
 		'projetos'   => 'Pedidos',
 		'estoque'    => 'Estoque, insumos e compras',
 		'produtos'   => 'Produtos e marketplaces',

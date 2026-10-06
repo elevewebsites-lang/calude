@@ -47,12 +47,6 @@ function ap_first_column() {
  */
 function ap_order_from_quote( $q, $client, $delivery, $amount ) {
 	$items = ap_quote_items( $q );
-	$grams = 0;
-	$hours = 0;
-	foreach ( $items as $it ) {
-		$grams += (float) $it['grams'] * (int) $it['qty'];
-		$hours += (float) $it['hours'] * (int) $it['qty'];
-	}
 	$id = ap_insert(
 		'projects',
 		array(
@@ -68,10 +62,10 @@ function ap_order_from_quote( $q, $client, $delivery, $amount ) {
 			'ship_price'     => 'envio' === $delivery ? $q->freight : 0,
 			'start_date'     => ap_today(),
 			'due_date'       => $q->deadline_days ? gmdate( 'Y-m-d', strtotime( ap_today() . ' +' . (int) $q->deadline_days . ' day' ) ) : null,
-			'notes'          => 'Estimativa do orçamento: ' . round( $grams ) . ' g · ' . round( $hours, 1 ) . ' h de impressão.',
+			'notes'          => 'Origem: proposta nº ' . ap_quote_number( $q ) . '.' . ( $q->notes ? "\n" . $q->notes : '' ),
 		)
 	);
-	ap_log( $id, 'Pedido criado a partir do orçamento "' . $q->title . '".' );
+	ap_log( $id, 'Pedido criado a partir da proposta nº ' . ap_quote_number( $q ) . ' "' . $q->title . '".' );
 	return $id;
 }
 

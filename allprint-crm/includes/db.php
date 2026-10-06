@@ -270,6 +270,7 @@ function ap_install_tables() {
 			audience varchar(20) NOT NULL DEFAULT 'final',
 			title varchar(190) NOT NULL DEFAULT '',
 			intro text NULL,
+			notes text NULL,
 			model3d longtext NULL,
 			delivery_mode varchar(20) NOT NULL DEFAULT '',
 			items longtext NULL,

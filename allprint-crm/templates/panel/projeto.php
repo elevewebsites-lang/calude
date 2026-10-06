@@ -12,7 +12,6 @@ $items   = ap_order_items( $p );
 $photos  = ap_order_photos( $p );
 $quote   = $p->quote_id ? ap_get( 'quotes', $p->quote_id ) : null;
 $qimgs   = $quote ? ap_json( $quote->images ) : array();
-$model   = $quote ? ap_json( $quote->model3d ) : array();
 $trans   = ap_rows( 'transactions', 'project_id = %d', array( $p->id ), 'due_date, id' );
 $moves   = ap_rows( 'stock_moves', "project_id = %d AND kind = 'uso'", array( $p->id ), 'id' );
 $log     = ap_rows( 'activity', 'project_id = %d', array( $p->id ), 'id DESC LIMIT 40' );
@@ -92,7 +91,6 @@ ap_panel_start( '#' . $p->id . ' · ' . $p->title, 'pedidos', $actions );
 					<?php foreach ( $items as $it ) : ?>
 						<div class="items-row">
 							<span><strong><?php echo (int) ( $it['qty'] ?? 1 ); ?>× <?php echo esc_html( $it['name'] ?? '' ); ?></strong><?php if ( ! empty( $it['desc'] ) ) : ?><small><?php echo esc_html( $it['desc'] ); ?></small><?php endif; ?><?php if ( isset( $it['area'] ) ) : ?><small><?php echo esc_html( number_format( (float) $it['area'], 2, ',', '.' ) ); ?> m²</small><?php endif; ?><?php foreach ( (array) ( $it['files'] ?? array() ) as $fl ) : ?><?php if ( ! empty( $fl['thumb'] ) ) : ?><img class="upthumb" alt="" src="<?php echo esc_attr( $fl['thumb'] ); ?>"><?php endif; ?><?php if ( ! empty( $fl['pw'] ) ) : ?><small>Arte: <?php echo esc_html( number_format( (float) $fl['pw'], 1, ',', '' ) . ' × ' . number_format( (float) $fl['ph'], 1, ',', '' ) ); ?> cm</small><?php endif; ?><small><a href="<?php echo esc_url( $fl['link'] ?? '#' ); ?>" target="_blank" rel="noopener">📎 <?php echo esc_html( $fl['name'] ); ?></a><?php echo ! empty( $fl['size'] ) ? ' · ' . esc_html( number_format( $fl['size'] / 1048576, 1, ',', '.' ) ) . ' MB' : ''; ?><?php echo ! empty( $fl['new'] ) ? ' <em class="badge badge--warn">novo</em>' : ''; ?></small><?php endforeach; ?></span>
-							<span class="muted small"><?php echo ! empty( $it['grams'] ) ? esc_html( round( $it['grams'] ) . ' g · ' . round( (float) ( $it['hours'] ?? 0 ), 1 ) . ' h/un.' ) : ''; ?></span>
 							<?php if ( $fin ) : ?><span class="money"><?php echo esc_html( ap_money( (float) ( $it['unit'] ?? 0 ) * (int) ( $it['qty'] ?? 1 ) ) ); ?></span><?php endif; ?>
 						</div>
 					<?php endforeach; ?>
@@ -100,11 +98,10 @@ ap_panel_start( '#' . $p->id . ' · ' . $p->title, 'pedidos', $actions );
 			<?php else : ?>
 				<p class="muted small">Pedido sem itens detalhados.</p>
 			<?php endif; ?>
-			<?php if ( $qimgs || $model ) : ?>
+			<?php if ( $qimgs ) : ?>
 				<p class="small muted" style="margin-top:14px;">Referências do orçamento:</p>
 				<div class="thumbs">
 					<?php foreach ( $qimgs as $img ) : ?><a href="<?php echo esc_url( $img['url'] ); ?>" target="_blank" rel="noopener"><img src="<?php echo esc_url( $img['thumb'] ?? $img['url'] ); ?>" alt=""></a><?php endforeach; ?>
-					<?php if ( $model ) : ?><a class="thumb-file" href="<?php echo esc_url( $model['url'] ); ?>" download><?php echo ap_icon( 'cubo', 22 ); // phpcs:ignore ?><span><?php echo esc_html( $model['name'] ); ?></span></a><?php endif; ?>
 				</div>
 			<?php endif; ?>
 		</section>
@@ -200,7 +197,6 @@ ap_panel_start( '#' . $p->id . ' · ' . $p->title, 'pedidos', $actions );
 					<span>Custo estimado</span><strong class="money"><?php echo esc_html( ap_money( $p->cost_estimated ) ); ?></strong>
 					<span>Custo real</span><strong class="money"><?php echo $p->cost_real > 0 ? esc_html( ap_money( $p->cost_real ) ) : '<em class="muted">registre o consumo</em>'; ?></strong>
 					<span>Lucro</span><strong class="money <?php echo $profit < 0 ? 'text-late' : 'text-ok'; ?>"><?php echo esc_html( ap_money( $profit ) ); ?></strong>
-					<?php if ( $p->grams_used > 0 ) : ?><span>Consumo</span><strong><?php echo esc_html( round( $p->grams_used ) . ' g · ' . round( $p->print_hours, 1 ) . ' h' ); ?></strong><?php endif; ?>
 				</div>
 			</section>
 
