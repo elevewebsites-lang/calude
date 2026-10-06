@@ -243,38 +243,91 @@ function lk_priorities() {
  * -------------------------------------------------------------------- */
 
 /**
- * Áreas do painel que podem ser liberadas para a equipe.
+ * Áreas do painel, em grupos (é assim que aparecem na tela Equipe). Admin vê tudo; os demais só o que estiver marcado.
+ * As telas abertas a toda a equipe (chat, modo foco, ranking, apontamentos, perfil, ajuda) não precisam de permissão.
  */
-function lk_areas() {
-	return array(
-		'clientes'   => 'Clientes',
-		'leads'      => 'Funil de leads',
-		'orcamentos' => 'Orçamentos',
-		'projetos'   => 'Pedidos',
-		'estoque'    => 'Estoque, insumos e compras',
-		'produtos'   => 'Produtos e marketplaces',
-		'conteudo'   => 'Conteúdo (posts)',
-		'relatorios' => 'Relatórios',
-		'trafego'    => 'Tráfego pago',
-		'emails'     => 'E-mails para clientes',
-		'tarefas'    => 'Tarefas',
-		'financeiro' => 'Financeiro',
+function lk_area_groups() {
+	$g = array(
+		'Dia a dia'            => array(
+			'tarefas'   => 'Tarefas',
+			'reunioes'  => 'Reuniões e atas',
+			'agenda'    => 'Agenda',
+		),
+		'Conteúdo e entrega'   => array(
+			'conteudo'   => 'Conteúdo, posts e planejamento',
+			'relatorios' => 'Relatórios dos clientes',
+			'trafego'    => 'Tráfego pago',
+			'redes'      => 'Redes conectadas',
+		),
+		'Clientes'             => array(
+			'clientes'    => 'Clientes (fichas)',
+			'contratos'   => 'Contratos',
+			'formularios' => 'Briefings e pesquisas',
+			'mensagens'   => 'Mensagens com clientes',
+			'acessos'     => 'Acessos e senhas dos clientes',
+			'emails'      => 'E-mails para clientes',
+		),
+		'Comercial'            => array(
+			'leads'      => 'Funil de leads e ideias de conteúdo',
+			'prospeccao' => 'Prospecção',
+			'orcamentos' => 'Propostas e orçamentos',
+		),
+		'Financeiro'           => array(
+			'financeiro' => 'Financeiro, mensalidades e cobranças',
+		),
+		'Pedidos e estoque'    => array(
+			'projetos' => 'Pedidos e projetos',
+			'estoque'  => 'Estoque, insumos e compras',
+			'produtos' => 'Produtos e marketplaces',
+		),
 	);
+	// Esconde o que o projeto não usa (módulos desligados).
+	if ( ! lk_module( 'estoque' ) ) {
+		unset( $g['Pedidos e estoque']['estoque'] );
+	}
+	if ( ! lk_module( 'produtos' ) ) {
+		unset( $g['Pedidos e estoque']['produtos'] );
+	}
+	return $g;
+}
+
+/** Lista simples chave → nome (todas as áreas liberáveis). */
+function lk_areas() {
+	$out = array();
+	foreach ( lk_area_groups() as $items ) {
+		$out = array_merge( $out, $items );
+	}
+	return $out;
+}
+
+/** Áreas só do administrador (não aparecem para liberar). */
+function lk_admin_only_areas() {
+	return array( 'Equipe e permissões', 'Configurações', 'Saúde do sistema', 'Metas e prêmios', 'Gamificação' );
 }
 
 /**
- * Funções da equipe: cada uma já marca as permissões certas (dá para ajustar depois, pessoa por pessoa).
+ * Funções da equipe (perfis): cada uma já marca as permissões certas. Dá para ajustar depois, pessoa por pessoa.
+ * Formato: chave => array( nome, áreas, descrição, aparece no cadastro por link? )
  */
 function lk_team_roles() {
 	return array(
-		'designer'    => array( 'Designer', array( 'conteudo', 'tarefas' ) ),
-		'social'      => array( 'Social media', array( 'conteudo', 'clientes', 'relatorios', 'tarefas' ) ),
-		'atendimento' => array( 'Atendimento', array( 'conteudo', 'clientes', 'relatorios', 'emails', 'leads', 'tarefas' ) ),
-		'videomaker'  => array( 'Videomaker', array( 'conteudo', 'tarefas' ) ),
-		'trafego'     => array( 'Gestor de tráfego', array( 'trafego', 'relatorios', 'clientes', 'tarefas' ) ),
-		'financeiro'  => array( 'Financeiro e contratos', array( 'financeiro', 'clientes', 'orcamentos', 'leads', 'tarefas' ) ),
-		'outro'       => array( 'Outra função', array( 'tarefas' ) ),
+		'gestor'      => array( 'Gestor / coordenação', array_keys( lk_areas() ), 'Vê quase tudo para coordenar a operação. Só não mexe em Equipe, Configurações e Saúde (esses são do admin).', false ),
+		'comercial'   => array( 'Comercial / vendas', array( 'leads', 'prospeccao', 'orcamentos', 'clientes', 'contratos', 'agenda', 'reunioes', 'emails', 'tarefas' ), 'Funil, prospecção, propostas e contratos.', true ),
+		'atendimento' => array( 'Atendimento / sucesso do cliente', array( 'conteudo', 'clientes', 'contratos', 'formularios', 'mensagens', 'agenda', 'reunioes', 'relatorios', 'emails', 'leads', 'tarefas' ), 'Conversa com o cliente, briefing, contratos e acompanhamento.', true ),
+		'social'      => array( 'Social media', array( 'conteudo', 'clientes', 'redes', 'relatorios', 'agenda', 'reunioes', 'tarefas' ), 'Posts, planejamento, redes conectadas e relatórios.', true ),
+		'redator'     => array( 'Redator / copywriter', array( 'conteudo', 'reunioes', 'tarefas' ), 'Textos e roteiros dos posts.', true ),
+		'designer'    => array( 'Designer', array( 'conteudo', 'reunioes', 'tarefas' ), 'Artes dos posts e peças. Vê o conteúdo que está com ele.', true ),
+		'videomaker'  => array( 'Videomaker / editor de vídeo', array( 'conteudo', 'reunioes', 'tarefas' ), 'Vídeos e Reels.', true ),
+		'trafego'     => array( 'Gestor de tráfego', array( 'trafego', 'relatorios', 'clientes', 'redes', 'reunioes', 'tarefas' ), 'Campanhas pagas e relatórios.', true ),
+		'financeiro'  => array( 'Financeiro e contratos', array( 'financeiro', 'clientes', 'contratos', 'orcamentos', 'leads', 'reunioes', 'tarefas' ), 'Cobranças, mensalidades, contratos e propostas.', true ),
+		'outro'       => array( 'Outra função', array( 'tarefas' ), 'Só tarefas. Marque o resto à mão.', true ),
 	);
+}
+
+/** Áreas de uma função (só as que existem neste projeto). */
+function lk_role_areas( $role ) {
+	$r = lk_team_roles();
+	return isset( $r[ $role ] ) ? array_values( array_intersect( $r[ $role ][1], array_keys( lk_areas() ) ) ) : array( 'tarefas' );
 }
 
 function lk_user_role_key( $user_id ) {
@@ -325,6 +378,79 @@ function lk_can( $area, $user_id = 0 ) {
 function lk_only_own_tasks( $user_id = 0 ) {
 	$user_id = $user_id ? $user_id : get_current_user_id();
 	return ! lk_is_admin( $user_id ) && (bool) get_user_meta( $user_id, 'lk_only_own', true );
+}
+
+/**
+ * Escopos da pessoa (além das áreas): ver só as próprias tarefas, só os próprios clientes, só as próprias reuniões.
+ */
+function lk_only_own_clients( $user_id = 0 ) {
+	$user_id = $user_id ? $user_id : get_current_user_id();
+	return $user_id && ! lk_is_admin( $user_id ) && (bool) get_user_meta( $user_id, 'lk_only_clients', true );
+}
+
+function lk_only_own_meetings( $user_id = 0 ) {
+	$user_id = $user_id ? $user_id : get_current_user_id();
+	return $user_id && ! lk_is_admin( $user_id ) && (bool) get_user_meta( $user_id, 'lk_only_meet', true );
+}
+
+/** Colunas da ficha do cliente que dizem "quem cuida": designer, social, atendimento, tráfego e revisor. */
+function lk_client_owner_columns() {
+	return array( 'designer_id', 'social_id', 'atendimento_id', 'trafego_id', 'revisor_id' );
+}
+
+/** O cliente está na carteira desta pessoa? (Admin e quem não tem o escopo "só meus clientes" vê todos.) */
+function lk_client_visible( $client_id, $user_id = 0 ) {
+	$user_id = $user_id ? $user_id : get_current_user_id();
+	if ( ! lk_only_own_clients( $user_id ) ) {
+		return true;
+	}
+	$c = lk_get( 'clients', (int) $client_id );
+	if ( ! $c ) {
+		return false;
+	}
+	foreach ( lk_client_owner_columns() as $col ) {
+		if ( (int) $c->$col === (int) $user_id ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/** WHERE (sem o "WHERE") que limita a lista de clientes à carteira da pessoa; '' quando não há limite. */
+function lk_clients_scope_sql( $alias = '' ) {
+	if ( ! is_user_logged_in() || ! lk_only_own_clients() ) {
+		return '';
+	}
+	$u   = (int) get_current_user_id();
+	$pre = $alias ? $alias . '.' : '';
+	$out = array();
+	foreach ( lk_client_owner_columns() as $col ) {
+		$out[] = $pre . $col . ' = ' . $u;
+	}
+	return '(' . implode( ' OR ', $out ) . ')';
+}
+
+/**
+ * Quem já era da equipe antes das novas áreas continua vendo o que via:
+ *  clientes → agenda, contratos, briefings, redes e mensagens · leads → prospecção · todos → reuniões.
+ * Roda uma vez por versão.
+ */
+function lk_perms_migrate() {
+	if ( get_option( 'lk_perms_v2' ) ) {
+		return;
+	}
+	foreach ( get_users( array( 'role' => 'lk_team', 'fields' => 'ID' ) ) as $uid ) {
+		$perms = (array) get_user_meta( $uid, 'lk_perms', true );
+		$add   = array( 'reunioes' );
+		if ( in_array( 'clientes', $perms, true ) ) {
+			$add = array_merge( $add, array( 'agenda', 'contratos', 'formularios', 'redes', 'mensagens' ) );
+		}
+		if ( in_array( 'leads', $perms, true ) ) {
+			$add[] = 'prospeccao';
+		}
+		update_user_meta( $uid, 'lk_perms', array_values( array_unique( array_merge( $perms, $add ) ) ) );
+	}
+	update_option( 'lk_perms_v2', 1, false );
 }
 
 function lk_add_roles() {

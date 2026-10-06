@@ -173,7 +173,7 @@ function lk_contract_import( $client, $field = 'contract_file' ) {
 }
 
 function lk_do_contract_import() {
-	lk_require( 'clientes' );
+	lk_require( 'contratos' );
 	$client = lk_get( 'clients', lk_in( 'client_id', 'int' ) );
 	if ( ! $client ) {
 		lk_back( 'Escolha o cliente.', 'erro' );

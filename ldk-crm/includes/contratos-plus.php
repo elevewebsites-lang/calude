@@ -47,7 +47,7 @@ function lk_contract_apply_clauses( $body, $clauses ) {
 }
 
 function lk_do_contract_clauses() {
-	lk_require( 'clientes' );
+	lk_require( 'contratos' );
 	$k = lk_get( 'contracts', lk_in( 'id', 'int' ) );
 	if ( ! $k || 'rascunho' !== $k->status ) {
 		lk_back( 'As cláusulas só podem mudar enquanto o contrato é rascunho.', 'erro' );
@@ -83,7 +83,7 @@ function lk_contract_draft_for( $client, $lead = null ) {
 
 /** Cliente aceitou o serviço (lead no funil) → gerar contrato. */
 function lk_do_lead_to_contract() {
-	lk_require( 'clientes' );
+	lk_require( 'contratos' );
 	$lead = lk_get( 'leads', lk_in( 'lead_id', 'int' ) );
 	if ( ! $lead ) {
 		lk_back( 'Lead não encontrado.', 'erro' );
@@ -99,7 +99,7 @@ function lk_do_lead_to_contract() {
 
 /** Novo contrato direto da lista central. */
 function lk_do_contract_new() {
-	lk_require( 'clientes' );
+	lk_require( 'contratos' );
 	$client = lk_get( 'clients', lk_in( 'client_id', 'int' ) );
 	if ( ! $client ) {
 		lk_back( 'Escolha o cliente.', 'erro' );

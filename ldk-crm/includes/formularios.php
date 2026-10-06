@@ -214,7 +214,7 @@ function lk_form_normalize( $d ) {
 
 /** Salva (e opcionalmente envia) o que foi montado. acao: modelo | enviar | rascunho */
 function lk_do_form_save() {
-	lk_require( 'clientes' );
+	lk_require( 'formularios' );
 	$kind   = isset( lk_form_kinds()[ lk_in( 'kind' ) ] ) ? lk_in( 'kind' ) : 'briefing';
 	$title  = lk_in( 'title' ) ? lk_in( 'title' ) : lk_form_kinds()[ $kind ];
 	$intro  = lk_in( 'intro', 'textarea' );
@@ -270,7 +270,7 @@ function lk_do_form_save() {
 
 /** Envio rápido de um modelo (ex.: pesquisa de satisfação) para um cliente. */
 function lk_do_form_quick() {
-	lk_require( 'clientes' );
+	lk_require( 'formularios' );
 	$client = lk_get( 'clients', lk_in( 'client_id', 'int' ) );
 	$t      = lk_form_template( lk_in( 'ref' ) );
 	if ( ! $client || ! $t ) {
@@ -282,7 +282,7 @@ function lk_do_form_quick() {
 }
 
 function lk_do_form_delete() {
-	lk_require( 'clientes' );
+	lk_require( 'formularios' );
 	$what = lk_in( 'what' );
 	$id   = lk_in( 'id', 'int' );
 	if ( 'modelo' === $what && lk_get( 'forms', $id ) ) {
@@ -297,7 +297,7 @@ function lk_do_form_delete() {
 }
 
 function lk_do_form_resend() {
-	lk_require( 'clientes' );
+	lk_require( 'formularios' );
 	$send = lk_get( 'form_sends', lk_in( 'id', 'int' ) );
 	if ( ! $send ) {
 		lk_back( 'Envio não encontrado.', 'erro' );

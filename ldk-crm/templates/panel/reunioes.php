@@ -30,7 +30,7 @@ if ( 'mes' === $ver ) {
 	$prev  = $next = $d;
 	$title = 'Próximos 60 dias';
 }
-$all = lk_rows( 'meetings', 'starts_at >= %s AND starts_at < %s', array( $start . ' 00:00:00', $end . ' 00:00:00' ), 'starts_at ASC' );
+$all = lk_rows( 'meetings', 'starts_at >= %s AND starts_at < %s' . lk_meetings_scope_sql(), array( $start . ' 00:00:00', $end . ' 00:00:00' ), 'starts_at ASC' );
 $by  = array();
 foreach ( $all as $m ) {
 	$by[ gmdate( 'Y-m-d', strtotime( $m->starts_at ) ) ][] = $m;

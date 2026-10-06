@@ -215,7 +215,7 @@ function lk_social_pick_pending( $cid ) {
 }
 
 function lk_do_social_pick() {
-	lk_require( 'clientes' );
+	lk_require( 'redes' );
 	$cid = lk_in( 'client_id', 'int' );
 	$net = sanitize_key( lk_in( 'net' ) );
 	$raw = get_transient( 'lk_pick_' . $net . '_' . $cid );

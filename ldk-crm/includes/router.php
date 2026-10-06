@@ -110,18 +110,18 @@ function lk_route() {
 			'time'        => array( 'time', '' ),
 			'chat'        => array( 'chat', '' ),
 			'foco'        => array( 'foco', '' ),
-			'agenda'      => array( 'agenda', 'clientes' ),
-			'reunioes'    => array( 'reunioes', '' ),
-			'formularios' => array( 'formularios', 'clientes' ),
-			'formulario'  => array( 'formulario', 'clientes' ),
-			'resposta'    => array( 'resposta', 'clientes' ),
+			'agenda'      => array( 'agenda', 'agenda' ),
+			'reunioes'    => array( 'reunioes', 'reunioes' ),
+			'formularios' => array( 'formularios', 'formularios' ),
+			'formulario'  => array( 'formulario', 'formularios' ),
+			'resposta'    => array( 'resposta', 'formularios' ),
 			'relatorios'  => array( 'relatorios', 'relatorios' ),
 			'relatorio'   => array( 'relatorio', 'relatorios' ),
 			'trafego'     => array( 'trafego', 'trafego' ),
 			'cobrancas'   => array( 'cobrancas', 'financeiro' ),
-			'mensagens'   => array( 'mensagens', 'clientes' ),
+			'mensagens'   => array( 'mensagens', 'mensagens' ),
 			'emails'      => array( 'emails', 'emails' ),
-			'redes'       => array( 'redes', 'clientes' ),
+			'redes'       => array( 'redes', 'redes' ),
 			'orcamento'   => array( 'orcamento', 'orcamentos' ),
 			'calculadora' => array( 'calculadora', 'orcamentos' ),
 			'pedidos'     => array( 'projetos', 'projetos' ),
@@ -148,14 +148,14 @@ function lk_route() {
 			'propostas-servicos' => array( 'propostas-servicos', 'orcamentos' ),
 			'sala'        => array( 'sala', '' ),
 			'conta'       => array( 'conta', '' ),
-			'contrato'    => array( 'contrato', 'clientes' ),
+			'contrato'    => array( 'contrato', 'contratos' ),
 			'feedback'    => array( 'feedback', '' ),
 			'novidades'   => array( 'novidades', '' ),
 			'ajuda'       => array( 'ajuda', '' ),
 			'ranking'     => array( 'ranking', '' ),
 			'metas'       => array( 'metas', 'admin' ),
-			'contratos'   => array( 'contratos', 'clientes' ),
-			'prospeccao'  => array( 'prospeccao', 'leads' ),
+			'contratos'   => array( 'contratos', 'contratos' ),
+			'prospeccao'  => array( 'prospeccao', 'prospeccao' ),
 			'gamificacao' => array( 'gamificacao', 'admin' ),
 		);
 
@@ -168,6 +168,19 @@ function lk_route() {
 		if ( ! $allowed && 'tarefa' === $view && $id ) {
 			$task    = lk_get( 'tasks', $id );
 			$allowed = $task && (int) $task->assignee === get_current_user_id();
+		}
+		// "Só meus clientes": a ficha e o contrato de um cliente fora da carteira não abrem.
+		if ( $allowed && $id && lk_only_own_clients() ) {
+			$cid = 0;
+			if ( 'cliente' === $view ) {
+				$cid = $id;
+			} elseif ( 'contrato' === $view ) {
+				$k   = lk_get( 'contracts', $id );
+				$cid = $k ? (int) $k->client_id : 0;
+			}
+			if ( $cid && ! lk_client_visible( $cid ) ) {
+				$allowed = false;
+			}
 		}
 		if ( ! $allowed ) {
 			lk_render( 'panel/sem-acesso' );
@@ -193,7 +206,7 @@ function lk_route() {
  */
 function lk_viewing_client() {
 	if ( lk_is_team() && isset( $_GET['como'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-		return lk_can( 'clientes' ) ? lk_get( 'clients', absint( $_GET['como'] ) ) : null; // phpcs:ignore WordPress.Security.NonceVerification
+		return lk_can( 'clientes' ) && lk_client_visible( absint( $_GET['como'] ) ) ? lk_get( 'clients', absint( $_GET['como'] ) ) : null; // phpcs:ignore WordPress.Security.NonceVerification
 	}
 	return lk_is_client_user() ? lk_current_client() : null;
 }

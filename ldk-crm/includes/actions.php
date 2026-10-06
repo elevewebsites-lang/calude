@@ -653,6 +653,8 @@ function lk_do_team_save() {
 	update_user_meta( $user_id, 'lk_perms', $perms );
 	update_user_meta( $user_id, 'lk_func', isset( lk_team_roles()[ lk_in( 'func' ) ] ) ? lk_in( 'func' ) : '' );
 	update_user_meta( $user_id, 'lk_only_own', lk_in( 'only_own', 'bool' ) );
+	update_user_meta( $user_id, 'lk_only_clients', lk_in( 'only_clients', 'bool' ) );
+	update_user_meta( $user_id, 'lk_only_meet', lk_in( 'only_meet', 'bool' ) );
 	lk_back( 'Membro da equipe salvo.' );
 }
 

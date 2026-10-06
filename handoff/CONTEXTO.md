@@ -158,3 +158,22 @@ Observação: os scripts têm caminhos `/tmp/...` e `localhost:8082`; ajuste ao 
 3. Decidir quais itens da seção 5 entram.
 4. Trocar a senha de teste citada na gravação.
 5. Rodar `handoff/tests` de novo no ambiente local antes de publicar no site real.
+
+---
+
+## 9. LDK CRM (`ldk-crm/`, prefixo `lk_`): equipe e permissões por perfil (v1.28.0)
+
+Pedido: "ajuste certinho a parte de equipe e as permissões de acordo com o perfil; agora tem mais coisas pra adicionar, reuniões etc."
+
+**Estado antes:** `lk_areas()` tinha 12 áreas; Reuniões e várias telas novas (agenda, contratos, briefings, redes, mensagens, prospecção) ou estavam abertas a toda a equipe ou presas à área "clientes"/"leads".
+
+**O que foi feito**
+- `includes/helpers.php`: `lk_area_groups()` (áreas em grupos: Dia a dia, Conteúdo e entrega, Clientes, Comercial, Financeiro, Pedidos e estoque), `lk_areas()` achatada, `lk_team_roles()` com 10 perfis (Gestor, Comercial, Atendimento, Social, Redator, Designer, Videomaker, Tráfego, Financeiro, Outro; 3º item = descrição, 4º = aparece no cadastro por link; Gestor só o admin atribui), `lk_role_areas()`.
+- Novas áreas: `reunioes`, `agenda`, `contratos`, `formularios`, `mensagens`, `redes`, `prospeccao` (+ `acessos` agora listada). Roteador (`includes/router.php`), menu (`includes/ui.php`) e ações (`lk_require`) passaram a usar essas chaves. A API de chat com clientes exige `mensagens`.
+- Escopos por pessoa (user meta): `lk_only_own` (tarefas), `lk_only_clients` (carteira = colunas designer_id/social_id/atendimento_id/trafego_id/revisor_id do cliente) e `lk_only_meet` (reuniões que ela marcou). `lk_clients()` já filtra pela carteira; ficha do cliente e contrato fora da carteira dão "sem acesso"; reuniões filtradas por `lk_meetings_scope_sql()`/`lk_meeting_visible()`.
+- Migração `lk_perms_migrate()` (roda uma vez, option `lk_perms_v2`): quem já era da equipe ganha `reunioes`; quem tinha `clientes` ganha agenda/contratos/formularios/redes/mensagens; quem tinha `leads` ganha prospecção. Ninguém perde acesso que tinha.
+- Tela Equipe (`templates/panel/equipe.php`): lista de perfis com descrição, matriz de permissões por grupo ("marcar todos"), copiar de outra pessoa, escopos, resumo dos limites na lista.
+- Cadastro por link da equipe só oferece perfis com a flag pública; aprovação aplica `lk_role_areas()`.
+- Testes: `handoff/tests/ldk-permtest.php` (35 verificações: perfis × áreas, migração, escopo de clientes e reuniões, ações barradas), `ldk2.js` (cada perfil percorre 28 telas e confere menu), `ldk3.js` (criar pessoa pela tela, escopos, carteira, reuniões, celular). Todos passaram. WP de teste em `/tmp/wpl` (porta 8085, banco `wptl`).
+- Limitação conhecida: o escopo "só meus clientes" cobre listas, ficha, contrato e reuniões; ações enviadas à mão (POST forjado) que recebem `client_id` de outro cliente não foram auditadas uma a uma.
+- Observação: o LDK CRM ainda carrega módulos de herança 3D (estoque, slicer, produtos); estão desligados no `identity.php` e não foram mexidos.

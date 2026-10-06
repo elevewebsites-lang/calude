@@ -77,7 +77,7 @@ function lk_briefing_store( $c ) {
  */
 function lk_do_briefing_save() {
 	if ( lk_is_team() ) {
-		lk_require( 'clientes' );
+		lk_require( 'formularios' );
 		$c = lk_get( 'clients', lk_in( 'id', 'int' ) );
 	} else {
 		$c = lk_current_client();
@@ -93,7 +93,7 @@ function lk_do_briefing_save() {
  * Mandar o link por e-mail (e deixar o WhatsApp pronto).
  */
 function lk_do_briefing_send() {
-	lk_require( 'clientes' );
+	lk_require( 'formularios' );
 	$c = lk_get( 'clients', lk_in( 'id', 'int' ) );
 	if ( ! $c ) {
 		lk_back();

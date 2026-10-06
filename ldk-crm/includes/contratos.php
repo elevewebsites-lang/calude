@@ -248,7 +248,7 @@ function lk_contract_html( $text ) {
  * -------------------------------------------------------------------- */
 
 function lk_do_contract_save() {
-	lk_require( 'clientes' );
+	lk_require( 'contratos' );
 	$id     = lk_in( 'id', 'int' );
 	$client = lk_get( 'clients', lk_in( 'client_id', 'int' ) );
 	if ( ! $client ) {
@@ -289,7 +289,7 @@ function lk_do_contract_save() {
 }
 
 function lk_do_contract_body() {
-	lk_require( 'clientes' );
+	lk_require( 'contratos' );
 	$k = lk_get( 'contracts', lk_in( 'id', 'int' ) );
 	if ( ! $k || 'rascunho' !== $k->status ) {
 		lk_back( 'Só dá para editar o texto enquanto o contrato é rascunho.', 'erro' );
@@ -299,7 +299,7 @@ function lk_do_contract_body() {
 }
 
 function lk_do_contract_send() {
-	lk_require( 'clientes' );
+	lk_require( 'contratos' );
 	$k      = lk_get( 'contracts', lk_in( 'id', 'int' ) );
 	$client = $k ? lk_get( 'clients', $k->client_id ) : null;
 	if ( ! $k || ! $client || ! in_array( $k->status, array( 'rascunho', 'enviado' ), true ) ) {
@@ -320,7 +320,7 @@ function lk_do_contract_send() {
 }
 
 function lk_do_contract_cancel() {
-	lk_require( 'clientes' );
+	lk_require( 'contratos' );
 	$k = lk_get( 'contracts', lk_in( 'id', 'int' ) );
 	if ( $k && 'concluido' !== $k->status ) {
 		lk_update( 'contracts', $k->id, array( 'status' => 'cancelado' ) );
@@ -329,7 +329,7 @@ function lk_do_contract_cancel() {
 }
 
 function lk_do_contract_duplicate() {
-	lk_require( 'clientes' );
+	lk_require( 'contratos' );
 	$k = lk_get( 'contracts', lk_in( 'id', 'int' ) );
 	if ( ! $k ) {
 		lk_back();

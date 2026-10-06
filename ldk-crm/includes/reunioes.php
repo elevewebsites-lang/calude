@@ -15,9 +15,50 @@ function lk_meeting_status_labels() {
 	return array( 'agendada' => 'Agendada', 'feita' => 'Feita', 'cancelada' => 'Cancelada' );
 }
 
+/**
+ * Pedaço de WHERE (começa com " AND ") que limita as reuniões ao que a pessoa pode ver:
+ * "só minhas reuniões" = as que ela marcou; "só meus clientes" = internas + dos clientes da carteira dela.
+ */
+function lk_meetings_scope_sql() {
+	if ( ! is_user_logged_in() || lk_is_admin() ) {
+		return '';
+	}
+	$u   = (int) get_current_user_id();
+	$out = '';
+	if ( lk_only_own_meetings( $u ) ) {
+		$out .= ' AND created_by = ' . $u;
+	}
+	if ( lk_only_own_clients( $u ) ) {
+		$cols = array();
+		foreach ( lk_client_owner_columns() as $col ) {
+			$cols[] = $col . ' = ' . $u;
+		}
+		$out .= ' AND ( client_id = 0 OR created_by = ' . $u . ' OR client_id IN ( SELECT id FROM ' . lk_table( 'clients' ) . ' WHERE ' . implode( ' OR ', $cols ) . ' ) )';
+	}
+	return $out;
+}
+
+/** A pessoa pode abrir/editar esta reunião? */
+function lk_meeting_visible( $m ) {
+	if ( ! $m || ! lk_can( 'reunioes' ) ) {
+		return false;
+	}
+	if ( lk_is_admin() ) {
+		return true;
+	}
+	$u = (int) get_current_user_id();
+	if ( lk_only_own_meetings( $u ) && (int) $m->created_by !== $u ) {
+		return false;
+	}
+	if ( lk_only_own_clients( $u ) && $m->client_id && (int) $m->created_by !== $u && ! lk_client_visible( $m->client_id, $u ) ) {
+		return false;
+	}
+	return true;
+}
+
 /** Reuniões de hoje em diante (agendadas), da mais próxima para a mais distante. */
 function lk_meetings_upcoming( $limit = 8, $client_id = 0 ) {
-	$where = "status = 'agendada' AND starts_at >= %s" . ( $client_id ? ' AND client_id = %d' : '' );
+	$where = "status = 'agendada' AND starts_at >= %s" . ( $client_id ? ' AND client_id = %d' : '' ) . lk_meetings_scope_sql();
 	$args  = $client_id ? array( gmdate( 'Y-m-d 00:00:00', strtotime( lk_today() ) ), $client_id ) : array( gmdate( 'Y-m-d 00:00:00', strtotime( lk_today() ) ) );
 	return array_slice( lk_rows( 'meetings', $where, $args, 'starts_at ASC' ), 0, $limit );
 }
@@ -57,6 +98,9 @@ function lk_meeting_row_html( $m, $show_client = true ) {
 
 /** Lista curta para o dashboard: reuniões do CRM + do Google Agenda (se conectado), em ordem de horário. */
 function lk_meetings_widget_html() {
+	if ( ! lk_can( 'reunioes' ) ) {
+		return '';
+	}
 	$items = array();
 	foreach ( lk_meetings_upcoming( 8 ) as $m ) {
 		$items[] = array( strtotime( $m->starts_at ), lk_meeting_row_html( $m ) );
@@ -94,8 +138,11 @@ function lk_meetings_widget_html() {
 
 /** Cartão completo na Agenda (próximas e últimas reuniões registradas). */
 function lk_meetings_card_html() {
+	if ( ! lk_can( 'reunioes' ) ) {
+		return '';
+	}
 	$up   = lk_meetings_upcoming( 30 );
-	$past = array_slice( lk_rows( 'meetings', "(status <> 'agendada' OR starts_at < %s)", array( gmdate( 'Y-m-d 00:00:00', strtotime( lk_today() ) ) ), 'starts_at DESC' ), 0, 8 );
+	$past = array_slice( lk_rows( 'meetings', "(status <> 'agendada' OR starts_at < %s)" . lk_meetings_scope_sql(), array( gmdate( 'Y-m-d 00:00:00', strtotime( lk_today() ) ) ), 'starts_at DESC' ), 0, 8 );
 	ob_start();
 	?>
 	<section class="card">
@@ -110,7 +157,10 @@ function lk_meetings_card_html() {
 
 /** Reuniões na ficha do cliente. */
 function lk_client_meetings_html( $client ) {
-	$rows = lk_rows( 'meetings', 'client_id = %d', array( $client->id ), 'starts_at DESC' );
+	if ( ! lk_can( 'reunioes' ) ) {
+		return '';
+	}
+	$rows = lk_rows( 'meetings', 'client_id = %d' . lk_meetings_scope_sql(), array( $client->id ), 'starts_at DESC' );
 	ob_start();
 	?>
 	<section class="card" id="reunioes">
@@ -198,11 +248,15 @@ function lk_meeting_form( $client_id = 0, $edit = false ) {
 }
 
 function lk_do_reuniao_save() {
-	if ( ! lk_is_team() ) {
-		wp_die( 'Sem permissão.' );
-	}
+	lk_require( 'reunioes' );
 	$id = lk_in( 'id', 'int' );
 	$m  = $id ? lk_get( 'meetings', $id ) : null;
+	if ( $m && ! lk_meeting_visible( $m ) ) {
+		wp_die( 'Você não tem permissão para esta reunião.', 'Sem permissão', array( 'response' => 403 ) );
+	}
+	if ( ! $m && lk_in( 'client_id', 'int' ) && ! lk_client_visible( lk_in( 'client_id', 'int' ) ) ) {
+		wp_die( 'Este cliente não está na sua carteira.', 'Sem permissão', array( 'response' => 403 ) );
+	}
 	if ( $m && lk_in( 'excluir', 'bool' ) ) {
 		if ( $m->google_id && function_exists( 'lk_calendar_delete' ) ) {
 			lk_calendar_delete( $m->google_id );

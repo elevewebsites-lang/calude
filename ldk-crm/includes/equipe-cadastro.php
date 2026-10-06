@@ -85,7 +85,7 @@ function lk_team_join_submit() {
 	if ( email_exists( $email ) || lk_rows( 'team_requests', 'email = %s AND status = %s', array( $email, 'pendente' ) ) ) {
 		return new WP_Error( 'lk', 'Este e-mail já tem cadastro ou pedido em análise.' );
 	}
-	$func = isset( lk_team_roles()[ lk_in( 'funcao' ) ] ) ? lk_in( 'funcao' ) : 'outro';
+	$func = isset( lk_team_roles()[ lk_in( 'funcao' ) ] ) && ! empty( lk_team_roles()[ lk_in( 'funcao' ) ][3] ) ? lk_in( 'funcao' ) : 'outro'; // cargos de chefia só o admin escolhe, na aprovação
 	lk_insert(
 		'team_requests',
 		array(
@@ -137,7 +137,7 @@ function lk_do_team_request_approve() {
 	$wpdb->update( $wpdb->users, array( 'user_pass' => $r->pass_hash ), array( 'ID' => $user_id ) );
 	clean_user_cache( $user_id );
 	update_user_meta( $user_id, 'lk_func', $func );
-	update_user_meta( $user_id, 'lk_perms', lk_team_roles()[ $func ][1] ?? array( 'tarefas' ) );
+	update_user_meta( $user_id, 'lk_perms', lk_role_areas( $func ) );
 	update_user_meta( $user_id, 'lk_phone', $r->phone );
 	update_user_meta( $user_id, 'lk_cpf', $r->cpf );
 	update_user_meta( $user_id, 'lk_pix', $r->pix );

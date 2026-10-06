@@ -454,12 +454,12 @@ function lk_api_team_hub( WP_REST_Request $r ) {
 		}
 	);
 	$geral   = lk_team_unread( 'geral', $me );
-	$clients = lk_can( 'clientes' ) ? lk_chat_unread_count() : 0;
+	$clients = lk_can( 'mensagens' ) ? lk_chat_unread_count() : 0;
 	$notes   = lk_notifications_unread();
 	$manual  = (string) get_user_meta( $me, 'lk_presence', true );
 	// Conversas com clientes (as mais recentes), para responder direto na janela.
 	$convs = array();
-	if ( lk_can( 'clientes' ) ) {
+	if ( lk_can( 'mensagens' ) ) {
 		foreach ( array_slice( lk_chat_inbox(), 0, 12 ) as $row ) {
 			$c    = lk_get( 'clients', $row->client_id );
 			$last = lk_get( 'messages', $row->last_id );

@@ -41,7 +41,7 @@ lk_head( 'Cadastro na equipe' );
 					<?php lk_input( 'name', 'Nome completo', $v( 'name' ), 'text', 'required autocomplete="name"' ); ?>
 					<?php lk_input( 'email', 'E-mail (será o seu login)', $v( 'email' ), 'email', 'required autocomplete="email"' ); ?>
 					<?php lk_input( 'phone', 'WhatsApp', $v( 'phone' ), 'tel', 'required data-mask="phone"' ); ?>
-					<?php lk_select( 'funcao', 'Sua função', array_map( function ( $r ) { return $r[0]; }, lk_team_roles() ), $v( 'funcao' ) ); ?>
+					<?php lk_select( 'funcao', 'Sua função', array_map( function ( $r ) { return $r[0]; }, array_filter( lk_team_roles(), function ( $r ) { return ! empty( $r[3] ); } ) ), $v( 'funcao' ) ); ?>
 					<?php lk_input( 'cpf', 'CPF', $v( 'cpf' ), 'text', 'inputmode="numeric" data-mask="doc"' ); ?>
 					<?php lk_input( 'pix', 'Chave Pix (para pagamentos)', $v( 'pix' ) ); ?>
 					<?php lk_input( 'birthday', 'Data de nascimento', $v( 'birthday' ), 'date' ); ?>

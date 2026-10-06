@@ -17,7 +17,7 @@ function lk_places_key() {
 add_action(
 	'rest_api_init',
 	function () {
-		$who = function () { return lk_can( 'leads' ); };
+		$who = function () { return lk_can( 'prospeccao' ); };
 		register_rest_route( 'lk/v1', '/prospect/search', array( 'methods' => 'POST', 'callback' => 'lk_api_prospect_search', 'permission_callback' => $who ) );
 		register_rest_route( 'lk/v1', '/prospect/email', array( 'methods' => 'POST', 'callback' => 'lk_api_prospect_email', 'permission_callback' => $who ) );
 		register_rest_route( 'lk/v1', '/prospect/add', array( 'methods' => 'POST', 'callback' => 'lk_api_prospect_add', 'permission_callback' => $who ) );

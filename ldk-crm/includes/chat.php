@@ -12,7 +12,7 @@ add_action(
 	'rest_api_init',
 	function () {
 		$who = function () {
-			return is_user_logged_in() && ( lk_is_team() || lk_current_client() );
+			return is_user_logged_in() && ( ( lk_is_team() && lk_can( 'mensagens' ) ) || lk_current_client() );
 		};
 		register_rest_route( 'lk/v1', '/chat', array( array( 'methods' => 'GET', 'callback' => 'lk_api_chat_get', 'permission_callback' => $who ), array( 'methods' => 'POST', 'callback' => 'lk_api_chat_send', 'permission_callback' => $who ) ) );
 		register_rest_route( 'lk/v1', '/chat/unread', array( 'methods' => 'GET', 'callback' => 'lk_api_chat_unread', 'permission_callback' => $who ) );

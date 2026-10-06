@@ -880,7 +880,8 @@ function lk_current_client() {
 
 function lk_clients() {
 	global $wpdb;
-	return $wpdb->get_results( 'SELECT * FROM ' . lk_table( 'clients' ) . ' ORDER BY company, name' ); // phpcs:ignore WordPress.DB.PreparedSQL
+	$scope = function_exists( 'lk_clients_scope_sql' ) ? lk_clients_scope_sql() : '';
+	return $wpdb->get_results( 'SELECT * FROM ' . lk_table( 'clients' ) . ( $scope ? ' WHERE ' . $scope : '' ) . ' ORDER BY company, name' ); // phpcs:ignore WordPress.DB.PreparedSQL
 }
 
 function lk_client_label( $client ) {

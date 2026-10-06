@@ -78,7 +78,7 @@ function lk_social_auth_url( $net, $st ) {
 
 add_action( 'admin_post_lk_social_go', 'lk_social_go' );
 function lk_social_go() {
-	if ( ! lk_can( 'clientes' ) ) {
+	if ( ! lk_can( 'redes' ) ) {
 		wp_die( 'Sem permissão.' );
 	}
 	check_admin_referer( 'lk_social_go' );
@@ -199,7 +199,7 @@ function lk_fb_connect( $cid, $code ) {
 }
 
 function lk_do_fb_pick_page() {
-	lk_require( 'clientes' );
+	lk_require( 'redes' );
 	$cid   = lk_in( 'client_id', 'int' );
 	$pages = json_decode( (string) lk_decrypt( get_transient( 'lk_fbpages_' . $cid ) ), true );
 	foreach ( (array) $pages as $pg ) {
@@ -235,7 +235,7 @@ function lk_social_store( $cid, $net, $account, $username, $name, $avatar, $toke
 }
 
 function lk_do_social_disconnect() {
-	lk_require( 'clientes' );
+	lk_require( 'redes' );
 	lk_delete( 'social_accounts', lk_in( 'id', 'int' ) );
 	lk_back( 'Rede desconectada.' );
 }
