@@ -529,7 +529,7 @@ function ap_stage_stock( $id, $status ) {
 		}
 		$c = ap_get( 'catalog', $it['material'] );
 		if ( $c && $c->supply_id ) {
-			$use[ $c->supply_id ] = ( $use[ $c->supply_id ] ?? 0 ) + (float) ( $it['area'] ?? 0 );
+			$use[ $c->supply_id ] = ( $use[ $c->supply_id ] ?? 0 ) + (float) ( $it['area'] ?? 0 ) * ap_stock_loss_factor();
 		}
 	}
 	if ( $use ) {
@@ -539,7 +539,7 @@ function ap_stage_stock( $id, $status ) {
 		}
 		$cost = ap_stock_consume( $id, array(), $pairs );
 		ap_update( 'projects', $id, array( 'stock_done' => 1, 'cost_real' => $p->cost_real + $cost ) );
-		ap_log( $id, 'Estoque: baixa de ' . number_format( array_sum( $use ), 2, ',', '.' ) . ' m² de material.' );
+		ap_log( $id, 'Estoque: baixa de ' . number_format( array_sum( $use ), 2, ',', '.' ) . ' m² de material (inclui ' . round( ( ap_stock_loss_factor() - 1 ) * 100 ) . '% de perda da máquina).' );
 	}
 }
 

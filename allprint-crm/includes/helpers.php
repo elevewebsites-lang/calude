@@ -12,6 +12,7 @@ function ap_default_settings() {
 		'empresa'        => 'Minha Empresa',
 		'logo'           => '',
 		'logo_cor'       => '',
+		'perda_impressao' => '20',
 		'credito_boas_vindas' => '0',
 		'credito_validade_dias' => '0',
 		'cor_ink'        => '',
@@ -587,7 +588,7 @@ function ap_installments_text() {
 
 function ap_qty_label( $qty, $unit ) {
 	$q = rtrim( rtrim( number_format( (float) $qty, 2, ',', '.' ), '0' ), ',' );
-	return $q . ' ' . $unit;
+	return $q . ' ' . ( 'm2' === $unit ? 'm²' : $unit );
 }
 
 /**

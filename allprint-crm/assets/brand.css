@@ -143,3 +143,15 @@
 .paymodal-err { color: var(--late); font-size: 13px; margin: 0 0 8px; }
 .paymodal-actions { display: grid; gap: 8px; margin-top: 12px; }
 .paymodal-actions .btn { width: 100%; justify-content: center; }
+
+/* Estoque */
+.est-stats { margin-bottom: 14px; }
+.est-tabs { flex-wrap: wrap; }
+.est-table .table-row { grid-template-columns: minmax(0, 2.4fr) 1.3fr 1.3fr 1.4fr auto; align-items: center; }
+.est-lvl { display: grid; gap: 4px; }
+.lvl { display: block; height: 7px; border-radius: 6px; background: var(--line); overflow: hidden; }
+.lvl i { display: block; height: 100%; border-radius: 6px; background: var(--tn-dot, var(--muted)); }
+.table--count .table-row { grid-template-columns: minmax(0, 2.2fr) 1.2fr 1.6fr; align-items: center; }
+.est-inputs { display: flex; gap: 8px; flex-wrap: wrap; }
+.est-inputs .field { min-width: 96px; max-width: 130px; }
+@media (max-width: 900px) { .est-table .table-row, .table--count .table-row { grid-template-columns: 1fr; } }
