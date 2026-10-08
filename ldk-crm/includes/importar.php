@@ -412,10 +412,33 @@ function lk_do_import_upload() {
 		lk_back( 'Não encontrei nenhuma linha com texto para importar. Confira se a planilha tem as colunas Name (ou Nome) e Data.', 'erro' );
 	}
 	$data['user']  = get_current_user_id();
+	$data['client_id'] = lk_in( 'client_id', 'int' );
 	$data['file']  = sanitize_file_name( $f['name'] );
 	$token         = strtolower( wp_generate_password( 20, false ) );
 	set_transient( 'lk_import_' . $token, $data, HOUR_IN_SECONDS );
 	lk_back( '', 'ok', lk_panel_url( 'importar', 0, array( 't' => $token ) ) );
+}
+
+/** Bloco da ficha do cliente: botão + janela para subir a planilha já com o cliente escolhido. */
+function lk_client_import_html( $client ) {
+	ob_start();
+	?>
+	<section class="card" id="importar">
+		<div class="pay-row"><span><strong>Importar planilha de conteúdo (Excel)</strong><small>Suba o Excel do Monday e o sistema preenche o conteúdo deste cliente. Só entram as linhas com texto.</small></span>
+			<button type="button" class="btn btn--primary btn--sm" data-open="importar-planilha"><?php echo lk_icon( 'upload', 15 ); // phpcs:ignore ?><span>Subir Excel</span></button></div>
+	</section>
+	<?php
+	lk_modal_start( 'importar-planilha', 'Importar planilha · ' . lk_client_label( $client ) );
+	lk_form( 'import_upload', 'stack', true );
+	?>
+		<input type="hidden" name="client_id" value="<?php echo (int) $client->id; ?>">
+		<p class="muted small">Arquivo .xlsx (ou .csv) com as colunas Name/Nome, Data, Produto, Arte, Legenda, Vídeo e Pessoa. Você vê uma prévia antes de importar.</p>
+		<label class="field"><span>Arquivo (até 15 MB)</span><input type="file" name="planilha" accept=".xlsx,.csv" required></label>
+		<div class="form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button type="submit" class="btn btn--primary">Ler a planilha</button></div>
+	</form>
+	<?php
+	lk_modal_end();
+	return ob_get_clean();
 }
 
 /** Passo 2: grava os posts. */
@@ -471,5 +494,5 @@ function lk_do_import_commit() {
 		lk_update( 'clients', $client->id, array( 'instagram' => $data['instagram'] ) );
 	}
 	delete_transient( 'lk_import_' . $token );
-	lk_back( $added . ' posts importados para ' . lk_client_label( $client ) . ( $dups ? ' (' . $dups . ' já existiam e foram pulados)' : '' ) . '.', 'ok', lk_panel_url( 'conteudo' ) );
+	lk_back( $added . ' posts importados para ' . lk_client_label( $client ) . ( $dups ? ' (' . $dups . ' já existiam e foram pulados)' : '' ) . '.', 'ok', lk_panel_url( 'conteudo', 0, array( 'cliente' => $client->id ) ) );
 }

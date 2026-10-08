@@ -39,7 +39,7 @@ else :
 		$by_fmt[ $it['format'] ] = ( $by_fmt[ $it['format'] ] ?? 0 ) + 1;
 	}
 	ksort( $by_mo );
-	$guess  = $pre ? $pre : lk_import_guess_client( $data['board'] );
+	$guess  = $pre ? $pre : ( ! empty( $data['client_id'] ) ? (int) $data['client_id'] : lk_import_guess_client( $data['board'] ) );
 	$gc     = $guess ? lk_get( 'clients', $guess ) : null;
 	?>
 <section class="stats stats--4">
@@ -55,7 +55,7 @@ else :
 			<?php lk_form( 'import_commit', 'stack' ); ?>
 				<input type="hidden" name="token" value="<?php echo esc_attr( $token ); ?>">
 				<?php lk_select( 'client_id', 'Cliente', lk_client_options( 'Escolha o cliente…' ), $guess ? (string) $guess : '', 'required' ); ?>
-				<?php if ( $gc ) : ?><p class="muted small">O nome do quadro combina com <strong><?php echo esc_html( lk_client_label( $gc ) ); ?></strong>. Confira se está certo.</p><?php endif; ?>
+				<?php if ( $gc && ! empty( $data['client_id'] ) ) : ?><p class="muted small">Os posts vão para <strong><?php echo esc_html( lk_client_label( $gc ) ); ?></strong>, de onde você subiu a planilha.</p><?php elseif ( $gc ) : ?><p class="muted small">O nome do quadro combina com <strong><?php echo esc_html( lk_client_label( $gc ) ); ?></strong>. Confira se está certo.</p><?php endif; ?>
 				<?php if ( ! empty( $data['instagram'] ) ) : lk_check( 'usar_instagram', 'Preencher o Instagram do cliente com @' . $data['instagram'] . ' (só se estiver em branco)', true ); endif; ?>
 				<div class="form-actions"><a class="btn btn--ghost" href="<?php echo esc_url( lk_panel_url( 'importar' ) ); ?>">Cancelar</a><button type="submit" class="btn btn--primary">Importar <?php echo (int) count( $items ); ?> posts</button></div>
 			</form>
