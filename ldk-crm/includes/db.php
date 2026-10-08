@@ -737,6 +737,8 @@ function lk_install_tables() {
 			drive_url varchar(255) NOT NULL DEFAULT '',
 			lead_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			package varchar(120) NOT NULL DEFAULT '',
+			subject varchar(190) NOT NULL DEFAULT '',
+			reminded_at datetime NULL,
 			file_url varchar(255) NOT NULL DEFAULT '',
 			file_att bigint(20) unsigned NOT NULL DEFAULT 0,
 			imported tinyint(1) NOT NULL DEFAULT 0,
@@ -767,6 +769,26 @@ function lk_install_tables() {
 			PRIMARY KEY  (id),
 			KEY client_id (client_id),
 			KEY token (token)
+		) $c;"
+	);
+
+	// Vencimentos do cliente: hospedagem, domínio, SSL, e-mail, suporte… (o que a agência renova por ele).
+	dbDelta(
+		'CREATE TABLE ' . lk_table( 'renewals' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			client_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			kind varchar(40) NOT NULL DEFAULT 'hospedagem',
+			label varchar(190) NOT NULL DEFAULT '',
+			provider varchar(190) NOT NULL DEFAULT '',
+			due_date date NULL,
+			value decimal(12,2) NOT NULL DEFAULT 0,
+			cycle varchar(20) NOT NULL DEFAULT 'anual',
+			notes text NULL,
+			notified_days int(11) NOT NULL DEFAULT 999,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY client_id (client_id),
+			KEY due_date (due_date)
 		) $c;"
 	);
 

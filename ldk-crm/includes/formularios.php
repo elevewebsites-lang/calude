@@ -107,7 +107,7 @@ function lk_fq( $type, $label, $opts = array(), $req = true, $other = false ) {
 }
 
 /** Modelos prontos (aparecem na lista de modelos junto com os que você salvar). */
-function lk_form_defaults() {
+function lk_form_defaults_base() {
 	$sat = function ( $area, $extra ) {
 		return array( 'title' => $area, 'questions' => array( lk_fq( 'sat', 'Como você avalia ' . $extra . '?' ), lk_fq( 'long', 'Quer comentar algo sobre ' . mb_strtolower( $area ) . '?', array(), false ) ) );
 	};

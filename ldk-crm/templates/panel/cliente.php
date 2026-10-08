@@ -42,6 +42,7 @@ lk_panel_start( $label, 'clientes', $actions );
 		$more  = lk_social_pick_pending( $c->id );
 		?>
 		<?php echo lk_client_contracts_html( $c ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+		<?php echo lk_client_renewals_html( $c ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		<?php echo lk_client_meetings_html( $c ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		<?php echo lk_client_forms_html( $c ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		<?php if ( function_exists( 'lk_google_connected' ) && lk_google_connected() ) : $fl = lk_drive_folder_link( array( 'Clientes', lk_client_label( $c ) ) ); ?>

@@ -120,6 +120,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 		'Clientes' => array(
 			'clientes'   => array( 'Clientes', 'clientes', 'clientes' ),
 			'contratos'  => array( 'Contratos', 'proposta', 'clientes' ),
+			'vencimentos' => array( 'Hospedagem e domínios', 'globo', 'clientes' ),
 			'formularios' => array( 'Briefings e pesquisas', 'lista', 'clientes' ),
 			'redes'      => array( 'Redes conectadas', 'globo', 'clientes' ),
 			'mensagens'  => array( 'Mensagens', 'chat', 'clientes' ),
@@ -184,6 +185,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 					?>
 					<a href="<?php echo esc_url( lk_panel_url( $slug ) ); ?>" class="<?php echo $active === $slug ? 'is-active' : ''; ?>">
 						<?php echo lk_icon( $it[1] ); // phpcs:ignore ?><span><?php echo esc_html( $it[0] ); ?></span>
+						<?php if ( 'contratos' === $slug && lk_contracts_pending_count() ) : ?><em class="side-count"><?php echo (int) lk_contracts_pending_count(); ?></em><?php endif; ?>
 						<?php if ( 'tarefas' === $slug && $today_count ) : ?><em class="side-count"><?php echo (int) $today_count; ?></em><?php endif; ?>
 						<?php if ( 'novidades' === $slug && lk_changelog_unseen() ) : ?><em class="side-count side-count--new">novo</em><?php endif; ?>
 						<?php if ( 'feedback' === $slug && lk_is_admin() && lk_feedback_open_mine() ) : ?><em class="side-count"><?php echo (int) lk_feedback_open_mine(); ?></em><?php endif; ?>
