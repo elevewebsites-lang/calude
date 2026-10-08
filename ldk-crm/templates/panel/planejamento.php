@@ -39,7 +39,7 @@ if ( ! $client ) {
 			?>
 			<div class="table-row">
 				<a class="cell-main" href="<?php echo esc_url( lk_panel_url( 'planejamento', 0, array( 'cliente' => $c->id, 'mes' => $ym ) ) ); ?>"><span class="svc-dot" style="background:<?php echo esc_attr( $c->color ?: '#14E9EC' ); ?>"></span><strong><?php echo esc_html( lk_client_label( $c ) ); ?></strong></a>
-				<span data-label="Artes"><?php echo $c->posts_quota > 0 ? lk_quota_html( $c, $ym ) : esc_html( $n . ' arte(s) · sem pacote definido' ); // phpcs:ignore ?></span>
+				<span data-label="Artes e vídeos"><?php echo ( $c->posts_quota > 0 || (int) $c->videos_quota > 0 ) ? lk_quota_html( $c, $ym ) : esc_html( $n . ' post(s) · sem pacote definido' ); // phpcs:ignore ?></span>
 				<span data-label="Planejamento"><?php echo $plan ? '<em class="badge badge--plan-' . esc_attr( $plan->status ) . '">' . esc_html( lk_plan_status_label( $plan->status ) ) . '</em>' : '<em class="badge badge--off">não começou</em>'; ?></span>
 				<span data-label="Com" class="small"><?php echo $soc ? esc_html( strtok( $soc->display_name, ' ' ) ) : '—'; ?></span>
 				<span><?php lk_action_button( 'plan_start', array( 'client_id' => $c->id, 'mes' => $ym ), $plan ? 'Abrir' : '▶ Start', $plan ? 'btn btn--ghost btn--sm' : 'btn btn--primary btn--sm' ); ?></span>
@@ -72,6 +72,7 @@ lk_panel_start( 'Planejamento · ' . lk_client_label( $client ), 'planejamento',
 $steps = array(
 	'rascunho' => 'Montando',
 	'revisao'  => 'Revisão interna',
+	'pronto'   => 'Atendimento envia',
 	'enviado'  => 'Com a cliente',
 	'ajustes'  => 'Ajustes',
 	'aprovado' => 'Aprovado → Design',
@@ -85,7 +86,8 @@ $order = array_keys( $steps );
 	<h3><?php echo esc_html( ucfirst( lk_month_label( $ym ) ) ); ?></h3>
 	<a class="icon-btn" href="<?php echo esc_url( lk_panel_url( 'planejamento', 0, array( 'cliente' => $client->id, 'mes' => $next ) ) ); ?>">›</a>
 	<?php echo lk_quota_html( $client, $ym ); // phpcs:ignore ?>
-	<?php if ( $client->posts_quota <= 0 ) : ?><a class="small" href="<?php echo esc_url( lk_panel_url( 'cliente', $client->id ) ); ?>#contrato">definir o pacote de artes</a><?php endif; ?>
+	<?php if ( lk_package_summary( $client ) ) : ?><span class="badge" title="Quantidade cadastrada na ficha do cliente"><?php echo esc_html( lk_package_summary( $client ) ); ?></span><?php endif; ?>
+	<?php if ( $client->posts_quota <= 0 && (int) $client->videos_quota <= 0 ) : ?><a class="small" href="<?php echo esc_url( lk_panel_url( 'cliente', $client->id ) ); ?>#contrato">definir o pacote de artes</a><?php endif; ?>
 </div>
 
 <?php if ( ! $plan ) : ?>
@@ -131,7 +133,7 @@ if ( $hol_list ) :
 <section class="card ai-plan" data-ai-plan data-client="<?php echo (int) $client->id; ?>" data-ym="<?php echo esc_attr( $ym ); ?>">
 	<div class="card-head"><h3>✨ Ideias do mês com IA</h3><span class="muted small">usa o briefing, os feriados e o que já foi postado</span></div>
 	<div class="ai-plan-form">
-		<label class="field"><span>Quantas ideias</span><input type="number" min="1" max="20" value="<?php echo (int) ( $client->posts_quota > 0 ? min( 20, $client->posts_quota ) : 8 ); ?>" data-ai-qty></label>
+		<label class="field"><span>Quantas ideias</span><input type="number" min="1" max="20" value="<?php echo (int) ( ( $client->posts_quota + (int) $client->videos_quota ) > 0 ? min( 20, $client->posts_quota + (int) $client->videos_quota ) : 8 ); ?>" data-ai-qty></label>
 		<label class="field"><span>Foco do mês (opcional)</span><input type="text" placeholder="Ex.: promover o plano novo, mais Reels, Dia das Mães" data-ai-focus></label>
 		<button type="button" class="btn btn--primary" data-ai-plan-go>Gerar ideias</button>
 	</div>
@@ -160,11 +162,15 @@ if ( $hol_list ) :
 		<?php elseif ( 'revisao' === $status ) : ?>
 			<span class="muted small">Esperando a revisão de <?php echo esc_html( $reviewer ? $reviewer->display_name : 'quem revisa' ); ?>.</span>
 		<?php endif; ?>
+		<?php if ( 'pronto' === $status ) : ?>
+			<?php lk_action_button( 'plan_send_ready', array( 'id' => $plan->id ), lk_icon( 'email', 16 ) . '<span>Enviar ao cliente (e-mail + WhatsApp)</span>', 'btn btn--primary', 'Enviar o planejamento ao cliente agora?' ); ?>
+		<?php endif; ?>
 		<?php if ( in_array( $status, array( 'enviado', 'ajustes', 'aprovado' ), true ) ) : ?>
-			<?php if ( $wa ) : ?><a class="btn btn--wa" href="<?php echo esc_url( $wa ); ?>" target="_blank" rel="noopener"><?php echo lk_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>WhatsApp</span></a><?php endif; ?>
+			<?php if ( $wa ) : ?><a class="btn btn--wa" href="<?php echo esc_url( $wa ); ?>" target="_blank" rel="noopener"><?php echo lk_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>Enviar no WhatsApp</span></a><?php endif; ?>
 			<button type="button" class="btn btn--ghost" data-copy="<?php echo esc_attr( lk_plan_url( $plan ) ); ?>">Copiar link</button>
 		<?php endif; ?>
 		<a class="btn btn--ghost" href="<?php echo esc_url( lk_plan_url( $plan ) ); ?>" target="_blank" rel="noopener">Ver como a cliente</a>
+		<?php if ( $wa && ! in_array( $status, array( 'enviado', 'ajustes', 'aprovado' ), true ) ) : ?><a class="btn btn--wa" href="<?php echo esc_url( $wa ); ?>" target="_blank" rel="noopener"><?php echo lk_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>Enviar no WhatsApp</span></a><?php endif; ?>
 		<?php if ( in_array( $status, array( 'enviado', 'ajustes' ), true ) && $pending ) : ?>
 			<?php lk_action_button( 'plan_approve_manual', array( 'id' => $plan->id ), 'Aprovar manualmente', 'btn btn--link', 'Marcar tudo como aprovado (a cliente aprovou por fora)? Os posts vão para o design.' ); ?>
 		<?php endif; ?>
@@ -207,6 +213,7 @@ if ( $hol_list ) :
 	</aside>
 
 	<div class="plan-main">
+		<?php echo lk_plan_files_html( $client, $here, $ym ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		<section class="card plan-quick">
 			<div class="card-head"><h3>Novo post no planejamento</h3><span class="muted small">sem arte: tema, legenda e dia</span></div>
 			<?php lk_form( 'post_save', 'plan-quick-form' ); ?>
@@ -220,6 +227,7 @@ if ( $hol_list ) :
 				</div>
 				<?php lk_input( 'title', 'Tema / título do post', '', 'text', 'required placeholder="Ex.: Outubro Rosa: prevenção começa no cuidado"' ); ?>
 				<?php lk_input( 'caption', 'Ideia da legenda', '', 'textarea', 'rows="3" placeholder="A legenda (ou a ideia dela) que a cliente vai aprovar…"' ); ?>
+				<?php echo lk_form_picker_html( $client->id ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				<?php lk_input( 'notes', 'Briefing da arte para o design (interno)', '', 'textarea', 'rows="2" placeholder="Referências, texto da arte, cores…"' ); ?>
 				<div class="form-actions"><button type="submit" class="btn btn--primary">Adicionar ao planejamento</button></div>
 			</form>
@@ -245,6 +253,7 @@ if ( $hol_list ) :
 						</div>
 						<div class="plan-acts">
 							<?php if ( $is_pl ) : ?><button type="button" class="btn btn--ghost btn--sm" data-open="edit-<?php echo (int) $p->id; ?>"><?php echo lk_icon( 'editar', 14 ); // phpcs:ignore ?><span>Editar</span></button><?php endif; ?>
+							<?php if ( 'ajuste' === $p->plan_status ) : ?><?php lk_action_button( 'plan_post_redone', array( 'id' => $p->id ), '✓ Refiz', 'btn btn--primary btn--sm', 'Já refez este conteúdo? O atendimento será avisado para mandar de novo ao cliente.' ); ?><?php endif; ?>
 							<a class="btn btn--link btn--sm" href="<?php echo esc_url( lk_panel_url( 'post', $p->id ) ); ?>">abrir</a>
 						</div>
 					</article>
@@ -284,5 +293,8 @@ document.addEventListener('click', function (e) {
 	t.value = (t.value.trim() ? t.value.replace(/\s+$/, '') + '\n' : '') + b.dataset.addLine; b.remove(); t.focus();
 });
 </script>
+<?php
+?>
+<script src="<?php echo esc_url( LK_URL . 'assets/cliente-arquivos.js?ver=' . LK_VERSION ); ?>"></script>
 <?php
 lk_panel_end();

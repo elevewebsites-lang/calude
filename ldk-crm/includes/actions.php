@@ -134,12 +134,20 @@ function lk_do_client_save() {
 		if ( ! empty( $data['logo'] ) ) {
 			do_action( 'lk_client_logo_saved', $id, $data['logo'] );
 		}
-		if ( lk_in( 'package' ) ) {
-			$pk = lk_packages();
-			if ( isset( $pk[ lk_in( 'package' ) ] ) ) {
-				lk_update( 'clients', $id, array( 'monthly_fee' => $pk[ lk_in( 'package' ) ]['value'], 'posts_quota' => $pk[ lk_in( 'package' ) ]['arts'], 'notes' => trim( 'Pacote: ' . lk_in( 'package' ) . "\n" . $data['notes'] ) ) );
+		$pk  = lk_packages();
+		$pkg = lk_in( 'package' );
+		$upd = array(
+			'posts_quota'  => lk_in( 'posts_quota' ) !== '' ? max( 0, lk_in( 'posts_quota', 'int' ) ) : ( isset( $pk[ $pkg ] ) ? (int) $pk[ $pkg ]['arts'] : 0 ),
+			'videos_quota' => lk_in( 'videos_quota' ) !== '' ? max( 0, lk_in( 'videos_quota', 'int' ) ) : ( isset( $pk[ $pkg ] ) ? (int) $pk[ $pkg ]['videos'] : 0 ),
+		);
+		if ( isset( $pk[ $pkg ] ) ) {
+			$upd['package'] = $pkg;
+			if ( lk_can( 'financeiro' ) ) {
+				$upd['monthly_fee'] = $pk[ $pkg ]['value']; // o valor só entra se quem cadastra pode mexer com dinheiro
 			}
+			$upd['notes'] = trim( 'Pacote: ' . $pkg . "\n" . $data['notes'] );
 		}
+		lk_update( 'clients', $id, $upd );
 		do_action( 'lk_client_created', $id );
 		lk_back( 'Cliente criado. Copie o link de cadastro (ou mande pelo WhatsApp): ele preenche os dados e cria a senha.', 'ok', lk_panel_url( 'cliente', $id ) );
 	}
@@ -353,6 +361,7 @@ function lk_do_task_save() {
 		'title'          => lk_in( 'title' ),
 		'description'    => lk_in( 'description', 'textarea' ),
 		'project_id'     => lk_in( 'project_id', 'int' ),
+		'client_id'      => lk_in( 'client_id', 'int' ),
 		'grp'            => lk_in( 'grp' ),
 		'priority'       => array_key_exists( lk_in( 'priority' ), lk_priorities() ) ? lk_in( 'priority' ) : 'normal',
 		'due_date'       => lk_in( 'due_date', 'date' ),
@@ -671,6 +680,8 @@ function lk_do_settings_save() {
 	$out = array();
 	$current = lk_settings();
 	$new_ai  = '';
+	$warn    = '';
+	$okmsg   = '';
 	foreach ( lk_default_settings() as $key => $default ) {
 		// Campo que não veio no formulário (outra aba): mantém o valor salvo.
 		if ( ! isset( $_POST[ $key ] ) && ! in_array( $key, array( 'melhorenvio_sandbox', 'email_pronto', 'email_boasvindas', 'email_etapas', 'email_pagamento', 'cobranca_auto', 'seg_2fa', 'revisao_obrigatoria' ), true ) ) { // phpcs:ignore WordPress.Security.NonceVerification
@@ -680,6 +691,23 @@ function lk_do_settings_save() {
 		// Segredos: guardados criptografados; campo em branco mantém o que já estava salvo.
 		if ( in_array( $key, array( 'google_client_secret', 'smtp_pass', 'anthropic_key', 'gemini_key', 'groq_key', 'mistral_key', 'openrouter_key', 'places_key', 'melhorenvio_token', 'ml_secret', 'shopee_key', 'ig_app_secret', 'meta_app_secret', 'meta_ads_token', 'voz_turn_pass', 'linkedin_client_secret' ), true ) ) {
 			$sec         = 'smtp_pass' === $key ? (string) lk_in( $key, 'raw' ) : trim( (string) lk_in( $key, 'raw' ) );
+			if ( in_array( $key, lk_plain_secret_keys(), true ) ) {
+				// Texto puro: o valor novo sempre sobrescreve o antigo (inclusive cópia criptografada); em branco mantém.
+				if ( '' === $sec ) {
+					$out[ $key ] = $current[ $key ];
+				} elseif ( in_array( $key, array( 'ig_app_secret', 'meta_app_secret' ), true ) && ! preg_match( '/^[0-9a-f]{32}$/i', $sec ) ) {
+					$warn        .= ' A chave "' . $key . '" NÃO foi salva: chegaram ' . strlen( $sec ) . ' caracteres e o certo são 32 (letras de a a f e números).';
+					$out[ $key ] = $current[ $key ];
+				} else {
+					$out[ $key ] = $sec;
+					$okmsg      .= ' Chave "' . $key . '" salva (' . strlen( $sec ) . ' caracteres).';
+				}
+				continue;
+			}
+			if ( '' !== $sec && preg_match( '/^[so]:[A-Za-z0-9+\/=]{20,}$/', $sec ) ) {
+				$out[ $key ] = $current[ $key ]; // já é um valor criptografado: não criptografa de novo
+				continue;
+			}
 			$out[ $key ] = '' === $sec ? $current[ $key ] : lk_encrypt( $sec );
 			if ( '' !== $sec && in_array( $key, array( 'gemini_key', 'groq_key', 'mistral_key', 'openrouter_key' ), true ) ) {
 				$new_ai = substr( $key, 0, -4 ); // chave nova colada agora: essa IA passa a ser a escolhida
@@ -695,7 +723,7 @@ function lk_do_settings_save() {
 	}
 	update_option( 'lk_settings', $out );
 	flush_rewrite_rules();
-	lk_back( 'Configurações salvas.' . ( $new_ai ? ' IA em uso: ' . $new_ai . '.' : '' ) );
+	lk_back( 'Configurações salvas.' . ( $new_ai ? ' IA em uso: ' . $new_ai . '.' : '' ) . $okmsg . $warn, $warn ? 'erro' : 'ok' );
 }
 
 /* -----------------------------------------------------------------------

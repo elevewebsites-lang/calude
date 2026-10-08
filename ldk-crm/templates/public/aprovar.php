@@ -46,6 +46,7 @@ lk_head( 'Aprovação · ' . $p->title );
 		?>
 
 		<?php if ( $msg ) : ?><div class="apx-msg"><?php echo esc_html( $msg ); ?></div><?php endif; ?>
+		<?php if ( isset( $_GET['aprovado'] ) && $open ) : ?><div class="apx-msg">✅ Aprovado! Agora este<?php echo $nav ? ' (' . (int) $nav['pos'] . ' de ' . (int) $nav['total'] . ')' : ''; ?>:</div><?php endif; // phpcs:ignore WordPress.Security.NonceVerification ?>
 		<?php if ( ! $open && ! $msg ) : ?>
 			<div class="apx-msg"><?php echo 'aprovado' === $p->client_status ? 'Conteúdo aprovado ✓ Obrigado!' : 'Estamos trabalhando no ajuste. Você recebe de novo para aprovar.'; ?></div>
 		<?php endif; ?>
@@ -53,12 +54,13 @@ lk_head( 'Aprovação · ' . $p->title );
 		<?php if ( $cnotes ) : ?><div class="apx-hist"><p class="apx-hist-t">Apontamentos</p><?php echo lk_notes_html( $p, $cnotes, false ); // phpcs:ignore ?></div><?php endif; ?>
 		<?php if ( $open && $media && lk_note_can_client( $p->client_id ) ) : ?>
 			<details class="apx-hist apx-note"><summary>📌 Fazer apontamento</summary>
-				<form method="post" class="note-form">
+				<form method="post" class="note-form" enctype="multipart/form-data">
 					<?php wp_nonce_field( 'lk_approve_' . $p->id ); ?>
 					<label>Sobre <select name="alvo"><?php foreach ( lk_note_abouts() as $k => $lab ) : ?><option value="<?php echo esc_attr( $k ); ?>"><?php echo esc_html( $lab ); ?></option><?php endforeach; ?></select></label>
 					<label>No tempo do vídeo (opcional) <span class="note-at"><input type="text" name="at" placeholder="0:12" inputmode="numeric"><button type="button" data-grab>📍 Pegar do vídeo</button></span></label>
 					<input type="hidden" name="media_i" value="">
-					<textarea name="comentario" rows="3" placeholder="Escreva o que você quer apontar…" required></textarea>
+					<textarea name="comentario" rows="3" placeholder="Escreva o que você quer apontar… ou grave um áudio"></textarea>
+					<div class="apx-att" data-audio-rec><label class="apx-att-file">📎 Anexar referência (imagem, PDF ou vídeo)<input type="file" name="ref_file" accept="image/*,application/pdf,video/mp4"></label><input type="file" name="audio_file" hidden data-audio-input><button type="button" data-audio-btn>🎙️ Gravar áudio</button> <audio controls hidden data-audio-prev></audio></div>
 					<button type="submit" name="decisao" value="apontar" class="apx-send">Enviar apontamento</button>
 				</form>
 			</details>
@@ -72,7 +74,7 @@ lk_head( 'Aprovação · ' . $p->title );
 	</main>
 
 	<?php if ( $open && ! $msg && $media ) : ?>
-		<form method="post" class="apx-form" data-apv>
+		<form method="post" class="apx-form" data-apv enctype="multipart/form-data">
 			<?php wp_nonce_field( 'lk_approve_' . $p->id ); ?>
 			<div class="apx-sheet" data-apv-box hidden role="dialog" aria-label="Pedir ajuste">
 				<div class="apx-sheet-in">
@@ -80,8 +82,10 @@ lk_head( 'Aprovação · ' . $p->title );
 					<div class="apx-seg">
 						<label><input type="radio" name="alvo" value="arte" checked><span>🎨 Na arte</span></label>
 						<label><input type="radio" name="alvo" value="legenda"><span>✍️ Na legenda</span></label>
+						<label><input type="radio" name="alvo" value="ambos"><span>🎨✍️ Nos dois</span></label>
 					</div>
-					<textarea name="comentario" rows="4" placeholder="Conte o que precisa mudar…"></textarea>
+					<textarea name="comentario" rows="4" placeholder="Conte o que precisa mudar… ou grave um áudio"></textarea>
+					<div class="apx-att" data-audio-rec><label class="apx-att-file">📎 Anexar referência<input type="file" name="ref_file" accept="image/*,application/pdf,video/mp4"></label><input type="file" name="audio_file" hidden data-audio-input><button type="button" data-audio-btn>🎙️ Gravar áudio</button> <audio controls hidden data-audio-prev></audio></div>
 					<div class="apx-sheet-btns">
 						<button type="button" class="apx-cancel" data-apv-cancel>Cancelar</button>
 						<button type="submit" name="decisao" value="alterar" class="apx-send">Enviar pedido de ajuste</button>
@@ -103,6 +107,7 @@ lk_head( 'Aprovação · ' . $p->title );
 	<footer class="apx-foot"><?php echo lk_credit_html( 'dark' ); // phpcs:ignore ?></footer>
 </div>
 <script src="<?php echo esc_url( LK_URL . 'assets/notes.js?ver=' . LK_VERSION ); ?>"></script>
+<script src="<?php echo esc_url( LK_URL . 'assets/audio.js?ver=' . LK_VERSION ); ?>"></script>
 <script>
 (function () {
 	// Carrossel: contador e pontinhos.
@@ -124,7 +129,7 @@ lk_head( 'Aprovação · ' . $p->title );
 	box.addEventListener('click', function (e) { if (e.target === box) box.hidden = true; });
 	f.addEventListener('submit', function (e) {
 		var d = e.submitter && e.submitter.value;
-		if (d === 'alterar' && !f.querySelector('textarea').value.trim()) { e.preventDefault(); alert('Conte o que precisa mudar.'); return; }
+		var au = f.querySelector('[data-audio-input]'), rf = f.querySelector('[name=ref_file]'); if (d === 'alterar' && !f.querySelector('textarea').value.trim() && !(au && au.files.length) && !(rf && rf.files.length)) { e.preventDefault(); alert('Conte o que precisa mudar (escrevendo, gravando um áudio ou anexando uma referência).'); return; }
 		if (d === 'aprovar') { e.submitter.classList.add('is-go'); document.body.classList.add('apx-approving'); }
 	});
 })();

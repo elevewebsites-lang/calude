@@ -25,7 +25,7 @@ lk_panel_start( 'Chat da equipe', 'chat' );
 			<p class="hub-sec">Conversas individuais</p>
 			<?php foreach ( $dms as $k => $u ) : ?>
 				<?php $st = lk_presence( $u->ID ); ?>
-				<a class="inbox-item<?php echo $k === $ch ? ' is-active' : ''; ?>" href="<?php echo esc_url( lk_panel_url( 'chat', 0, array( 'canal' => $k ) ) ); ?>"><strong><i class="pres pres--<?php echo esc_attr( $st ); ?>" title="<?php echo esc_attr( lk_presence_labels()[ $st ] ); ?>"></i><?php echo esc_html( $u->display_name ); ?></strong></a>
+				<a class="inbox-item<?php echo $k === $ch ? ' is-active' : ''; ?>" href="<?php echo esc_url( lk_panel_url( 'chat', 0, array( 'canal' => $k ) ) ); ?>"><strong><i class="pres pres--<?php echo esc_attr( $st ); ?>" title="<?php echo esc_attr( lk_presence_labels()[ $st ] ); ?>"></i><?php echo esc_html( $u->display_name ); ?></strong><?php $nt = 'offline' === $st ? '' : (string) get_user_meta( $u->ID, 'lk_status_note', true ); if ( $nt ) : ?><span class="pres-note"><?php echo esc_html( $nt ); ?></span><?php endif; ?></a>
 			<?php endforeach; ?>
 		<?php endif; ?>
 	</aside>

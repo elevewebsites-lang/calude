@@ -1,76 +1,80 @@
 <?php
+/**
+ * Tarefas: tudo num lugar, em colunas por prazo (Atrasadas · Hoje · Amanhã · Esta semana · Pendentes).
+ * Junta tarefas, posts que estão com você e alterações pedidas pelos clientes.
+ */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+if ( isset( $_GET['v'] ) && 'status' === $_GET['v'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+	include __DIR__ . '/tarefas-status.php';
+	return;
+}
 $only_mine = ! lk_can( 'tarefas' ) || lk_only_own_tasks();
-$filter    = isset( $_GET['f'] ) ? sanitize_key( $_GET['f'] ) : ( $only_mine ? 'minhas' : 'todas' ); // phpcs:ignore WordPress.Security.NonceVerification
-$project   = isset( $_GET['projeto'] ) ? absint( $_GET['projeto'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
-$statuses  = lk_task_statuses();
-
-// Etapas geradas pelos serviços ficam dentro do projeto; aqui entram quando ganham prazo, responsável ou andamento.
-$where = "( p.archived IS NULL OR p.archived = 0 ) AND ( t.project_id = 0 OR t.due_date IS NOT NULL OR t.assignee > 0 OR t.status IN ('doing', 'review') )";
-$args  = array();
-if ( $only_mine || 'minhas' === $filter ) {
-	$where .= ' AND t.assignee = %d';
-	$args[] = get_current_user_id();
+$who       = isset( $_GET['quem'] ) ? sanitize_text_field( wp_unslash( $_GET['quem'] ) ) : 'minhas'; // phpcs:ignore WordPress.Security.NonceVerification
+$client_id = isset( $_GET['cliente'] ) ? absint( $_GET['cliente'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+$kind      = isset( $_GET['tipo'] ) && in_array( $_GET['tipo'], array( 'task', 'post', 'alter' ), true ) ? sanitize_key( $_GET['tipo'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+$only_col  = isset( $_GET['col'] ) && isset( lk_task_cols()[ $_GET['col'] ] ) ? sanitize_key( $_GET['col'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+$show_done = isset( $_GET['feitas'] ); // phpcs:ignore WordPress.Security.NonceVerification
+$uid       = 'minhas' === $who || $only_mine ? get_current_user_id() : ( 'todas' === $who ? 0 : absint( $who ) );
+$items     = lk_task_board( array( 'user_id' => $uid, 'client_id' => $client_id, 'kind' => $kind ) );
+$done      = $show_done ? lk_task_board( array( 'user_id' => $uid, 'client_id' => $client_id, 'kind' => 'task', 'done' => true ) ) : array();
+$cols      = lk_task_cols();
+$by        = array_fill_keys( array_keys( $cols ), array() );
+foreach ( $items as $i ) {
+	$by[ $i['col'] ][] = $i;
 }
-if ( 'agencia' === $filter ) {
-	$where .= ' AND t.project_id = 0';
-}
-if ( $project ) {
-	$where = 't.project_id = %d';
-	$args  = array( $project );
-}
-// Feitas: só as dos últimos 14 dias, para o quadro não crescer para sempre.
-$where .= " AND ( t.status <> 'done' OR t.done_at >= %s )";
-$args[] = gmdate( 'Y-m-d', strtotime( lk_today() . ' -14 day' ) );
-
-$tasks  = lk_tasks( $where, $args, "t.position, FIELD(t.priority, 'urgente', 'alta', 'normal', 'baixa'), t.due_date IS NULL, t.due_date, t.id" );
-$by_col = array_fill_keys( array_keys( $statuses ), array() );
-foreach ( $tasks as $t ) {
-	$by_col[ isset( $by_col[ $t->status ] ) ? $t->status : 'todo' ][] = $t;
-}
-
-$tabs = array( 'todas' => 'Todas', 'minhas' => 'Minhas', 'agencia' => 'Agência' );
-$seg  = '';
-if ( ! $only_mine ) {
-	$seg = '<div class="seg">';
-	foreach ( $tabs as $k => $label ) {
-		$seg .= '<a href="' . esc_url( lk_panel_url( 'tarefas', 0, array( 'f' => $k ) ) ) . '" class="' . ( $filter === $k && ! $project ? 'is-active' : '' ) . '">' . esc_html( $label ) . '</a>';
-	}
-	$seg .= '</div>';
-}
-$actions = $seg . '<button type="button" class="btn btn--primary" data-open="nova-tarefa">' . lk_icon( 'mais', 16 ) . '<span>Tarefa</span></button>';
+$here = function ( $extra = array() ) use ( $who, $client_id, $kind, $only_col, $show_done ) {
+	$a = array_filter( array( 'quem' => $who, 'cliente' => $client_id, 'tipo' => $kind, 'col' => $only_col, 'feitas' => $show_done ? 1 : 0 ) );
+	return lk_panel_url( 'tarefas', 0, array_merge( $a, $extra ) );
+};
+$actions = '<button type="button" class="btn btn--primary" data-open="nova-tarefa">' . lk_icon( 'mais', 16 ) . '<span>Tarefa</span></button>';
 lk_panel_start( 'Tarefas', 'tarefas', $actions );
 ?>
+<form method="get" class="tk-filters" action="<?php echo esc_url( lk_panel_url( 'tarefas' ) ); ?>">
+	<?php if ( ! $only_mine ) : ?>
+		<label class="field field--inline"><span>Quem</span>
+			<select name="quem" onchange="this.form.submit()">
+				<option value="minhas"<?php selected( $who, 'minhas' ); ?>>Minhas</option>
+				<option value="todas"<?php selected( $who, 'todas' ); ?>>Todas</option>
+				<?php foreach ( lk_team_users() as $tu ) : ?><option value="<?php echo (int) $tu->ID; ?>"<?php selected( $who, (string) $tu->ID ); ?>><?php echo esc_html( $tu->display_name ); ?></option><?php endforeach; ?>
+			</select></label>
+	<?php endif; ?>
+	<label class="field field--inline"><span>Cliente</span>
+		<select name="cliente" onchange="this.form.submit()">
+			<option value="">Todos os clientes</option>
+			<?php foreach ( lk_clients() as $c ) : ?><option value="<?php echo (int) $c->id; ?>"<?php selected( $client_id, (int) $c->id ); ?>><?php echo esc_html( lk_client_label( $c ) ); ?></option><?php endforeach; ?>
+		</select></label>
+	<label class="field field--inline"><span>Tipo</span>
+		<select name="tipo" onchange="this.form.submit()">
+			<option value="">Tudo</option>
+			<option value="task"<?php selected( $kind, 'task' ); ?>>Tarefas</option>
+			<option value="post"<?php selected( $kind, 'post' ); ?>>Posts com você</option>
+			<option value="alter"<?php selected( $kind, 'alter' ); ?>>Alterações</option>
+		</select></label>
+	<label class="chk"><input type="checkbox" name="feitas" value="1" onchange="this.form.submit()"<?php checked( $show_done ); ?>> Mostrar feitas (7 dias)</label>
+	<?php if ( $only_col ) : ?><input type="hidden" name="col" value="<?php echo esc_attr( $only_col ); ?>"><a class="btn btn--ghost btn--sm" href="<?php echo esc_url( $here( array( 'col' => '' ) ) ); ?>">Ver todas as colunas</a><?php endif; ?>
+	<a class="btn btn--link btn--sm" href="<?php echo esc_url( lk_panel_url( 'tarefas', 0, array( 'v' => 'status' ) ) ); ?>">Quadro por status</a>
+</form>
 
-<?php if ( $project ) : ?>
-	<?php $pp = lk_get( 'projects', $project ); ?>
-	<p class="muted">Tarefas do pedido <a href="<?php echo esc_url( lk_panel_url( 'pedido', $project ) ); ?>"><?php echo esc_html( $pp ? $pp->title : '' ); ?></a>. <a href="<?php echo esc_url( lk_panel_url( 'tarefas' ) ); ?>">Ver todas</a></p>
-<?php else : ?>
-	<p class="muted small hint">Tarefas da agência e dos projetos: produzir pedidos pagos, chamar leads, combinar entregas… As automáticas (pedido pago, pagamento com problema) entram sozinhas.</p>
-<?php endif; ?>
-
-<div class="kanban kanban--tasks" data-kanban="task">
-	<?php foreach ( $statuses as $slug => $name ) : ?>
-		<section class="kcol kcol--<?php echo esc_attr( $slug ); ?>">
-			<header class="kcol-head"><h3><?php echo esc_html( $name ); ?></h3><span class="kcount"><?php echo (int) count( $by_col[ $slug ] ); ?></span></header>
-			<div class="kcol-body" data-status="<?php echo esc_attr( $slug ); ?>">
-				<?php foreach ( $by_col[ $slug ] as $t ) : ?>
-					<article class="kcard kcard--task prio-<?php echo esc_attr( $t->priority ); ?>" draggable="true" data-id="<?php echo (int) $t->id; ?>" data-href="<?php echo esc_url( lk_panel_url( 'tarefa', $t->id ) ); ?>">
-						<?php if ( $t->project_title ) : ?><span class="kcard-project"><?php echo esc_html( $t->project_title ); ?></span><?php endif; ?>
-						<h4><?php echo esc_html( $t->title ); ?></h4>
-						<div class="kcard-foot">
-							<span class="kcard-badges"><?php echo lk_priority_badge( $t->priority ) . lk_due_badge( $t->due_date, 'done' === $t->status ); // phpcs:ignore ?><?php echo $t->routine_id ? '<span class="badge" title="Criada por uma rotina">' . lk_icon( 'rotinas', 12 ) . '</span>' : ''; // phpcs:ignore ?></span>
-							<?php echo lk_avatar( $t->assignee ); // phpcs:ignore ?>
-						</div>
-					</article>
-				<?php endforeach; ?>
+<div class="tk-board<?php echo $only_col ? ' tk-board--one' : ''; ?>" data-tk-board data-endpoint="<?php echo esc_url( rest_url( 'lk/v1/task-board' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>">
+	<?php foreach ( $cols as $slug => $name ) : ?>
+		<?php if ( $only_col && $only_col !== $slug ) { continue; } ?>
+		<section class="tk-col tk-col--<?php echo esc_attr( $slug ); ?>">
+			<header class="tk-head"><h3><?php echo esc_html( $name ); ?></h3><span class="kcount"><?php echo (int) count( $by[ $slug ] ); ?></span></header>
+			<div class="tk-body" data-col="<?php echo esc_attr( $slug ); ?>"<?php echo 'atrasadas' === $slug ? ' data-nodrop="1"' : ''; ?>>
+				<?php foreach ( $by[ $slug ] as $i ) : echo lk_task_card_html( $i ); endforeach; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+				<?php if ( ! $by[ $slug ] ) : ?><p class="tk-empty muted small"><?php echo 'atrasadas' === $slug ? 'Nada atrasado 🎉' : 'Nada por aqui'; ?></p><?php endif; ?>
 			</div>
 		</section>
 	<?php endforeach; ?>
+	<?php if ( $show_done && ! $only_col ) : ?>
+		<section class="tk-col tk-col--feitas"><header class="tk-head"><h3>Feitas</h3><span class="kcount"><?php echo (int) count( $done ); ?></span></header>
+			<div class="tk-body" data-nodrop="1"><?php foreach ( $done as $i ) : echo lk_task_card_html( $i ); endforeach; // phpcs:ignore WordPress.Security.EscapeOutput ?></div></section>
+	<?php endif; ?>
 </div>
-
+<p class="muted small">Arraste uma <strong>tarefa</strong> para outra coluna para mudar o prazo. Posts e alterações seguem o fluxo e saem sozinhos quando o passo é concluído.</p>
+<script src="<?php echo esc_url( LK_URL . 'assets/tarefas.js?ver=' . LK_VERSION ); ?>"></script>
 <?php
-lk_task_modal( 'nova-tarefa', 'Nova tarefa', array( 'project_id' => $project ) );
+lk_task_modal( 'nova-tarefa', 'Nova tarefa', array( 'client_id' => $client_id ) );
 lk_panel_end();

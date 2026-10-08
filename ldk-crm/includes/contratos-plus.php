@@ -61,7 +61,7 @@ function lk_do_contract_clauses() {
  * Gerar contrato (do lead aceito ou direto de um cliente)
  * -------------------------------------------------------------------- */
 
-function lk_contract_draft_for( $client, $lead = null, $over = array() ) {
+function lk_contract_draft_for( $client, $lead = null ) {
 	$data = array(
 		'client_id'     => $client->id,
 		'title'         => 'Contrato de prestação de serviços de marketing digital',
@@ -75,8 +75,7 @@ function lk_contract_draft_for( $client, $lead = null, $over = array() ) {
 		'created_by'    => get_current_user_id(),
 		'lead_id'       => $lead ? (int) $lead->id : 0,
 	);
-	$data = array_merge( $data, $over );
-	$id   = lk_insert( 'contracts', $data );
+	$id = lk_insert( 'contracts', $data );
 	$k  = lk_get( 'contracts', $id );
 	lk_update( 'contracts', $id, array( 'body' => lk_contract_compose( $k ) ) );
 	return $id;

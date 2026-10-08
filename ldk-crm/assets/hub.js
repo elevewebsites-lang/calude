@@ -155,7 +155,8 @@
 	function fmt(sec) { sec = Math.max(0, Math.round(sec || 0)); return Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2); }
 	function drawThread(ms) {
 		var html = ms.map(function (m) {
-			var inner = m.audio
+			var wl = winkLabel(m);
+			var inner = wl ? '<button type="button" class="wink-btn" data-wink-replay="' + String(m.body).replace(/[^a-z]/g, '').replace('wink', '') + '">' + wl + '</button>' : m.audio
 				? '<audio controls preload="none" src="' + esc(m.audio) + '"></audio>' + (m.sec ? '<span class="hub-dur">' + fmt(m.sec) + '</span>' : '')
 				: emo(esc(m.body).replace(/@([\wÀ-ÿ.-]+)/g, '<b>@$1</b>').replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g, '<br>'));
 			var big = !m.audio && EMO_ONLY.test(String(m.body || '').trim());
@@ -164,6 +165,13 @@
 		// Não redesenha (e não interrompe um áudio tocando) se nada mudou.
 		if (html === state.last) return;
 		if ([].some.call(list.querySelectorAll('audio'), function (a) { return !a.paused; })) return;
+		ms.forEach(function (m) {
+			var k = String(m.body || '').match(winkRe);
+			if (k && !m.mine && m.id && !played[m.id] && state.lastCh === state.ch) {
+				played[m.id] = 1; try { sessionStorage.setItem('lk-winks', JSON.stringify(played)); } catch (e) {}
+				winkPlay(k[1]);
+			} else if (k && m.id) { played[m.id] = 1; }
+		});
 		var atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
 		list.innerHTML = html; state.last = html;
 		if (atBottom || !state.lastCh || state.lastCh !== state.ch) list.scrollTop = list.scrollHeight;
@@ -202,6 +210,24 @@
 		}
 	});
 	statusSel.addEventListener('change', function () { ping(statusSel.value); });
+	/* Recados rápidos: "Fui almoçar", "Volto já"… marcam como ausente com o recado; "Voltei" limpa tudo. */
+	var quick = $('[data-hub-quick]');
+	if (quick) {
+		var backBtn = quick.querySelector('[data-q-back]');
+		var hh = function () { var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); };
+		quick.addEventListener('click', function (e) {
+			var b = e.target.closest('button'); if (!b) return;
+			if (b.hasAttribute('data-q-back')) {
+				post('team/hub', { idle: false, status: 'online', note: '' }).then(draw).catch(function () {});
+				return;
+			}
+			var n = b.getAttribute('data-q-note'); if (!n) return;
+			post('team/hub', { idle: false, status: 'ausente', note: (n + ' (desde ' + hh() + ')').slice(0, 60) }).then(draw).catch(function () {});
+		});
+		var sync = function () { if (backBtn) backBtn.hidden = !(state.data && state.data.me && state.data.me !== 'online'); };
+		var _draw = draw;
+		draw = function (d) { _draw(d); sync(); };
+	}
 	var noteIn = $('[data-hub-note]'), noteT = 0;
 	var saveNote = function () { clearTimeout(noteT); post('team/hub', { idle: false, note: noteIn.value.trim() }).then(draw).catch(function () {}); };
 	noteIn.addEventListener('input', function () { clearTimeout(noteT); noteT = setTimeout(saveNote, 1200); });
@@ -301,6 +327,54 @@
 		var body = text.value.trim(); if (!body || !state.ch) return;
 		var ch = state.ch; text.value = ''; text.style.height = '';
 		(isCli(ch) ? post('chat', { client: +ch.slice(3), body: body }) : post('team', { channel: ch, body: body })).then(function (j) { if (ch === state.ch && j.messages) drawThread(j.messages); }).catch(function (err) { text.value = body; alert(err.message); });
+	});
+
+
+	/* ---------- winks (animações de tela cheia, como no MSN) ---------- */
+	var WINKS = {
+		confete:  { label: 'confete', chars: ['🎉', '🎊', '✨', '⭐'], mode: 'fall', color: ['#fc5521', '#14E9EC', '#ffd34d', '#7c3aed', '#2ee59d'] },
+		coracao:  { label: 'uma chuva de corações', chars: ['💖', '💗', '💕', '❤️'], mode: 'rise' },
+		foguete:  { label: 'um foguete', chars: ['🚀'], mode: 'rocket' },
+		aplausos: { label: 'aplausos', chars: ['👏', '👏', '✨'], mode: 'pop' }
+	};
+	var winkRe = /^::wink:(confete|coracao|foguete|aplausos)::$/;
+	var played = {};
+	try { played = JSON.parse(sessionStorage.getItem('lk-winks') || '{}'); } catch (e) {}
+	function winkPlay(kind) {
+		var w = WINKS[kind]; if (!w) return;
+		var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+		var layer = document.createElement('div'); layer.className = 'lk-wink'; layer.setAttribute('aria-hidden', 'true');
+		document.body.appendChild(layer);
+		var W = window.innerWidth, H = window.innerHeight, n = reduce ? 6 : (w.mode === 'rocket' ? 1 : 46);
+		for (var i = 0; i < n; i++) {
+			var s = document.createElement('span'), ch = w.chars[Math.floor(Math.random() * w.chars.length)];
+			s.textContent = ch; s.className = 'lk-wink-i lk-wink-i--' + w.mode;
+			var size = w.mode === 'rocket' ? 90 : 20 + Math.random() * 28;
+			s.style.fontSize = size + 'px';
+			s.style.left = (w.mode === 'rocket' ? 8 + Math.random() * 12 : Math.random() * 100) + 'vw';
+			s.style.animationDuration = (w.mode === 'rocket' ? 2.6 : 2.2 + Math.random() * 2.2) + 's';
+			s.style.animationDelay = (w.mode === 'rocket' ? 0 : Math.random() * 0.9) + 's';
+			if (w.mode === 'pop') { s.style.top = (10 + Math.random() * 70) + 'vh'; }
+			if (w.mode === 'fall' && w.color && Math.random() < 0.5) { s.textContent = ''; s.style.width = '10px'; s.style.height = '16px'; s.style.background = w.color[Math.floor(Math.random() * w.color.length)]; s.style.borderRadius = '2px'; }
+			layer.appendChild(s);
+		}
+		var banner = null;
+		setTimeout(function () { layer.remove(); }, 5200);
+	}
+	function winkLabel(m) {
+		var k = String(m.body || '').match(winkRe); if (!k) return null;
+		return '<span class="wink-msg">✨ ' + (m.mine ? 'Você mandou ' : esc(m.who) + ' mandou ') + WINKS[k[1]].label + ' <em>(toque para ver de novo)</em></span>';
+	}
+	hub.addEventListener('click', function (e) {
+		var rp = e.target.closest('[data-wink-replay]'); if (rp) { winkPlay(rp.getAttribute('data-wink-replay')); return; }
+		var tgl = e.target.closest('[data-hub-wink]');
+		var box = $('[data-hub-wink-box]');
+		if (tgl) { box.hidden = !box.hidden; var eb = $('[data-hub-emo-box]'); if (eb) eb.hidden = true; return; }
+		var pick = e.target.closest('[data-wink]');
+		if (pick && state.ch && !isCli(state.ch)) {
+			var kind = pick.getAttribute('data-wink'); box.hidden = true; winkPlay(kind);
+			post('team', { channel: state.ch, body: '::wink:' + kind + '::' }).then(function (j) { if (j.messages) drawThread(j.messages); }).catch(function () {});
+		}
 	});
 
 	/* ---------- áudio ---------- */

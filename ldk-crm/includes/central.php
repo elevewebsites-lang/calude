@@ -13,6 +13,105 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.36.0' => array(
+			'date'  => '2026-10-06',
+			'title' => 'Temas festivos (opcionais)',
+			'items' => array(
+				array( '🎃', 'Halloween', 'Cores de noite roxa e laranja, morcegos e fantasmas passando, aranha pendurada, abóbora no canto e cartões das tarefas que balançam. Ao concluir uma tarefa, um fantasminha sobe.' ),
+				array( '🎄', 'Natal', 'Cores vermelho e verde, pisca-pisca no topo da tela, neve que cai de vez em quando e uma "neve" em cima de cada cartão de tarefa.' ),
+				array( '🎆', 'Ano Novo', 'Cores azul-noite e dourado, fogos de artifício de tempos em tempos e brilho dourado nos cartões. Concluir uma tarefa solta um fogo.' ),
+				array( '🎨', 'Você escolhe', 'No botão "Tema festivo" (menu lateral, ou no canto da tela de login) a pessoa escolhe Nenhum, Halloween, Natal ou Ano Novo, e pode desligar só as animações. É opcional e fica guardado no aparelho de cada um.' ),
+			),
+		),
+		'1.35.0' => array(
+			'date'  => '2026-10-06',
+			'title' => 'Apontamentos conectados ao Eleve CRM (com resolvido de volta)',
+			'items' => array(
+				array( '🔌', 'Testar conexão', 'Em Configurações → Apontamentos, cole o endereço do projeto no Eleve CRM e clique em "Testar conexão". Cada apontamento vira tarefa lá; quando for marcado como resolvido lá, aparece resolvido aqui para o cliente.' ),
+			),
+		),
+		'1.34.0' => array(
+			'date'  => '2026-10-06',
+			'title' => 'Apontamentos vão para o Eleve CRM',
+			'items' => array(
+				array( '🔗', 'Apontamento vira tarefa lá', 'Em Configurações → Apontamentos, cole o endereço do projeto no Eleve CRM. Cada apontamento feito aqui cria uma tarefa no projeto, e quando é resolvido, a tarefa é concluída.' ),
+			),
+		),
+		'1.33.1' => array(
+			'date'  => '2026-10-06',
+			'title' => 'Janela da reunião',
+			'items' => array(
+				array( '🪟', 'Clique na reunião e veja tudo', 'Ao clicar numa reunião (Agenda ou dashboard), abre uma janela com data, horário, cliente, link, participantes, equipe e a pauta/ata. Dentro dela ficam os botões Entrar na reunião, Remarcar, Editar, WhatsApp, E-mail e Excluir. A linha não abre mais o Meet direto.' ),
+			),
+		),
+		'1.33.0' => array(
+			'date'  => '2026-10-06',
+			'title' => 'Winks no chat e remarcar/excluir reunião',
+			'items' => array(
+				array( '✨', 'Winks (como no MSN)', 'No chat, o botão ✨ manda uma animação de tela cheia para a pessoa: confete, chuva de corações, foguete ou aplausos. Ela vê na hora, e a mensagem fica no histórico para rever.' ),
+				array( '📅', 'Remarcar e excluir reunião', 'Cada reunião da Agenda e do dashboard ganhou os botões Remarcar (outro dia e horário, com aviso ao cliente) e Excluir (com aviso de cancelamento). Valem também para as reuniões do Google Agenda.' ),
+			),
+		),
+		'1.32.1' => array(
+			'date'  => '2026-10-06',
+			'title' => 'Recados rápidos no chat',
+			'items' => array(
+				array( '🍽️', 'Fui almoçar, volto já…', 'No chat da equipe, um clique em "Fui almoçar", "Volto já", "Em reunião" ou "Ausente" marca você como ausente com o recado e a hora. O botão "Voltei" limpa tudo. O recado aparece para a equipe na lista do chat.' ),
+			),
+		),
+		'1.32.0' => array(
+			'date'  => '2026-10-06',
+			'title' => 'Tarefas unificadas por prazo',
+			'items' => array(
+				array( '🗂️', 'Tudo em Tarefas', 'A tela Tarefas junta as tarefas, os posts que estão com você (fazer arte, revisar…) e as alterações pedidas pelos clientes, em colunas: Atrasadas, Hoje, Amanhã, Esta semana e Pendentes. Arraste uma tarefa para outra coluna para mudar o prazo; o ✓ conclui.' ),
+				array( '🔎', 'Escolher o cliente', 'Filtre por cliente, por pessoa (minhas, todas ou alguém da equipe) e por tipo (tarefas, posts, alterações). A tarefa nova também pode ser ligada a um cliente.' ),
+				array( '🖱️', 'Dashboard clicável', 'Clique em "Atrasados" (ou em Hoje, Amanhã, Esta semana) no dashboard e abra direto aquela coluna.' ),
+				array( '🎯', 'Modo foco por prazo', 'O Modo foco mostra suas tarefas juntas em Hoje, Amanhã e Esta semana, e lista as tarefas para escolher já agrupadas por prazo.' ),
+			),
+		),
+		'1.31.0' => array(
+			'date'  => '2026-10-06',
+			'title' => 'Nova tela de login',
+			'items' => array(
+				array( '🔐', 'Login em vidro azul animado', 'Cartão de vidro com a logo da LDK no topo, "Seja bem-vindo", fundo azul com movimento e botão com brilho. Também vale para a tela do código de acesso.' ),
+			),
+		),
+		'1.30.0' => array(
+			'date'  => '2026-10-06',
+			'title' => 'Novo fluxo: planejamento, alterações e envio ao cliente',
+			'items' => array(
+				array( '🧭', 'Planejamento → revisão → atendimento', 'A social media monta o planejamento, a administradora revisa e, ao aprovar, o atendimento recebe uma TAREFA para enviar ao cliente (e-mail + WhatsApp com mensagem pronta). O cliente não recebe nada direto da revisão.' ),
+				array( '🔁', 'Pedido do cliente vira tarefa', 'Se o cliente pedir ajuste no planejamento, a tarefa vai para a social media com o comentário. Ao clicar em "Refiz", o atendimento recebe a tarefa de mandar de novo falando desse conteúdo.' ),
+				array( '✏️', 'Alterações (menu)', 'Pedidos de arte e/ou legenda (por texto, áudio ou referência) viram tarefa com prazo para o designer e/ou a social media, e aparecem na aba Alterações com contador. Ao terminar, o atendimento é avisado para reenviar.' ),
+				array( '📤', 'Enviar ao cliente (menu)', 'Uma aba só com tudo que está pronto: planejamentos revisados, ajustes refeitos e a semana fechada, com e-mail e WhatsApp em um clique.' ),
+				array( '✅', 'Semana fechada avisa o atendimento', 'Quando todo o conteúdo da semana de um cliente está com arte e legenda, o atendimento ganha a tarefa de enviar a semana. Aprovado tudo, vai para agendado e publica sozinho.' ),
+				array( '🎬', 'Vídeo: capa e roteiros do dia', 'Ao salvar um vídeo sem capa, aparece um aviso perguntando se usa a capa automática. Roteiros do mesmo dia seguem juntos para o cliente. A prévia da arte aparece assim que sobe.' ),
+				array( '⭕', 'Logo do cliente em círculo perfeito', 'A logo aparece centralizada, sem margem nem fundo branco.' ),
+			),
+		),
+		'1.29.0' => array(
+			'date'  => '2026-10-06',
+			'title' => 'Pacotes com artes e vídeos, e dinheiro só com permissão',
+			'items' => array(
+				array( '📦', 'Pacote com artes e vídeos', 'Em Configurações → Contrato, cada pacote ganha a quantidade de vídeos (5º campo). Ao cadastrar o cliente, escolha o pacote e as quantidades de artes e de vídeos se preenchem (dá para ajustar para aquele cliente).' ),
+				array( '📊', 'Planejamento mostra o pacote', 'No planejamento aparece o pacote cadastrado (ex.: 16 artes + 4 vídeos por mês) e duas barrinhas: quantas artes e quantos vídeos já foram planejados no mês.' ),
+				array( '🔒', 'Dinheiro só com permissão', 'Equipe sem a permissão Financeiro não vê nenhum valor em reais no painel (mensalidade, contratos, propostas, funil, receita). Você libera pessoa por pessoa em Equipe.' ),
+			),
+		),
+		'1.28.0' => array(
+			'date'  => '2026-10-06',
+			'title' => 'Roteiros de vídeo, pausar, collab e ajustes por áudio',
+			'items' => array(
+				array( '🎬', 'Aba Roteiros', 'Todo post de vídeo ganha um roteiro, com dia e hora da gravação. O cliente vê todos os roteiros e vídeos dele no painel dele e aprova por link. 3 dias antes da gravação ele recebe o roteiro por e-mail e a atendente ganha uma tarefa para avisar no WhatsApp e pedir a aprovação.' ),
+				array( '⏸️', 'Pausar postagem', 'Botão para pausar um post: ele não sai sozinho até você retomar.' ),
+				array( '🤝', 'Collab', 'Campo de collab no post: o perfil convidado recebe o convite ao publicar no Instagram.' ),
+				array( '🎙️', 'Ajuste por áudio e referência', 'O cliente pode gravar um áudio e anexar imagem, PDF ou vídeo ao pedir ajuste ou fazer apontamento. O ajuste pode ser na arte, na legenda ou nos dois.' ),
+				array( '🖼️', 'Carrossel de até 20 e arte salva sozinha', 'A arte é salva assim que termina de subir. Carrossel aceita até 20 itens.' ),
+				array( '🗓️', 'Enviar a semana', 'No menu Enviar a semana, escolha o cliente e mande todas as artes prontas da semana de uma vez, com o link de cada uma (e-mail e WhatsApp). O cliente aprova uma e já abre a próxima.' ),
+				array( '📲', 'WhatsApp em tudo', 'Botão de enviar no WhatsApp no planejamento, na arte, na reunião e no roteiro, com mensagem organizada.' ),
+				array( '📅', 'Equipe na reunião', 'Marque quem da equipe participa; todos são avisados. Reunião registrada pode ser enviada ao cliente por e-mail e WhatsApp.' ),
+			),
+		),
 		'1.16.0' => array(
 			'date'  => '2026-10-05',
 			'title' => 'Dashboard personalizável',

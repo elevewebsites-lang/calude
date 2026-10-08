@@ -31,7 +31,7 @@ lk_panel_start( 'Clientes', 'clientes', $actions );
 		<?php foreach ( $clients as $c ) : ?>
 			<?php $n = isset( $counts[ $c->id ] ) ? $counts[ $c->id ] : null; ?>
 			<a class="table-row" href="<?php echo esc_url( lk_panel_url( 'cliente', $c->id ) ); ?>">
-				<span class="cell-main"><?php echo lk_client_avatar_html( $c ); // phpcs:ignore ?><span><strong><?php echo esc_html( lk_client_label( $c ) ); ?></strong><small><?php echo esc_html( $c->company && $c->name ? $c->name : $c->cnpj ); ?></small><?php echo lk_client_service_tags_html( $c ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></span>
+				<span class="cell-main"><?php echo lk_client_avatar_html( $c ); // phpcs:ignore ?><span><strong><?php echo esc_html( lk_client_label( $c ) ); ?></strong><small><?php echo esc_html( $c->company && $c->name ? $c->name : $c->cnpj ); ?></small></span></span>
 				<span data-label="Contato"><?php echo esc_html( $c->whatsapp ? $c->whatsapp : $c->phone ); ?><small><?php echo esc_html( $c->email ); ?></small></span>
 				<span data-label="Projetos"><?php echo $n ? (int) $n->active . ' ativo' . ( 1 === (int) $n->active ? '' : 's' ) . ' <small>' . (int) $n->n . ' no total</small>' : '<span class="muted">—</span>'; // phpcs:ignore ?></span>
 				<span data-label="Acesso"><?php echo lk_status_badge( $c->user_id ? 'ativo' : 'convidado' ); // phpcs:ignore ?></span>
@@ -52,6 +52,11 @@ lk_panel_start( 'Clientes', 'clientes', $actions );
 		</div>
 		<label class="field"><span>Logo do cliente (PNG, JPG ou WebP) — aparece na lista</span><input type="file" name="logo_file" accept="image/png,image/jpeg,image/webp"></label>
 		<?php lk_package_picker( '', 'Pacote contratado' ); ?>
+		<div class="grid-2">
+			<?php lk_input( 'posts_quota', 'Artes por mês', '', 'number', 'min="0" max="200" placeholder="Ex.: 12"' ); ?>
+			<?php lk_input( 'videos_quota', 'Vídeos por mês', '', 'number', 'min="0" max="100" placeholder="Ex.: 4"' ); ?>
+		</div>
+		<p class="muted small">Ao escolher o pacote, as quantidades se preenchem sozinhas. Dá para ajustar para este cliente.</p>
 		<label class="field"><span>Já tem contrato assinado? Anexe aqui (PDF, JPG ou PNG) — fica na área do cliente e no Drive</span><input type="file" name="contract_file" accept=".pdf,image/png,image/jpeg"></label>
 		<?php lk_input( 'projeto', 'Projeto / serviço contratado', '', 'text', 'placeholder="Ex.: Gestão de redes · plano Essencial"' ); ?>
 		<div class="form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button type="submit" class="btn btn--primary">Criar e gerar convite</button></div>

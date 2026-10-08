@@ -80,7 +80,7 @@ function lk_social_more_connect( $net, $cid, $code ) {
 		array(
 			'code'          => $code,
 			'client_id'     => lk_setting( 'google_client_id' ),
-			'client_secret' => lk_decrypt( lk_setting( 'google_client_secret' ) ),
+			'client_secret' => lk_secret( 'google_client_secret' ),
 			'redirect_uri'  => lk_social_more_redirect( $net ),
 			'grant_type'    => 'authorization_code',
 		)
@@ -146,7 +146,7 @@ function lk_li_connect( $cid, $code ) {
 			'grant_type'    => 'authorization_code',
 			'code'          => $code,
 			'client_id'     => lk_setting( 'linkedin_client_id' ),
-			'client_secret' => lk_decrypt( lk_setting( 'linkedin_client_secret' ) ),
+			'client_secret' => lk_secret( 'linkedin_client_secret' ),
 			'redirect_uri'  => lk_social_more_redirect( 'linkedin' ),
 		)
 	);
@@ -248,7 +248,7 @@ function lk_gclient_token( $acc ) {
 		'https://oauth2.googleapis.com/token',
 		array(
 			'client_id'     => lk_setting( 'google_client_id' ),
-			'client_secret' => lk_decrypt( lk_setting( 'google_client_secret' ) ),
+			'client_secret' => lk_secret( 'google_client_secret' ),
 			'refresh_token' => lk_decrypt( $acc->token ),
 			'grant_type'    => 'refresh_token',
 		)
@@ -273,7 +273,7 @@ function lk_li_refresh() {
 			lk_update( 'social_accounts', $a->id, array( 'status' => 'erro', 'error' => 'O acesso do LinkedIn vence em breve: reconecte.' ) );
 			continue;
 		}
-		$r = lk_http_json( 'POST', 'https://www.linkedin.com/oauth/v2/accessToken', array( 'grant_type' => 'refresh_token', 'refresh_token' => $rt, 'client_id' => lk_setting( 'linkedin_client_id' ), 'client_secret' => lk_decrypt( lk_setting( 'linkedin_client_secret' ) ) ) );
+		$r = lk_http_json( 'POST', 'https://www.linkedin.com/oauth/v2/accessToken', array( 'grant_type' => 'refresh_token', 'refresh_token' => $rt, 'client_id' => lk_setting( 'linkedin_client_id' ), 'client_secret' => lk_secret( 'linkedin_client_secret' ) ) );
 		if ( is_wp_error( $r ) ) {
 			lk_update( 'social_accounts', $a->id, array( 'status' => 'erro', 'error' => 'Reconecte: ' . $r->get_error_message() ) );
 			continue;

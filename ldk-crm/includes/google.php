@@ -385,23 +385,30 @@ function lk_meetings_html( $events ) {
 			$html .= '<li class="meet-day">' . esc_html( $label ) . '</li>';
 			$last  = $day;
 		}
-		$html .= '<li class="meet"><span class="meet-time">' . ( $ev['all_day'] ? 'Dia todo' : esc_html( wp_date( 'H:i', $ev['start'] ) ) ) . '</span><span class="meet-main"><strong>' . esc_html( $ev['title'] ) . '</strong>' . ( $ev['attendees'] ? '<small>' . esc_html( implode( ', ', array_slice( $ev['attendees'], 0, 3 ) ) . ( count( $ev['attendees'] ) > 3 ? ' +' . ( count( $ev['attendees'] ) - 3 ) : '' ) ) . '</small>' : '' ) . '</span>';
-		$html .= '<span class="meet-btns">';
-		$html .= $ev['meet'] ? '<a class="btn btn--primary btn--sm" href="' . esc_url( $ev['meet'] ) . '" target="_blank" rel="noopener">Entrar no Meet</a>' : ( $ev['link'] ? '<a class="icon-btn" href="' . esc_url( $ev['link'] ) . '" target="_blank" rel="noopener" title="Abrir no Google Agenda">' . lk_icon( 'seta', 15 ) . '</a>' : '' );
+		$day_l = ucfirst( lk_date_long( $day ) );
+		$info  = array(
+			'title'  => $ev['title'],
+			'when'   => $ev['all_day'] ? $day_l . ' · dia todo' : $day_l . ' · ' . wp_date( 'H:i', $ev['start'] ) . ' às ' . wp_date( 'H:i', $ev['end'] ) . ' (' . max( 15, (int) round( ( $ev['end'] - $ev['start'] ) / 60 ) ) . ' min)',
+			'client' => '',
+			'kind'   => 'Google Agenda',
+			'link'   => $ev['meet'] ? $ev['meet'] : ( $ev['link'] ? $ev['link'] : '' ),
+			'guests' => $ev['attendees'],
+		);
+		$html .= '<li class="meet is-click" tabindex="0" role="button" aria-label="Abrir a reunião ' . esc_attr( $ev['title'] ) . '" data-meet-info="' . esc_attr( wp_json_encode( $info ) ) . '"><span class="meet-time">' . ( $ev['all_day'] ? 'Dia todo' : esc_html( wp_date( 'H:i', $ev['start'] ) ) ) . '</span><span class="meet-main"><strong>' . esc_html( $ev['title'] ) . '</strong>' . ( $ev['attendees'] ? '<small>' . esc_html( implode( ', ', array_slice( $ev['attendees'], 0, 3 ) ) . ( count( $ev['attendees'] ) > 3 ? ' +' . ( count( $ev['attendees'] ) - 3 ) : '' ) ) . '</small>' : '' ) . '</span><span class="meet-go" aria-hidden="true">›</span><template data-meet-actions>';
 		if ( ! $ev['all_day'] && ! empty( $ev['id'] ) && lk_can( 'projetos' ) ) {
 			$dur    = max( 15, (int) round( ( $ev['end'] - $ev['start'] ) / 60 ) );
 			$invite = lk_meeting_invite_text( $ev['title'], $ev['start'], $dur, $ev['meet'] );
 			$data   = array( 'id' => $ev['id'], 'title' => $ev['title'], 'date' => wp_date( 'Y-m-d', $ev['start'] ), 'time' => wp_date( 'H:i', $ev['start'] ), 'duration' => $dur, 'guests' => $ev['attendees'] );
-			$html  .= '<button type="button" class="icon-btn" title="Copiar convite para o grupo" data-copy="' . esc_attr( $invite ) . '">' . lk_icon( 'copiar', 15 ) . '</button>';
-			$html  .= '<button type="button" class="icon-btn" title="Editar ou convidar mais gente" data-open="editar-reuniao" data-meeting="' . esc_attr( wp_json_encode( $data ) ) . '">' . lk_icon( 'editar', 15 ) . '</button>';
+			$html  .= '<button type="button" class="btn btn--ghost btn--sm" data-copy="' . esc_attr( $invite ) . '">' . lk_icon( 'copiar', 14 ) . '<span>Copiar convite</span></button>';
+			$html  .= '<button type="button" class="btn btn--ghost btn--sm" data-open="editar-reuniao" data-meeting="' . esc_attr( wp_json_encode( $data ) ) . '">' . lk_icon( 'relogio', 14 ) . '<span>Remarcar / editar</span></button>';
 			if ( $ev['organizer'] ) {
 				ob_start();
 				lk_form( 'meeting_cancel', 'inline-form' );
-				echo '<input type="hidden" name="event_id" value="' . esc_attr( $ev['id'] ) . '"><button type="submit" class="icon-btn icon-btn--danger" title="Desmarcar reunião" data-confirm="Desmarcar &quot;' . esc_attr( $ev['title'] ) . '&quot;? Os convidados recebem o aviso de cancelamento.">×</button></form>';
+				echo '<input type="hidden" name="event_id" value="' . esc_attr( $ev['id'] ) . '"><button type="submit" class="btn btn--ghost btn--sm btn--danger-text" data-confirm="Desmarcar &quot;' . esc_attr( $ev['title'] ) . '&quot;? Os convidados recebem o aviso de cancelamento.">Excluir</button></form>';
 				$html .= ob_get_clean();
 			}
 		}
-		$html .= '</span></li>';
+		$html .= '</template></li>';
 	}
 	return $html . '</ul>';
 }

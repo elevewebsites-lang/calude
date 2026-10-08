@@ -177,45 +177,90 @@ function lk_post_revisor( $p ) {
  * Pacote de artes do cliente (quantidade por mês)
  * -------------------------------------------------------------------- */
 
-function lk_client_month_count( $client_id, $ym ) {
+function lk_client_month_count( $client_id, $ym, $kind = '' ) {
 	global $wpdb;
-	return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . lk_table( 'posts' ) . ' WHERE client_id = %d AND scheduled_at BETWEEN %s AND %s', $client_id, $ym . '-01 00:00:00', gmdate( 'Y-m-t', strtotime( $ym . '-01' ) ) . ' 23:59:59' ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+	$extra = 'video' === $kind ? " AND format = 'video'" : ( 'arte' === $kind ? " AND format <> 'video'" : '' );
+	return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . lk_table( 'posts' ) . ' WHERE client_id = %d AND scheduled_at BETWEEN %s AND %s' . $extra, $client_id, $ym . '-01 00:00:00', gmdate( 'Y-m-t', strtotime( $ym . '-01' ) ) . ' 23:59:59' ) ); // phpcs:ignore WordPress.DB.PreparedSQL
 }
 
 /**
- * Barrinha "8 de 12 artes". Vazio se o cliente não tem pacote definido.
+ * Cotas do pacote: artes e vídeos. Sem cota de vídeo, as artes contam todos os posts (como era antes).
+ * Devolve array( array( rótulo, usado, cota, tipo ) ).
+ */
+function lk_client_quotas( $client, $ym ) {
+	$out = array();
+	if ( ! $client ) {
+		return $out;
+	}
+	$qa = (int) $client->posts_quota;
+	$qv = (int) ( $client->videos_quota ?? 0 );
+	if ( $qa > 0 ) {
+		$out[] = array( 'artes', lk_client_month_count( $client->id, $ym, $qv > 0 ? 'arte' : '' ), $qa, 'arte' );
+	}
+	if ( $qv > 0 ) {
+		$out[] = array( 'vídeos', lk_client_month_count( $client->id, $ym, 'video' ), $qv, 'video' );
+	}
+	return $out;
+}
+
+/**
+ * Barrinhas "8 de 12 artes" e "2 de 4 vídeos". Vazio se o cliente não tem pacote definido.
  */
 function lk_quota_html( $client, $ym ) {
-	if ( ! $client || (int) $client->posts_quota <= 0 ) {
+	$h = '';
+	foreach ( lk_client_quotas( $client, $ym ) as $qd ) {
+		list( $lab, $n, $q ) = $qd;
+		$cls = $n > $q ? 'quota--over' : ( $n === $q ? 'quota--full' : '' );
+		$txt = $n . ' de ' . $q . ' ' . $lab . ' em ' . lk_month_name( gmdate( 'n', strtotime( $ym . '-01' ) ) );
+		if ( $n > $q ) {
+			$txt .= ' · passou ' . ( $n - $q );
+		} elseif ( $n < $q ) {
+			$txt .= ' · faltam ' . ( $q - $n );
+		} else {
+			$txt .= ' · pacote completo';
+		}
+		$h .= '<span class="quota ' . $cls . '"><i style="width:' . min( 100, (int) round( $n / max( 1, $q ) * 100 ) ) . '%"></i><b>' . esc_html( $txt ) . '</b></span>';
+	}
+	return $h;
+}
+
+/**
+ * Pacote cadastrado, em uma frase: "Pacote Crescimento: 16 artes + 4 vídeos por mês".
+ */
+function lk_package_summary( $client ) {
+	$qa = (int) $client->posts_quota;
+	$qv = (int) ( $client->videos_quota ?? 0 );
+	if ( $qa <= 0 && $qv <= 0 ) {
 		return '';
 	}
-	$n   = lk_client_month_count( $client->id, $ym );
-	$q   = (int) $client->posts_quota;
-	$cls = $n > $q ? 'quota--over' : ( $n === $q ? 'quota--full' : '' );
-	$txt = $n . ' de ' . $q . ' artes em ' . lk_month_name( gmdate( 'n', strtotime( $ym . '-01' ) ) );
-	if ( $n > $q ) {
-		$txt .= ' · passou ' . ( $n - $q );
-	} elseif ( $n < $q ) {
-		$txt .= ' · faltam ' . ( $q - $n );
-	} else {
-		$txt .= ' · pacote completo';
+	$parts = array();
+	if ( $qa > 0 ) {
+		$parts[] = $qa . ' ' . ( 1 === $qa ? 'arte' : 'artes' );
 	}
-	return '<span class="quota ' . $cls . '"><i style="width:' . min( 100, (int) round( $n / max( 1, $q ) * 100 ) ) . '%"></i><b>' . esc_html( $txt ) . '</b></span>';
+	if ( $qv > 0 ) {
+		$parts[] = $qv . ' ' . ( 1 === $qv ? 'vídeo' : 'vídeos' );
+	}
+	return ( ! empty( $client->package ) ? 'Pacote ' . $client->package . ': ' : 'Pacote: ' ) . implode( ' + ', $parts ) . ' por mês';
 }
 
 /**
  * Aviso quando o mês passa do pacote (ao criar o post ou mudar o mês dele). Avisa o atendimento e o social media.
  */
 function lk_quota_check( $client, $scheduled_at ) {
-	if ( ! $client || (int) $client->posts_quota <= 0 || ! $scheduled_at ) {
+	if ( ! $client || ! $scheduled_at ) {
 		return '';
 	}
-	$ym = substr( $scheduled_at, 0, 7 );
-	$n  = lk_client_month_count( $client->id, $ym );
-	if ( $n <= (int) $client->posts_quota ) {
+	$ym   = substr( $scheduled_at, 0, 7 );
+	$over = array();
+	foreach ( lk_client_quotas( $client, $ym ) as $qd ) {
+		if ( $qd[1] > $qd[2] ) {
+			$over[] = $qd[1] . ' de ' . $qd[2] . ' ' . $qd[0];
+		}
+	}
+	if ( ! $over ) {
 		return '';
 	}
-	$msg = lk_client_label( $client ) . ' passou do pacote em ' . lk_month_label( $ym ) . ': ' . $n . ' de ' . (int) $client->posts_quota . ' artes.';
+	$msg = lk_client_label( $client ) . ' passou do pacote em ' . lk_month_label( $ym ) . ': ' . implode( ' e ', $over ) . '.';
 	foreach ( array_unique( array_filter( array( (int) $client->atendimento_id, (int) $client->social_id ) ) ) as $uid ) {
 		lk_notify( $uid, '⚠️ ' . $msg, lk_panel_url( 'planejamento', 0, array( 'cliente' => $client->id, 'mes' => $ym ) ) );
 	}
@@ -330,13 +375,25 @@ function lk_do_post_save() {
 		'notes'          => lk_in( 'notes', 'textarea' ),
 		'idea'           => lk_in( 'idea', 'textarea' ),
 		'hashtags'       => lk_in( 'hashtags', 'textarea' ),
+		'collab'         => lk_in( 'collab' ),
 	);
 	$data['deadlines'] = lk_prazos_from_form( $data['scheduled_at'] );
+	$picked = function_exists( 'lk_cfile_pick_media' ) ? lk_cfile_pick_media( $client->id ) : array();
+	if ( $picked ) {
+		$have = $old ? lk_post_media( $old ) : array();
+		$ids  = array_column( $have, 'id' );
+		foreach ( $picked as $m ) {
+			if ( ! in_array( $m['id'], $ids, true ) ) {
+				$have[] = $m;
+			}
+		}
+		$data['media'] = wp_json_encode( $have );
+	}
 	$check = $data['scheduled_at'] && ( ! $old || substr( (string) $old->scheduled_at, 0, 7 ) !== substr( $data['scheduled_at'], 0, 7 ) );
 	if ( $old ) {
 		lk_update( 'posts', $old->id, $data );
 		$id = $old->id;
-		if ( $old->caption !== $data['caption'] && 'legenda' === $old->change_target ) {
+		if ( $old->caption !== $data['caption'] && in_array( $old->change_target, array( 'legenda', 'ambos' ), true ) ) {
 			lk_post_log( $id, 'Legenda ajustada.' );
 		}
 	} else {
@@ -470,11 +527,21 @@ function lk_do_post_media() {
 	if ( $new ) {
 		lk_post_log( $p->id, count( (array) $new ) . ' arquivo(s) enviado(s).' );
 	}
+	// Alteração em arte E legenda: a arte fica pronta, mas só vai para revisão quando a legenda também for refeita.
+	if ( $media && 'ambos' === $p->change_target && ( lk_in( 'pronta', 'bool' ) || ( $p->stage === lk_stage_for( 'design' ) && ! lk_in( 'so_salvar', 'bool' ) ) ) ) {
+		lk_update( 'posts', $p->id, array( 'change_target' => 'legenda' ) );
+		lk_flow_task_done( '[alt:' . (int) $p->id . ':arte]' );
+		lk_post_log( $p->id, 'Arte refeita. Falta refazer a legenda.' );
+		lk_back( 'Arte salva. Falta a legenda (a social media foi avisada na tarefa).' );
+	}
 	// Na etapa de design, salvar com arte = arte pronta → Revisão (a não ser que marque "ainda não terminei").
 	$pronta = $media && ( lk_in( 'pronta', 'bool' ) || ( $p->stage === lk_stage_for( 'design' ) && ! lk_in( 'so_salvar', 'bool' ) ) );
 	if ( $pronta && in_array( $p->stage, array( lk_stage_for( 'planejamento' ), lk_stage_for( 'design' ) ), true ) ) {
 		lk_update( 'posts', $p->id, array( 'change_target' => '' ) );
 		lk_post_move( $p, lk_stage_for( 'revisao' ), 'Arte pronta.' . ( 'arte' === $p->change_target ? ' (alteração feita)' : '' ) );
+		if ( 'arte' === $p->change_target ) {
+			lk_flow_art_redone( lk_get( 'posts', $p->id ) );
+		}
 		$rev = get_userdata( lk_post_revisor( $p ) );
 		lk_back( 'Arte salva e enviada para revisão' . ( $rev ? ' (' . $rev->display_name . ' foi avisado)' : '' ) . '.' );
 	}
@@ -488,7 +555,9 @@ function lk_do_post_media() {
 
 function lk_approval_message( $p, $client ) {
 	$first = $client->name ? strtok( $client->name, ' ' ) : '';
-	return 'Olá' . ( $first ? ', ' . $first : '' ) . '! 😊 O conteúdo "' . $p->title . '"' . ( $p->scheduled_at ? ' (para ' . lk_date( $p->scheduled_at, 'd/m' ) . ')' : '' ) . ' está pronto para a sua aprovação. É só abrir, conferir a arte e a legenda e aprovar ou pedir ajuste: ' . lk_post_url( $p );
+	return 'Olá' . ( $first ? ', ' . $first : '' ) . "! 😊\n\n" .
+		"O conteúdo *" . $p->title . "*" . ( $p->scheduled_at ? ' (para ' . lk_date( $p->scheduled_at, 'd/m' ) . ')' : '' ) . " está pronto para a sua aprovação.\n\n" .
+		"👉 Abra, confira a arte e a legenda e aprove (ou peça ajuste):\n" . lk_post_url( $p );
 }
 
 function lk_do_post_send() {
@@ -505,7 +574,8 @@ function lk_do_post_send() {
 	if ( $gate ) {
 		lk_back( $gate, 'erro' );
 	}
-	lk_update( 'posts', $p->id, array( 'client_status' => 'pendente', 'sent_at' => lk_now(), 'change_target' => '' ) );
+	lk_update( 'posts', $p->id, array( 'client_status' => 'pendente', 'sent_at' => lk_now(), 'change_target' => '', 'resend' => 0 ) );
+	lk_flow_task_done( '[reenviar:' . (int) $p->id . ']' );
 	lk_post_move( $p, lk_stage_for( 'aprovacao' ), 'Enviado para o cliente aprovar.' );
 	if ( is_email( $client->email ) && ! $client->email_optout ) {
 		$media = lk_post_media( $p );
@@ -543,8 +613,15 @@ function lk_do_post_approve_manual() {
  */
 function lk_approval_decide( $p, $decision, $target, $comment, $by_client = true ) {
 	$client = lk_get( 'clients', $p->client_id );
-	if ( $comment ) {
-		lk_insert( 'post_comments', array( 'post_id' => $p->id, 'user_id' => get_current_user_id(), 'from_client' => $by_client ? 1 : 0, 'target' => $target ? $target : 'geral', 'body' => $comment ) );
+	$attach = 'aprovar' === $decision ? null : lk_collect_attach();
+	if ( is_wp_error( $attach ) ) {
+		$attach = null;
+	}
+	if ( $comment || $attach ) {
+		lk_insert( 'post_comments', array( 'post_id' => $p->id, 'user_id' => get_current_user_id(), 'from_client' => $by_client ? 1 : 0, 'target' => $target ? $target : 'geral', 'body' => $comment ? $comment : ( $attach && 'audio' === $attach['kind'] ? '🎙️ Áudio' : '📎 Referência anexada' ), 'attach_url' => $attach ? $attach['url'] : null, 'attach_kind' => $attach ? $attach['kind'] : '' ) );
+		if ( ! $comment ) {
+			$comment = '(áudio ou anexo)';
+		}
 	}
 	if ( 'aprovar' === $decision ) {
 		lk_update( 'posts', $p->id, array( 'client_status' => 'aprovado', 'approved_at' => lk_now(), 'change_target' => '' ) );
@@ -553,9 +630,13 @@ function lk_approval_decide( $p, $decision, $target, $comment, $by_client = true
 		lk_notify( $p->social_id, '✅ Aprovado: ' . $p->title, lk_panel_url( 'post', $p->id ) );
 		return 'Aprovado! Obrigado. 🎉';
 	}
-	$target = 'legenda' === $target ? 'legenda' : 'arte';
+	$target = in_array( $target, array( 'legenda', 'ambos' ), true ) ? $target : 'arte';
 	lk_update( 'posts', $p->id, array( 'client_status' => 'alteracao', 'change_target' => $target ) );
-	if ( 'arte' === $target ) {
+	if ( 'ambos' === $target ) {
+		lk_post_move( $p, lk_stage_for( 'design' ), 'Cliente pediu alteração na arte e na legenda: ' . wp_trim_words( $comment, 20 ) );
+		lk_notify( $p->designer_id, '✏️ Alteração na ARTE pedida por ' . lk_client_label( $client ) . ': ' . $p->title, lk_panel_url( 'post', $p->id ) );
+		lk_notify( $p->social_id, '✏️ Alteração na LEGENDA pedida por ' . lk_client_label( $client ) . ': ' . $p->title, lk_panel_url( 'post', $p->id ) );
+	} elseif ( 'arte' === $target ) {
 		lk_post_move( $p, lk_stage_for( 'design' ), 'Cliente pediu alteração na arte: ' . wp_trim_words( $comment, 20 ) );
 		lk_notify( $p->designer_id, '✏️ Alteração na arte pedida por ' . lk_client_label( $client ) . ': ' . $p->title, lk_panel_url( 'post', $p->id ) );
 	} else {
@@ -563,6 +644,7 @@ function lk_approval_decide( $p, $decision, $target, $comment, $by_client = true
 		lk_notify( $p->social_id, '✏️ Alteração na legenda pedida por ' . lk_client_label( $client ) . ': ' . $p->title, lk_panel_url( 'post', $p->id ) );
 	}
 	lk_notify( $p->atendimento_id, 'Cliente pediu ajuste (' . $target . '): ' . $p->title, lk_panel_url( 'post', $p->id ) );
+	lk_flow_alter_tasks( $p, $target, '(áudio ou anexo)' === $comment ? '' : $comment, $attach );
 	return 'Recebemos o seu pedido de ajuste. Assim que estiver pronto, mandamos de novo para você aprovar.';
 }
 
@@ -591,8 +673,17 @@ add_action(
 			if ( 'apontar' === lk_in( 'decisao' ) ) {
 				$msg = lk_note_from_client( $p );
 			} elseif ( $p->stage === lk_stage_for( 'aprovacao' ) || 'pendente' === $p->client_status ) {
-				$msg = lk_approval_decide( $p, lk_in( 'decisao' ), lk_in( 'alvo' ), lk_in( 'comentario', 'textarea' ), ! lk_is_team() );
+				$dec = lk_in( 'decisao' );
+				$msg = lk_approval_decide( $p, $dec, lk_in( 'alvo' ), lk_in( 'comentario', 'textarea' ), ! lk_is_team() );
 				$p   = lk_get( 'posts', $p->id );
+				// Aprovou: já abre o próximo conteúdo esperando aprovação, se houver.
+				if ( 'aprovar' === $dec && function_exists( 'lk_next_pending_url' ) ) {
+					$nx = lk_next_pending_url( $p );
+					if ( $nx ) {
+						wp_safe_redirect( $nx );
+						exit;
+					}
+				}
 			} else {
 				$msg = 'Este conteúdo já foi respondido. Obrigado!';
 			}
@@ -794,12 +885,14 @@ function lk_post_form( $p = null, $client_id = 0, $back = '' ) {
 			<?php lk_input( 'time', 'Horário', $p && $p->scheduled_at ? substr( $p->scheduled_at, 11, 5 ) : '10:00', 'time' ); ?>
 		</div>
 		<?php lk_prazos_fields( $p ); ?>
-		<?php if ( ! lk_manage_only() ) : ?><fieldset class="nets-pick">
+		<?php if ( ! $p && function_exists( 'lk_form_picker_html' ) ) : echo lk_form_picker_html( $cid ); endif; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+		<fieldset class="nets-pick">
 			<legend class="small">Onde publicar</legend>
 			<?php foreach ( lk_networks() as $n => $nl ) : ?>
 				<label class="chk"><input type="checkbox" name="networks[]" value="<?php echo esc_attr( $n ); ?>"<?php checked( in_array( $n, $nets, true ) ); ?>> <?php echo esc_html( $nl ); ?><?php if ( $cid && ! isset( $accs[ $n ] ) ) : ?> <em class="badge badge--off">não vinculado</em><?php endif; ?></label>
 			<?php endforeach; ?>
-		</fieldset><?php endif; ?>
+		</fieldset>
+		<?php lk_input( 'collab', 'Collab no Instagram (perfil convidado, ex.: @parceiro; até 3 separados por vírgula)', $p ? (string) $p->collab : '', 'text', 'placeholder="@perfil_parceiro"' ); ?>
 		<details class="post-more"<?php echo $p ? '' : ''; ?>>
 			<summary class="small">Responsáveis e observações</summary>
 			<div class="grid-3">
@@ -822,17 +915,9 @@ function lk_post_form( $p = null, $client_id = 0, $back = '' ) {
  */
 function lk_do_client_team() {
 	lk_require( 'clientes' );
-	if ( ! lk_client_team_apply() ) {
-		lk_back( 'Cliente não encontrado.', 'erro' );
-	}
-	lk_back( 'Cliente atualizado.' );
-}
-
-/** Salva equipe, pacote, mensalidade e preferências do cliente (campos do formulário). Devolve false se não achou o cliente. */
-function lk_client_team_apply() {
 	$c = lk_get( 'clients', lk_in( 'id', 'int' ) );
 	if ( ! $c ) {
-		return false;
+		lk_back( 'Cliente não encontrado.', 'erro' );
 	}
 	$data = array(
 		'designer_id'     => lk_in( 'designer_id', 'int' ),
@@ -841,6 +926,8 @@ function lk_client_team_apply() {
 		'trafego_id'      => lk_in( 'trafego_id', 'int' ),
 		'revisor_id'      => lk_in( 'revisor_id', 'int' ),
 		'posts_quota'     => max( 0, lk_in( 'posts_quota', 'int' ) ),
+		'videos_quota'    => max( 0, lk_in( 'videos_quota', 'int' ) ),
+		'package'         => lk_in( 'package' ),
 		'color'           => sanitize_hex_color( lk_in( 'color' ) ) ?: '#14E9EC',
 		'meta_ad_account' => lk_in( 'meta_ad_account' ),
 		'ads_visible'     => lk_in( 'ads_visible', 'bool' ),
@@ -853,16 +940,7 @@ function lk_client_team_apply() {
 	}
 	lk_update( 'clients', $c->id, $data );
 	lk_billing_generate();
-	return true;
-}
-
-/** Botão "Salvar tudo" da ficha do cliente: dados, equipe, mensalidade e preferências de uma vez. */
-function lk_do_client_save_all() {
-	lk_require( 'clientes' );
-	if ( ! lk_client_team_apply() ) {
-		lk_back( 'Cliente não encontrado.', 'erro' );
-	}
-	lk_do_client_save(); // salva os dados e volta com o aviso
+	lk_back( 'Cliente atualizado.' );
 }
 
 /* -----------------------------------------------------------------------

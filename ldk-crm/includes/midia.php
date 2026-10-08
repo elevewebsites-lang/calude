@@ -27,7 +27,7 @@ function lk_media_limits() {
 			'story_mb'     => 100,
 			'story_min_s'  => 3,
 			'story_max_s'  => 60,
-			'carousel_max' => 10,
+			'carousel_max' => 20,
 			'video_ext'    => array( 'mp4', 'mov' ),
 		)
 	);
@@ -232,11 +232,13 @@ function lk_note_default_assignee( $p, $about ) {
 	return (int) ( $id ? $id : $p->atendimento_id );
 }
 
-function lk_note_insert( $p, $body, $about, $media_i, $at, $assignee, $internal, $from_client ) {
+function lk_note_insert( $p, $body, $about, $media_i, $at, $assignee, $internal, $from_client, $attach = null ) {
 	$about = isset( lk_note_abouts()[ $about ] ) ? $about : 'arte';
 	return lk_insert(
 		'post_comments',
 		array(
+			'attach_url'  => $attach ? $attach['url'] : null,
+			'attach_kind' => $attach ? $attach['kind'] : '',
 			'post_id'     => $p->id,
 			'user_id'     => get_current_user_id(),
 			'from_client' => $from_client ? 1 : 0,
@@ -258,17 +260,24 @@ function lk_do_post_note() {
 	if ( ! lk_note_can() ) {
 		wp_die( 'O administrador não liberou apontamentos para o seu usuário.' );
 	}
-	$p    = lk_get( 'posts', lk_in( 'id', 'int' ) );
-	$body = lk_in( 'body', 'textarea' );
-	if ( ! $p || '' === $body ) {
-		lk_back( 'Escreva o apontamento.', 'erro' );
+	$p      = lk_get( 'posts', lk_in( 'id', 'int' ) );
+	$body   = lk_in( 'body', 'textarea' );
+	$attach = lk_collect_attach();
+	if ( is_wp_error( $attach ) ) {
+		lk_back( $attach->get_error_message(), 'erro' );
+	}
+	if ( ! $p || ( '' === $body && ! $attach ) ) {
+		lk_back( 'Escreva o apontamento (ou grave um áudio).', 'erro' );
+	}
+	if ( '' === $body ) {
+		$body = 'audio' === $attach['kind'] ? '🎙️ Áudio' : '📎 Referência anexada';
 	}
 	$about  = sanitize_key( lk_in( 'about' ) );
 	$who    = lk_in( 'assignee', 'int' ) ? lk_in( 'assignee', 'int' ) : lk_note_default_assignee( $p, $about );
 	$mi     = '' === (string) lk_in( 'media_i' ) ? -1 : lk_in( 'media_i', 'int' );
 	$at     = lk_note_parse_time( lk_in( 'at' ) );
 	$show   = lk_in( 'visible', 'bool' );
-	lk_note_insert( $p, $body, $about, $mi, $at, $who, ! $show, false );
+	lk_note_insert( $p, $body, $about, $mi, $at, $who, ! $show, false, $attach );
 	$me = wp_get_current_user()->display_name;
 	lk_notify( $who, '📌 Apontamento de ' . $me . ' em "' . $p->title . '": ' . wp_trim_words( $body, 12 ), lk_panel_url( 'post', $p->id ) . '#apontamentos' );
 	lk_back( 'Apontamento enviado' . ( get_userdata( $who ) ? ' para ' . get_userdata( $who )->display_name : '' ) . ( $show ? ' (o cliente também vê).' : ' (só a equipe vê).' ) );
@@ -288,14 +297,22 @@ function lk_note_from_client( $p ) {
 	if ( ! lk_note_can_client( $p->client_id ) ) {
 		return 'Apontamentos não estão liberados para este acesso.';
 	}
-	$body = lk_in( 'comentario', 'textarea' );
+	$body   = lk_in( 'comentario', 'textarea' );
+	$attach = lk_collect_attach();
+	if ( is_wp_error( $attach ) ) {
+		return $attach->get_error_message();
+	}
+	if ( '' === $body && ! $attach ) {
+		return 'Escreva (ou grave um áudio) com o que você quer apontar.';
+	}
 	if ( '' === $body ) {
-		return 'Escreva o que você quer apontar.';
+		$body = 'audio' === $attach['kind'] ? '🎙️ Áudio' : '📎 Referência anexada';
 	}
 	$client = lk_get( 'clients', $p->client_id );
 	$about  = sanitize_key( lk_in( 'alvo' ) );
 	$mi     = '' === (string) lk_in( 'media_i' ) ? -1 : lk_in( 'media_i', 'int' );
-	lk_note_insert( $p, $body, $about, $mi, lk_note_parse_time( lk_in( 'at' ) ), $p->atendimento_id, false, true );
+	lk_note_insert( $p, $body, $about, $mi, lk_note_parse_time( lk_in( 'at' ) ), $p->atendimento_id, false, true, $attach );
+	lk_flow_alter_tasks( $p, in_array( $about, array( 'legenda', 'video' ), true ) ? $about : 'arte', in_array( $body, array( '🎙️ Áudio', '📎 Referência anexada' ), true ) ? '' : $body, $attach );
 	lk_notify( $p->atendimento_id, '📌 Apontamento de ' . lk_client_label( $client ) . ' em "' . $p->title . '": ' . wp_trim_words( $body, 12 ), lk_panel_url( 'post', $p->id ) . '#apontamentos' );
 	return 'Apontamento enviado! A equipe vai ver.';
 }
@@ -319,7 +336,7 @@ function lk_notes_html( $p, $notes, $team ) {
 		if ( $team ) {
 			$h .= $n->internal ? '<em class="badge">só equipe</em>' : '<em class="badge badge--ok">cliente vê</em>';
 		}
-		$h .= $time . ( $n->resolved ? '<em class="badge badge--ok">resolvido</em>' : '' ) . '</div><p>' . nl2br( esc_html( $n->body ) ) . '</p><small class="muted">' . esc_html( lk_ago( $n->created_at ) ) . '</small>';
+		$h .= $time . ( $n->resolved ? '<em class="badge badge--ok">resolvido</em>' : '' ) . '</div><p>' . nl2br( esc_html( $n->body ) ) . '</p>' . lk_attach_html( $n ) . '<small class="muted">' . esc_html( lk_ago( $n->created_at ) ) . '</small>';
 		if ( $team ) {
 			ob_start();
 			lk_action_button( 'post_note_resolve', array( 'id' => $n->id ), $n->resolved ? 'Reabrir' : 'Resolver', 'btn btn--link btn--sm' );

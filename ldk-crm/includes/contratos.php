@@ -263,15 +263,14 @@ function lk_do_contract_save() {
 		'title'         => lk_in( 'title' ) ? lk_in( 'title' ) : 'Contrato de prestação de serviços',
 		'services'      => lk_in( 'services', 'textarea' ),
 		'package'       => lk_in( 'package' ),
-		'monthly_value' => lk_in( 'monthly_value', 'money' ),
-		'setup_value'   => lk_in( 'setup_value', 'money' ),
+		'monthly_value' => lk_can( 'financeiro' ) ? lk_in( 'monthly_value', 'money' ) : ( $old ? (float) $old->monthly_value : (float) $client->monthly_fee ),
+		'setup_value'   => lk_can( 'financeiro' ) ? lk_in( 'setup_value', 'money' ) : ( $old ? (float) $old->setup_value : 0 ),
 		'months'        => max( 1, lk_in( 'months', 'int' ) ),
 		'start_date'    => lk_in( 'start_date', 'date' ) ? lk_in( 'start_date', 'date' ) : lk_today(),
 		'due_day'       => min( 28, max( 1, lk_in( 'due_day', 'int' ) ? lk_in( 'due_day', 'int' ) : 10 ) ),
 		'posts_quota'   => lk_in( 'posts_quota', 'int' ),
 		'extra'         => lk_in( 'extra', 'textarea' ),
 		'clauses'       => lk_in( 'clauses', 'textarea' ),
-		'subject'       => implode( ',', lk_contract_subjects_from_post() ),
 	);
 	if ( $old ) {
 		lk_update( 'contracts', $old->id, $data );
@@ -520,11 +519,12 @@ function lk_contract_form( $client, $k = null ) {
 	<?php if ( $k ) : ?><input type="hidden" name="regerar" value="1"><?php endif; ?>
 	<?php lk_input( 'title', 'Título', $k ? $k->title : 'Contrato de prestação de serviços de marketing digital' ); ?>
 	<?php lk_package_picker( $k ? (string) $k->package : '' ); ?>
-	<?php lk_service_type_boxes( $k ? lk_contract_subjects( $k ) : array() ); ?>
 	<?php lk_input( 'services', 'Serviços contratados (um por linha)', $k ? $k->services : "Planejamento mensal de conteúdo\nCriação de artes e legendas\nProgramação das postagens\nRelatório mensal de resultados", 'textarea', 'rows="5"' ); ?>
 	<div class="grid-3">
+		<?php if ( ! lk_can( 'financeiro' ) ) : ?><p class="muted small" style="grid-column:1/-1">🔒 Valores do contrato só aparecem para quem o administrador libera em Equipe → Financeiro.</p><?php else : ?>
 		<?php lk_input( 'monthly_value', 'Valor mensal (R$)', number_format( (float) ( $k ? $k->monthly_value : $client->monthly_fee ), 2, ',', '.' ), 'text', 'inputmode="decimal" data-money required' ); ?>
 		<?php lk_input( 'setup_value', 'Implantação (R$, opcional)', $k && (float) $k->setup_value ? number_format( (float) $k->setup_value, 2, ',', '.' ) : '', 'text', 'inputmode="decimal" data-money' ); ?>
+		<?php endif; ?>
 		<?php lk_input( 'months', 'Duração (meses de recorrência)', $k ? $k->months : 12, 'number', 'min="1" max="60"' ); ?>
 		<?php lk_input( 'start_date', 'Início', $k && $k->start_date ? $k->start_date : lk_today(), 'date' ); ?>
 		<?php lk_input( 'due_day', 'Dia do vencimento', $k ? $k->due_day : ( $client->due_day ? $client->due_day : 10 ), 'number', 'min="1" max="28"' ); ?>

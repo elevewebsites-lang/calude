@@ -523,6 +523,13 @@ function lk_hub_html() {
 			<button type="button" class="hub-ic" data-hub-close aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
 		</header>
 		<div class="hub-home" data-hub-home>
+			<div class="hub-quick" data-hub-quick role="group" aria-label="Recados rápidos de ausência">
+				<button type="button" data-q-note="🍽️ Fui almoçar · volto já">🍽️ Fui almoçar</button>
+				<button type="button" data-q-note="☕ Pausa rápida · volto já">☕ Volto já</button>
+				<button type="button" data-q-note="📞 Em reunião">📞 Em reunião</button>
+				<button type="button" data-q-note="🚶 Ausente um instante">🚶 Ausente</button>
+				<button type="button" class="hub-quick-back" data-q-back hidden>✅ Voltei</button>
+			</div>
 			<label class="hub-note-in"><span class="sr-only">Recado de status</span><input type="text" maxlength="60" data-hub-note placeholder="Recado para a equipe (ex.: em reunião até 15h)"></label>
 			<div class="hub-voice" data-hub-voice>
 				<span class="hub-voice-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></svg></span>
@@ -556,6 +563,13 @@ function lk_hub_html() {
 				<div class="hub-rec" data-hub-rec hidden><i class="hub-rec-dot"></i><span data-hub-rec-t>0:00</span><span class="muted small">gravando…</span><button type="button" class="hub-ic" data-hub-rec-cancel aria-label="Descartar áudio"><?php echo lk_icon( 'lixo', 18 ); // phpcs:ignore ?></button></div>
 				<div class="hub-emo-box" data-hub-emo-box hidden></div>
 				<button type="button" class="hub-ic" data-hub-emo aria-label="Emojis" title="Emojis animados">😊</button>
+				<div class="hub-wink-box" data-hub-wink-box hidden>
+					<button type="button" data-wink="confete" title="Confete">🎉<small>Confete</small></button>
+					<button type="button" data-wink="coracao" title="Chuva de corações">💖<small>Corações</small></button>
+					<button type="button" data-wink="foguete" title="Foguete">🚀<small>Foguete</small></button>
+					<button type="button" data-wink="aplausos" title="Aplausos">👏<small>Aplausos</small></button>
+				</div>
+				<button type="button" class="hub-ic" data-hub-wink aria-label="Winks" title="Enviar um wink (animação)">✨</button>
 				<textarea rows="1" data-hub-text placeholder="Mensagem…"></textarea>
 				<button type="button" class="hub-ic hub-mic" data-hub-mic aria-label="Gravar áudio" title="Gravar áudio"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4"/></svg></button>
 				<button type="submit" class="hub-send" aria-label="Enviar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg></button>

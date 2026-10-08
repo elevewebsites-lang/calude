@@ -176,7 +176,7 @@ function lk_google_callback() {
 			'body'    => array(
 				'code'          => $code,
 				'client_id'     => lk_setting( 'google_client_id' ),
-				'client_secret' => lk_decrypt( lk_setting( 'google_client_secret' ) ),
+				'client_secret' => lk_secret( 'google_client_secret' ),
 				'redirect_uri'  => lk_google_redirect_uri(),
 				'grant_type'    => 'authorization_code',
 			),
@@ -221,7 +221,7 @@ function lk_google_token( $state = null ) {
 			'timeout' => 20,
 			'body'    => array(
 				'client_id'     => lk_setting( 'google_client_id' ),
-				'client_secret' => lk_decrypt( lk_setting( 'google_client_secret' ) ),
+				'client_secret' => lk_secret( 'google_client_secret' ),
 				'refresh_token' => lk_decrypt( $state['refresh'] ),
 				'grant_type'    => 'refresh_token',
 			),

@@ -12,12 +12,15 @@ function lk_head( $title, $themed = false ) {
 <head>
 <meta charset="UTF-8">
 <?php if ( $themed ) : ?>
+<script>(function(){try{var s=localStorage.getItem('lk-season');if(s==='halloween'||s==='natal'||s==='anonovo'){document.documentElement.setAttribute('data-season',s);}}catch(e){}})();</script>
 <script>(function(){try{var t=localStorage.getItem('lk-theme')||'claro';if(t==='sistema'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'escuro':'claro';}document.documentElement.setAttribute('data-theme',t==='escuro'?'dark':'light');if(localStorage.getItem('lk-hide-money')==='1'){document.documentElement.setAttribute('data-hide-money','');}}catch(e){}})();</script>
 <?php endif; ?>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0a0a0a">
 <title><?php echo esc_html( $title . ' · ' . lk_setting( 'empresa' ) ); ?></title>
+<link rel="stylesheet" href="<?php echo esc_url( LK_URL . 'assets/season.css?ver=' . LK_VERSION ); ?>">
+<script src="<?php echo esc_url( LK_URL . 'assets/season.js?ver=' . LK_VERSION ); ?>" defer></script>
 <link rel="icon" href="<?php echo esc_url( lk_setting( 'favicon' ) ); ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -109,6 +112,10 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 			''          => array( 'Dashboard', 'dashboard', '' ),
 			'conteudo'  => array( 'Conteúdo', 'projetos', 'conteudo' ),
 			'planejamento' => array( 'Planejamento do mês', 'lista', 'conteudo' ),
+			'enviar'    => array( 'Enviar ao cliente', 'email', 'conteudo' ),
+			'alteracoes' => array( 'Alterações', 'editar', 'conteudo' ),
+			'semana'    => array( 'Enviar a semana', 'email', 'conteudo' ),
+			'roteiros'  => array( 'Roteiros', 'tela', 'conteudo' ),
 			'reunioes'  => array( 'Reuniões', 'relogio', '' ),
 			'time'      => array( 'Equipe e demandas', 'equipe', '' ),
 			'tarefas'   => array( 'Tarefas', 'tarefas', 'tarefas' ),
@@ -120,7 +127,6 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 		'Clientes' => array(
 			'clientes'   => array( 'Clientes', 'clientes', 'clientes' ),
 			'contratos'  => array( 'Contratos', 'proposta', 'clientes' ),
-			'vencimentos' => array( 'Hospedagem e domínios', 'globo', 'clientes' ),
 			'formularios' => array( 'Briefings e pesquisas', 'lista', 'clientes' ),
 			'redes'      => array( 'Redes conectadas', 'globo', 'clientes' ),
 			'mensagens'  => array( 'Mensagens', 'chat', 'clientes' ),
@@ -156,7 +162,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 		unset( $items['Operação']['apontamentos'] );
 	}
 	?>
-<body class="lk lk-panel<?php echo lk_manage_only() ? ' modo-gestao' : ''; ?>">
+<body class="lk lk-panel">
 <div class="app">
 	<aside class="side" id="side">
 		<a class="side-brand" href="<?php echo esc_url( lk_panel_url() ); ?>">
@@ -185,7 +191,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 					?>
 					<a href="<?php echo esc_url( lk_panel_url( $slug ) ); ?>" class="<?php echo $active === $slug ? 'is-active' : ''; ?>">
 						<?php echo lk_icon( $it[1] ); // phpcs:ignore ?><span><?php echo esc_html( $it[0] ); ?></span>
-						<?php if ( 'contratos' === $slug && lk_contracts_pending_count() ) : ?><em class="side-count"><?php echo (int) lk_contracts_pending_count(); ?></em><?php endif; ?>
+						<?php if ( in_array( $slug, array( 'alteracoes', 'enviar' ), true ) && lk_flow_menu_count( $slug ) ) : ?><em class="side-count"><?php echo (int) lk_flow_menu_count( $slug ); ?></em><?php endif; ?>
 						<?php if ( 'tarefas' === $slug && $today_count ) : ?><em class="side-count"><?php echo (int) $today_count; ?></em><?php endif; ?>
 						<?php if ( 'novidades' === $slug && lk_changelog_unseen() ) : ?><em class="side-count side-count--new">novo</em><?php endif; ?>
 						<?php if ( 'feedback' === $slug && lk_is_admin() && lk_feedback_open_mine() ) : ?><em class="side-count"><?php echo (int) lk_feedback_open_mine(); ?></em><?php endif; ?>
@@ -275,6 +281,7 @@ function lk_client_start( $title, $client ) {
 	<nav class="ctop-nav"><div class="ctop-nav-in">
 			<a href="<?php echo esc_url( lk_client_link() ); ?>">Início</a>
 			<a href="<?php echo esc_url( lk_client_link( 'conteudos' ) ); ?>">Conteúdos</a>
+			<a href="<?php echo esc_url( lk_client_link( 'roteiros' ) ); ?>">Roteiros</a>
 			<a href="<?php echo esc_url( lk_client_link( 'aprovacoes' ) ); ?>">Aprovações</a>
 			<a href="<?php echo esc_url( lk_client_link( 'briefing' ) ); ?>">Briefing</a>
 			<a href="<?php echo esc_url( lk_client_link( 'contratos' ) ); ?>">Contratos</a>
@@ -312,8 +319,8 @@ function lk_flash_html() {
 /**
  * Abre um formulário que envia para lk_do_<acao>.
  */
-function lk_form( $do, $class = '', $upload = false ) {
-	echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="' . esc_attr( $class ) . '"' . ( $upload ? ' enctype="multipart/form-data"' : '' ) . '>';
+function lk_form( $do, $class = '', $upload = false, $id = '' ) {
+	echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="' . esc_attr( $class ) . '"' . ( $id ? ' id="' . esc_attr( $id ) . '"' : '' ) . ( $upload ? ' enctype="multipart/form-data"' : '' ) . '>';
 	echo '<input type="hidden" name="action" value="lk"><input type="hidden" name="do" value="' . esc_attr( $do ) . '">';
 	wp_nonce_field( 'lk_' . $do );
 }
@@ -529,6 +536,7 @@ function lk_task_modal( $modal_id, $title, $values = array(), $groups = array() 
 			'assignee'       => get_current_user_id(),
 			'client_visible' => 0,
 			'needs_approval' => 0,
+			'client_id'      => 0,
 		)
 	);
 	lk_modal_start( $modal_id, $title );
@@ -546,6 +554,7 @@ function lk_task_modal( $modal_id, $title, $values = array(), $groups = array() 
 		echo '<option value="' . esc_attr( $g ) . '">';
 	}
 	echo '</datalist></label>';
+	lk_select( 'client_id', 'Cliente', lk_client_options( '— nenhum —' ), $v['client_id'] );
 	lk_input( 'due_date', 'Prazo', $v['due_date'], 'date' );
 	lk_select( 'priority', 'Urgência', lk_priorities(), $v['priority'] );
 	lk_select( 'assignee', 'Responsável', lk_team_options(), $v['assignee'] );

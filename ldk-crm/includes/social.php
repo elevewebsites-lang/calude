@@ -17,9 +17,113 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'LK_GRAPH', 'v21.0' );
 
+// Chave secreta do app (Facebook), fixa no código: preencher entre as aspas.
+if ( ! defined( 'LK_META_SECRET_FIXA' ) ) {
+	define( 'LK_META_SECRET_FIXA', 'b978a3fe4b634bca4fda290f6f785989' );
+}
+
+// Chave secreta do app do Instagram, fixa no código a pedido (não compartilhe este arquivo nem o zip).
+if ( ! defined( 'LK_IG_SECRET_FIXA' ) ) {
+	define( 'LK_IG_SECRET_FIXA', '01ddf4ec8675f0946f1eb97a1f84df0d' );
+}
+
+/** Chaves de redes guardadas em texto puro (a criptografia estava corrompendo o valor). */
+function lk_plain_secret_keys() {
+	return array( 'ig_app_secret', 'meta_app_secret', 'linkedin_client_secret', 'google_client_secret' );
+}
+
+/** Todas as chaves secretas das Configurações (para o botão Apagar). */
+function lk_all_secret_keys() {
+	return array( 'google_client_secret', 'smtp_pass', 'anthropic_key', 'gemini_key', 'groq_key', 'mistral_key', 'openrouter_key', 'places_key', 'melhorenvio_token', 'ml_secret', 'shopee_key', 'ig_app_secret', 'meta_app_secret', 'meta_ads_token', 'voz_turn_pass', 'linkedin_client_secret' );
+}
+
+/** Linha "Chave salva: N caracteres" + botão Apagar, lendo do mesmo lugar que a conexão usa. */
+function lk_secret_row( $key ) {
+	$stored = (string) lk_setting( $key );
+	$len    = strlen( lk_secret( $key ) );
+	echo '<p class="muted small" style="margin:4px 0 0">';
+	if ( 'meta_app_secret' === $key && defined( 'LK_META_SECRET_FIXA' ) && '' !== LK_META_SECRET_FIXA ) {
+		return trim( LK_META_SECRET_FIXA ); // chave fixa no código
+	}
+	if ( ( 'ig_app_secret' === $key && '' !== LK_IG_SECRET_FIXA ) || ( 'meta_app_secret' === $key && '' !== LK_META_SECRET_FIXA ) ) {
+		echo '<strong>Chave fixa no código: ' . (int) $len . ' caracteres</strong> (usada na conexão; o campo acima fica sem efeito).';
+	} elseif ( '' === $stored ) {
+		echo 'Nenhuma chave salva.';
+	} else {
+		echo '<strong>Chave salva: ' . (int) $len . ' caracteres</strong>' . ( 0 === $len ? ' (ilegível: cole de novo)' : '' ) . ' · <button type="submit" form="secdel-' . esc_attr( $key ) . '" class="btn btn--ghost btn--sm" onclick="return confirm(\'Apagar a chave salva?\')">Apagar chave salva</button>';
+	}
+	echo '</p>';
+	$GLOBALS['lk_secret_rows'][ $key ] = true;
+}
+
+/** Formulários de apagar (ficam fora do formulário principal, ligados pelo atributo form). */
+function lk_secret_forms() {
+	foreach ( array_keys( (array) ( $GLOBALS['lk_secret_rows'] ?? array() ) ) as $key ) {
+		echo '<form id="secdel-' . esc_attr( $key ) . '" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" hidden><input type="hidden" name="action" value="lk"><input type="hidden" name="do" value="secret_delete"><input type="hidden" name="key" value="' . esc_attr( $key ) . '">';
+		wp_nonce_field( 'lk_secret_delete', '_wpnonce', false );
+		echo '</form>';
+	}
+}
+
+function lk_do_secret_delete() {
+	lk_require( 'admin' );
+	$key = sanitize_key( lk_in( 'key' ) );
+	if ( ! in_array( $key, lk_all_secret_keys(), true ) ) {
+		lk_back( 'Campo inválido.', 'erro' );
+	}
+	$s = get_option( 'lk_settings', array() );
+	$s = is_array( $s ) ? $s : array();
+	$s[ $key ] = '';
+	update_option( 'lk_settings', $s );
+	lk_back( 'Chave apagada. Cole a nova e salve.' );
+}
+
+/**
+ * Lê uma chave secreta guardada (criptografada) e devolve o texto puro, sem espaços.
+ * Se o valor foi criptografado mais de uma vez, desembrulha até sair o texto de verdade.
+ */
+function lk_secret( $key ) {
+	if ( 'ig_app_secret' === $key && defined( 'LK_IG_SECRET_FIXA' ) && '' !== LK_IG_SECRET_FIXA ) {
+		return trim( LK_IG_SECRET_FIXA ); // chave fixa no código: tem prioridade sobre o que estiver salvo
+	}
+	$v = (string) lk_setting( $key );
+	for ( $i = 0; $i < 5 && '' !== $v && preg_match( '/^[so]:[A-Za-z0-9+\/=]{20,}$/', $v ); $i++ ) {
+		$v = (string) lk_decrypt( $v );
+	}
+	return trim( $v );
+}
+
+
 function lk_social_redirect( $net ) {
+	// O login do Instagram descarta tudo depois do "?": o retorno usa uma rota REST sem parâmetros (cliente e rede vão dentro do "state").
+	if ( 'instagram' === $net ) {
+		return rest_url( 'lk/v1/social/instagram' );
+	}
 	return admin_url( 'admin-post.php?action=lk_social_cb&net=' . $net );
 }
+
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_route(
+			'lk/v1',
+			'/social/instagram',
+			array(
+				'methods'             => 'GET',
+				'permission_callback' => '__return_true', // o "state" sorteado (15 min) prova a origem
+				'callback'            => function ( $request ) {
+					$_GET['net'] = 'instagram'; // phpcs:ignore WordPress.Security.NonceVerification
+					$GLOBALS['lk_raw_code'] = (string) $request->get_param( 'code' ); // sem sanitize: o código vai ao Instagram como chegou
+					$st = get_transient( 'lk_soc_' . sanitize_text_field( wp_unslash( $_GET['state'] ?? '' ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+					if ( $st && empty( $st['public'] ) && ! empty( $st['user'] ) ) {
+						wp_set_current_user( (int) $st['user'] ); // a REST zera o usuário sem nonce; o state guarda quem iniciou
+					}
+					lk_social_cb(); // termina com redirecionamento
+				},
+			)
+		);
+	}
+);
 
 function lk_social_account( $client_id, $net ) {
 	$rows = lk_rows( 'social_accounts', 'client_id = %d AND network = %s', array( $client_id, $net ), 'id DESC LIMIT 1' );
@@ -49,10 +153,16 @@ function lk_social_auth_url( $net, $st ) {
 		if ( ! lk_setting( 'ig_app_id' ) ) {
 			return new WP_Error( 'lk', 'Preencha o Instagram App ID e o Secret em Configurações → Instagram, Facebook e Meta Ads.' );
 		}
+		$ru_now = lk_social_redirect( 'instagram' );
+		$saved  = get_transient( 'lk_soc_' . $st );
+		if ( is_array( $saved ) ) {
+			$saved['ru'] = $ru_now; // a troca do código usa exatamente este texto
+			set_transient( 'lk_soc_' . $st, $saved, 900 );
+		}
 		return add_query_arg(
 			array(
 				'client_id'     => lk_setting( 'ig_app_id' ),
-				'redirect_uri'  => rawurlencode( lk_social_redirect( 'instagram' ) ),
+				'redirect_uri'  => rawurlencode( $ru_now ),
 				'response_type' => 'code',
 				'scope'         => 'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_insights',
 				'state'         => $st,
@@ -99,6 +209,9 @@ function lk_social_go() {
 add_action( 'admin_post_lk_social_cb', 'lk_social_cb' );
 add_action( 'admin_post_nopriv_lk_social_cb', 'lk_social_cb' ); // cliente conectando pelo link (sem login no CRM)
 function lk_social_cb() {
+	static $runs = 0;
+	$runs++;
+	$GLOBALS['lk_cb_runs'] = $runs;
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- conferido pelo "state".
 	$net  = sanitize_key( $_GET['net'] ?? '' );
 	$code = sanitize_text_field( wp_unslash( $_GET['code'] ?? '' ) );
@@ -120,7 +233,7 @@ function lk_social_cb() {
 	if ( 'google' === $net || 'linkedin' === $net ) {
 		$res = lk_social_more_connect( $st['net'] ?? $net, $cid, $code );
 	} else {
-		$res = 'instagram' === $net ? lk_ig_connect( $cid, $code ) : lk_fb_connect( $cid, $code );
+		$res = 'instagram' === $net ? lk_ig_connect( $cid, $code, (string) ( $st['ru'] ?? '' ) ) : lk_fb_connect( $cid, $code );
 	}
 	if ( $pub ) {
 		if ( ! is_wp_error( $res ) && ( get_transient( 'lk_fbpages_' . $cid ) || lk_social_pick_pending( $cid ) ) ) {
@@ -150,39 +263,84 @@ function lk_http_json( $method, $url, $body = null, $headers = array() ) {
 	return is_array( $json ) ? $json : array();
 }
 
-function lk_ig_connect( $cid, $code ) {
-	$short = lk_http_json(
-		'POST',
+/**
+ * Diário das chamadas ao Instagram (últimas 20 linhas, visível em Configurações).
+ */
+function lk_social_log( $line ) {
+	$log   = get_option( 'lk_social_log', array() );
+	$log   = is_array( $log ) ? $log : array();
+	$log[] = gmdate( 'd/m H:i:s' ) . ' · callback#' . (int) ( $GLOBALS['lk_cb_runs'] ?? 0 ) . ' · ' . $line;
+	update_option( 'lk_social_log', array_slice( $log, -20 ), false );
+}
+
+function lk_ig_connect( $cid, $code, $ru = '' ) {
+	$raw   = isset( $GLOBALS['lk_raw_code'] ) ? (string) $GLOBALS['lk_raw_code'] : (string) $code;
+	$code  = trim( preg_replace( '/#_.*$/', '', $raw ) );
+	$ru    = $ru ? $ru : lk_social_redirect( 'instagram' );
+	$cidk  = trim( (string) lk_setting( 'ig_app_id' ) );
+	$sec   = lk_secret( 'ig_app_secret' );
+	if ( ! preg_match( '/^[0-9a-f]{32}$/i', $sec ) ) {
+		$st0 = (string) lk_setting( 'ig_app_secret' );
+		lk_social_log( 'client_secret ilegível: lido ' . strlen( $sec ) . ' car. (esperado 32 hexadecimais); guardado ' . strlen( $st0 ) . ' car., começa com "' . substr( $st0, 0, 2 ) . '"; Instagram não foi chamado' );
+		return new WP_Error( 'lk', 'Chave secreta do Instagram não pôde ser lida. Cole de novo em Configurações. [secret lido: ' . strlen( $sec ) . ' car.; esperado: 32]' );
+	}
+	$seen  = 'lk_igcode_' . md5( $code );
+	$prev  = get_transient( $seen );
+	if ( $prev ) {
+		// Mesmo código de novo: não reenvia ao Instagram (só vale uma vez). Mostra o resultado da primeira chamada.
+		lk_social_log( 'code repetido ignorado; resultado da 1ª chamada: ' . $prev );
+		return new WP_Error( 'lk', 'Instagram (1ª chamada): ' . $prev );
+	}
+	$resp = wp_remote_post(
 		'https://api.instagram.com/oauth/access_token',
 		array(
-			'client_id'     => lk_setting( 'ig_app_id' ),
-			'client_secret' => lk_decrypt( lk_setting( 'ig_app_secret' ) ),
-			'grant_type'    => 'authorization_code',
-			'redirect_uri'  => lk_social_redirect( 'instagram' ),
-			'code'          => $code,
+			'timeout' => 60,
+			'body'    => array(
+				'client_id'     => $cidk,
+				'client_secret' => $sec,
+				'grant_type'    => 'authorization_code',
+				'redirect_uri'  => $ru,
+				'code'          => $code,
+			),
 		)
 	);
-	if ( is_wp_error( $short ) ) {
-		return new WP_Error( 'lk', 'Instagram: ' . $short->get_error_message() . ' A conta foi adicionada como testadora do app?' );
+	$http = is_wp_error( $resp ) ? 'erro de rede' : (int) wp_remote_retrieve_response_code( $resp );
+	$body = is_wp_error( $resp ) ? $resp->get_error_message() : (string) wp_remote_retrieve_body( $resp );
+	lk_social_log( 'POST api.instagram.com/oauth/access_token · client_id=' . $cidk . ' · redirect_uri=' . $ru . ' · code=' . strlen( $code ) . ' car. (' . substr( $code, 0, 6 ) . '…) · client_secret=' . strlen( $sec ) . ' car. · HTTP ' . $http . ' · ' . mb_substr( $body, 0, 600 ) );
+	$json = is_wp_error( $resp ) ? array() : json_decode( $body, true );
+	if ( is_array( $json ) && empty( $json['access_token'] ) && ! empty( $json['data'][0]['access_token'] ) ) {
+		$json = $json['data'][0]; // formato antigo da resposta
 	}
-	$long = lk_http_json( 'GET', add_query_arg( array( 'grant_type' => 'ig_exchange_token', 'client_secret' => lk_decrypt( lk_setting( 'ig_app_secret' ) ), 'access_token' => $short['access_token'] ), 'https://graph.instagram.com/access_token' ) );
+	if ( is_wp_error( $resp ) || (int) $http >= 300 || ! is_array( $json ) || isset( $json['error_message'] ) || isset( $json['error'] ) || empty( $json['access_token'] ) ) {
+		set_transient( $seen, 'HTTP ' . $http . ' ' . mb_substr( $body, 0, 500 ), 600 );
+		return new WP_Error( 'lk', 'Instagram: HTTP ' . $http . ' · resposta bruta: ' . mb_substr( $body, 0, 500 ) . ' [redirect_uri: ' . $ru . '; app: ' . $cidk . '; secret: ' . strlen( $sec ) . ' car.; code: ' . strlen( $code ) . ' car.; callback#' . (int) ( $GLOBALS['lk_cb_runs'] ?? 0 ) . ']' );
+	}
+	set_transient( $seen, 'usado com sucesso', 600 );
+	$short = $json;
+	$long = lk_http_json( 'GET', add_query_arg( array( 'grant_type' => 'ig_exchange_token', 'client_secret' => $sec, 'access_token' => $short['access_token'] ), 'https://graph.instagram.com/access_token' ) );
 	if ( is_wp_error( $long ) ) {
-		return $long;
+		lk_social_log( 'GET graph.instagram.com/access_token (token longo) · ' . $long->get_error_message() );
+		return new WP_Error( 'lk', 'Instagram: o token curto veio, mas a troca pelo token longo falhou. Resposta: ' . $long->get_error_message() );
 	}
+	lk_social_log( 'token longo ok' );
 	$me = lk_http_json( 'GET', 'https://graph.instagram.com/' . LK_GRAPH . '/me?fields=user_id,username,name,profile_picture_url,account_type,followers_count&access_token=' . rawurlencode( $long['access_token'] ) );
 	if ( is_wp_error( $me ) ) {
-		return $me;
+		lk_social_log( 'GET graph.instagram.com/me · ' . $me->get_error_message() );
+		return new WP_Error( 'lk', 'Instagram: token ok, mas não consegui ler o perfil. Resposta: ' . $me->get_error_message() );
 	}
-	lk_social_store( $cid, 'instagram', $me['user_id'] ?? $me['id'], $me['username'] ?? '', $me['name'] ?? '', $me['profile_picture_url'] ?? '', $long['access_token'], time() + (int) ( $long['expires_in'] ?? 5184000 ), array( 'type' => $me['account_type'] ?? '', 'followers' => (int) ( $me['followers_count'] ?? 0 ) ) );
-	return 'Instagram @' . ( $me['username'] ?? '' ) . ' conectado.';
+	$saved = lk_social_store( $cid, 'instagram', $me['user_id'] ?? $me['id'], $me['username'] ?? '', $me['name'] ?? '', $me['profile_picture_url'] ?? '', $long['access_token'], time() + (int) ( $long['expires_in'] ?? 5184000 ), array( 'type' => $me['account_type'] ?? '', 'followers' => (int) ( $me['followers_count'] ?? 0 ) ) );
+	if ( is_wp_error( $saved ) ) {
+		return $saved;
+	}
+	return 'Instagram @' . ( $me['username'] ?? '' ) . ' conectado e gravado para o cliente #' . (int) $cid . '.';
 }
 
 function lk_fb_connect( $cid, $code ) {
-	$tok = lk_http_json( 'GET', add_query_arg( array( 'client_id' => lk_setting( 'meta_app_id' ), 'client_secret' => lk_decrypt( lk_setting( 'meta_app_secret' ) ), 'redirect_uri' => lk_social_redirect( 'facebook' ), 'code' => $code ), 'https://graph.facebook.com/' . LK_GRAPH . '/oauth/access_token' ) );
+	$tok = lk_http_json( 'GET', add_query_arg( array( 'client_id' => lk_setting( 'meta_app_id' ), 'client_secret' => lk_secret( 'meta_app_secret' ), 'redirect_uri' => rawurlencode( lk_social_redirect( 'facebook' ) ), 'code' => $code ), 'https://graph.facebook.com/' . LK_GRAPH . '/oauth/access_token' ) );
 	if ( is_wp_error( $tok ) ) {
 		return $tok;
 	}
-	$long  = lk_http_json( 'GET', add_query_arg( array( 'grant_type' => 'fb_exchange_token', 'client_id' => lk_setting( 'meta_app_id' ), 'client_secret' => lk_decrypt( lk_setting( 'meta_app_secret' ) ), 'fb_exchange_token' => $tok['access_token'] ), 'https://graph.facebook.com/' . LK_GRAPH . '/oauth/access_token' ) );
+	$long  = lk_http_json( 'GET', add_query_arg( array( 'grant_type' => 'fb_exchange_token', 'client_id' => lk_setting( 'meta_app_id' ), 'client_secret' => lk_secret( 'meta_app_secret' ), 'fb_exchange_token' => $tok['access_token'] ), 'https://graph.facebook.com/' . LK_GRAPH . '/oauth/access_token' ) );
 	$user  = is_wp_error( $long ) ? $tok['access_token'] : $long['access_token'];
 	$pages = lk_http_json( 'GET', 'https://graph.facebook.com/' . LK_GRAPH . '/me/accounts?fields=id,name,access_token,picture{url}&limit=100&access_token=' . rawurlencode( $user ) );
 	if ( is_wp_error( $pages ) || empty( $pages['data'] ) ) {
@@ -191,7 +349,10 @@ function lk_fb_connect( $cid, $code ) {
 	// Uma página: conecta direto. Várias: guarda e pede para escolher.
 	if ( 1 === count( $pages['data'] ) ) {
 		$pg = $pages['data'][0];
-		lk_social_store( $cid, 'facebook', $pg['id'], '', $pg['name'], $pg['picture']['data']['url'] ?? '', $pg['access_token'], 0 );
+		$saved = lk_social_store( $cid, 'facebook', $pg['id'], '', $pg['name'], $pg['picture']['data']['url'] ?? '', $pg['access_token'], 0 );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
+		}
 		return 'Página "' . $pg['name'] . '" conectada.';
 	}
 	set_transient( 'lk_fbpages_' . $cid, lk_encrypt( wp_json_encode( $pages['data'] ) ), 900 );
@@ -227,11 +388,27 @@ function lk_social_store( $cid, $net, $account, $username, $name, $avatar, $toke
 		'status'     => 'ok',
 		'error'      => '',
 	);
-	if ( $old ) {
-		lk_update( 'social_accounts', $old->id, $data );
-	} else {
-		lk_insert( 'social_accounts', $data );
+	global $wpdb;
+	for ( $try = 0; $try < 2; $try++ ) {
+		$wpdb->last_error = '';
+		if ( $old ) {
+			$ok = false !== lk_update( 'social_accounts', $old->id, $data );
+		} else {
+			$ok = (bool) lk_insert( 'social_accounts', $data );
+		}
+		if ( $ok && '' === (string) $wpdb->last_error ) {
+			// Confere lendo de volta, do mesmo lugar que a ficha do cliente usa.
+			$back = lk_social_account( $cid, $net );
+			if ( $back && (string) $back->account_id === (string) $account && 'ok' === $back->status ) {
+				lk_social_log( 'conta gravada: cliente ' . (int) $cid . ' · ' . $net . ' · @' . $username . ' · vence ' . ( $expires ? gmdate( 'd/m/Y', $expires ) : '—' ) );
+				return true;
+			}
+		}
+		lk_social_log( 'FALHA ao gravar a conta (tentativa ' . ( $try + 1 ) . '): ' . $wpdb->last_error );
+		$data['avatar'] = ''; // endereço da foto muito longo era o suspeito: tenta sem a foto
+		$old = lk_social_account( $cid, $net );
 	}
+	return new WP_Error( 'lk', 'A conta autorizou, mas não foi possível gravar no painel. Erro do banco: ' . ( $wpdb->last_error ? $wpdb->last_error : 'nenhum (a leitura de volta não achou o registro)' ) );
 }
 
 function lk_do_social_disconnect() {
@@ -320,14 +497,19 @@ function lk_ig_publish( $acc, $p, $urls ) {
 	$isv  = function ( $u ) {
 		return (bool) preg_match( '/\.(mp4|mov|m4v|webm)(\?|$)/i', $u );
 	};
-	$make = function ( $args ) use ( $base, $tok ) {
+	// Collab: o perfil convidado recebe o convite para aparecer como coautor (até 3, separados por vírgula).
+	$collab = array_values( array_filter( array_map( function ( $h ) { return ltrim( trim( $h ), '@' ); }, explode( ',', (string) ( $p->collab ?? '' ) ) ) ) );
+	$make = function ( $args ) use ( $base, $tok, $collab ) {
+		if ( $collab && empty( $args['is_carousel_item'] ) && 'STORIES' !== ( $args['media_type'] ?? '' ) ) {
+			$args['collaborators'] = wp_json_encode( array_slice( $collab, 0, 3 ) );
+		}
 		return lk_http_json( 'POST', $base . '/media', $args + array( 'access_token' => $tok ) );
 	};
 	if ( 'story' === $p->format ) {
 		$c = $make( array( 'media_type' => 'STORIES', $isv( $urls[0] ) ? 'video_url' : 'image_url' => $urls[0] ) );
 	} elseif ( count( $urls ) > 1 || 'carrossel' === $p->format ) {
 		$kids = array();
-		foreach ( array_slice( $urls, 0, 10 ) as $u ) {
+		foreach ( array_slice( $urls, 0, 20 ) as $u ) {
 			$k = $make( $isv( $u ) ? array( 'media_type' => 'VIDEO', 'video_url' => $u, 'is_carousel_item' => 'true' ) : array( 'image_url' => $u, 'is_carousel_item' => 'true' ) );
 			if ( is_wp_error( $k ) ) {
 				return $k;
@@ -447,19 +629,12 @@ add_action(
 
 add_action( 'lk_publish_tick', 'lk_publish_due' );
 function lk_publish_due() {
-	if ( function_exists( 'lk_manage_only' ) && lk_manage_only() ) {
-		// Modo gerenciamento: o sistema não publica. O post agendado no mLabs vira "Publicado" sozinho quando chega a hora.
-		foreach ( lk_posts( 'p.stage = %s AND p.scheduled_at IS NOT NULL AND p.scheduled_at <= %s', array( lk_stage_for( 'agendado' ), lk_now() ), 'p.scheduled_at LIMIT 50' ) as $p ) {
-			lk_post_move( $p, lk_stage_for( 'publicado' ), 'Marcado como publicado no horário agendado (mLabs).' );
-		}
-		return;
-	}
 	if ( get_transient( 'lk_publishing' ) ) {
 		return;
 	}
 	set_transient( 'lk_publishing', 1, 10 * MINUTE_IN_SECONDS );
 	update_option( 'lk_last_publish_tick', time(), false );
-	foreach ( lk_posts( 'p.stage = %s AND p.scheduled_at IS NOT NULL AND p.scheduled_at <= %s', array( lk_stage_for( 'agendado' ), lk_now() ), 'p.scheduled_at LIMIT 5' ) as $p ) {
+	foreach ( lk_posts( 'p.stage = %s AND p.paused = 0 AND p.scheduled_at IS NOT NULL AND p.scheduled_at <= %s', array( lk_stage_for( 'agendado' ), lk_now() ), 'p.scheduled_at LIMIT 5' ) as $p ) {
 		lk_publish_post( $p );
 	}
 	delete_transient( 'lk_publishing' );

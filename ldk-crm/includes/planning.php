@@ -24,6 +24,7 @@ function lk_plan_status_label( $status ) {
 	$map = array(
 		'rascunho' => 'montando',
 		'revisao'  => 'em revisão (interna)',
+		'pronto'   => 'revisado · o atendimento vai enviar',
 		'enviado'  => 'aguardando o cliente',
 		'ajustes'  => 'cliente pediu ajustes',
 		'aprovado' => 'aprovado',
@@ -56,7 +57,9 @@ function lk_plan_posts( $plan ) {
 
 function lk_plan_message( $plan, $client ) {
 	$first = $client->name ? strtok( $client->name, ' ' ) : '';
-	return 'Olá' . ( $first ? ', ' . $first : '' ) . '! 😊 O planejamento de conteúdo de ' . lk_month_label( $plan->period ) . ' está pronto. Dá uma olhada nos temas e nas legendas, comente o que quiser e aprove por aqui: ' . lk_plan_url( $plan );
+	return 'Olá' . ( $first ? ', ' . $first : '' ) . "! 😊\n\n" .
+		"O planejamento de conteúdo de *" . lk_month_label( $plan->period ) . "* está pronto.\n\n" .
+		"Dá uma olhada nos temas e nas legendas, comente o que quiser e aprove por aqui:\n" . lk_plan_url( $plan );
 }
 
 /**
@@ -142,18 +145,16 @@ function lk_do_plan_meta_save() {
  * Aviso de pacote: faltando ou sobrando artes no mês.
  */
 function lk_plan_quota_alert( $client, $ym ) {
-	if ( ! $client || (int) $client->posts_quota <= 0 ) {
-		return '';
+	$msgs = array();
+	foreach ( lk_client_quotas( $client, $ym ) as $qd ) {
+		list( $lab, $n, $q ) = $qd;
+		if ( $n < $q ) {
+			$msgs[] = 'Faltam ' . ( $q - $n ) . ' ' . $lab . ' para fechar o pacote de ' . $q . ' do mês.';
+		} elseif ( $n > $q ) {
+			$msgs[] = 'Passou ' . ( $n - $q ) . ' ' . $lab . ' do pacote de ' . $q . ' do mês. Confirme com o atendimento se é extra.';
+		}
 	}
-	$n = lk_client_month_count( $client->id, $ym );
-	$q = (int) $client->posts_quota;
-	if ( $n < $q ) {
-		return 'Faltam ' . ( $q - $n ) . ' arte(s) para fechar o pacote de ' . $q . ' do mês.';
-	}
-	if ( $n > $q ) {
-		return 'Passou ' . ( $n - $q ) . ' arte(s) do pacote de ' . $q . ' do mês. Confirme com o atendimento se é extra.';
-	}
-	return '';
+	return implode( ' ', $msgs );
 }
 
 /**
@@ -179,9 +180,8 @@ function lk_do_plan_send() {
 		if ( $gate ) {
 			lk_back( $gate, 'erro' );
 		}
-		lk_update( 'plans', $plan->id, array( 'reviewed_by' => get_current_user_id(), 'reviewed_at' => lk_now(), 'review_note' => '' ) );
-		lk_plan_send_client( lk_get( 'plans', $plan->id ) );
-		lk_back( 'Revisado e enviado para a cliente.' );
+		lk_plan_mark_ready( lk_get( 'plans', $plan->id ) );
+		lk_back( 'Revisado ✓ O atendimento recebeu a tarefa de enviar ao cliente.' );
 	}
 	lk_update( 'plans', $plan->id, array( 'status' => 'revisao', 'review_note' => '' ) );
 	$url = lk_panel_url( 'planejamento', 0, array( 'cliente' => $client->id, 'mes' => $ym ) );
@@ -217,13 +217,12 @@ function lk_do_plan_review_ok() {
 	if ( $gate ) {
 		lk_back( $gate, 'erro' );
 	}
-	lk_update( 'plans', $plan->id, array( 'reviewed_by' => get_current_user_id(), 'reviewed_at' => lk_now(), 'review_note' => '' ) );
-	lk_plan_send_client( lk_get( 'plans', $plan->id ) );
+	lk_plan_mark_ready( lk_get( 'plans', $plan->id ) );
 	$client = lk_get( 'clients', $plan->client_id );
-	foreach ( array_unique( array_filter( array( (int) $client->social_id, (int) $client->atendimento_id, (int) $plan->created_by ) ) ) as $uid ) {
-		lk_notify( $uid, '✅ Planejamento de ' . lk_client_label( $client ) . ' revisado e enviado para a cliente.', lk_panel_url( 'planejamento', 0, array( 'cliente' => $client->id, 'mes' => $plan->period ) ) );
+	foreach ( array_unique( array_filter( array( (int) $client->social_id, (int) $plan->created_by ) ) ) as $uid ) {
+		lk_notify( $uid, '✅ Planejamento de ' . lk_client_label( $client ) . ' revisado. O atendimento vai enviar ao cliente.', lk_panel_url( 'planejamento', 0, array( 'cliente' => $client->id, 'mes' => $plan->period ) ) );
 	}
-	lk_back( 'Revisado ✓ e enviado para a cliente (painel + e-mail). Reforce pelo WhatsApp.' );
+	lk_back( 'Revisado ✓ O atendimento recebeu a tarefa de enviar ao cliente (e-mail + WhatsApp).' );
 }
 
 /**
@@ -293,6 +292,7 @@ function lk_plan_approve( $plan, $by_client = true ) {
 		if ( $p->stage === lk_stage_for( 'planejamento' ) ) {
 			lk_update( 'posts', $p->id, array( 'plan_status' => 'ok' ) );
 			lk_post_move( $p, lk_stage_for( 'design' ), $by_client ? 'Planejamento aprovado pelo cliente.' : 'Planejamento aprovado manualmente por ' . wp_get_current_user()->display_name . '.' );
+			lk_flow_after_plan_ok( lk_get( 'posts', $p->id ) );
 			$n++;
 		}
 	}
@@ -335,10 +335,12 @@ function lk_plan_answer( $plan, $decision, $comments, $general, $decs = array() 
 		if ( 'ajuste' === $dec ) {
 			lk_update( 'posts', $p->id, array( 'plan_status' => 'ajuste' ) );
 			lk_post_log( $p->id, 'A cliente pediu ajuste no planejamento.' );
+			lk_flow_plan_adjust_task( lk_get( 'posts', $p->id ), $body );
 			$adj++;
 		} else {
 			lk_update( 'posts', $p->id, array( 'plan_status' => 'ok' ) );
 			lk_post_move( $p, lk_stage_for( 'design' ), $by ? 'Aprovado pela cliente no planejamento.' : 'Aprovado no planejamento por ' . wp_get_current_user()->display_name . '.' );
+			lk_flow_after_plan_ok( lk_get( 'posts', $p->id ) );
 			$ok++;
 		}
 	}
@@ -378,7 +380,7 @@ add_action(
 		header( 'X-Robots-Tag: noindex, nofollow', true );
 		$rows = lk_rows( 'plans', 'token = %s', array( sanitize_text_field( get_query_var( 'lk_token' ) ) ) );
 		$plan = $rows ? $rows[0] : null;
-		if ( ! $plan || ( in_array( $plan->status, array( 'rascunho', 'revisao' ), true ) && ! lk_is_team() ) ) {
+		if ( ! $plan || ( in_array( $plan->status, array( 'rascunho', 'revisao', 'pronto' ), true ) && ! lk_is_team() ) ) {
 			lk_render( 'public/indisponivel' );
 		}
 		$msg = '';

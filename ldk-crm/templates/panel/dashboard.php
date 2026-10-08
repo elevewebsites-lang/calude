@@ -37,7 +37,7 @@ $today_posts = lk_posts( 'DATE(p.scheduled_at) = %s', array( $today ), 'p.schedu
 $where = "t.status <> 'done' AND t.due_date IS NOT NULL AND t.due_date <= %s AND t.assignee = %d";
 $tasks = lk_tasks( $where, array( $today, $me ), "t.due_date, FIELD(t.priority, 'urgente', 'alta', 'normal', 'baixa'), t.id" );
 $pend  = $fin ? lk_billing_pending() : array();
-$nocon = lk_manage_only() ? array() : array_filter( lk_clients(), function ( $c ) { return ! isset( lk_social_accounts( $c->id )['instagram'] ); } );
+$nocon = array_filter( lk_clients(), function ( $c ) { return ! isset( lk_social_accounts( $c->id )['instagram'] ); } );
 
 // Gráficos: publicações 14 dias atrás → 14 dias à frente, tarefas concluídas (7 dias) e posts por etapa.
 $win_from = gmdate( 'Y-m-d', strtotime( $today . ' -14 day' ) );
@@ -128,12 +128,21 @@ $vis['perfil'] = true; // sempre no topo: nome, função, nível
 	<section class="dsh-stats" data-dash="stats">
 		<a class="dsh-stat dsh-stat--a" href="<?php echo esc_url( lk_panel_url( 'conteudo', 0, array( 'meus' => 1, 'ver' => 'lista' ) ) ); ?>"><span class="dsh-ic"><?php echo lk_icon( 'alvo', 20 ); // phpcs:ignore ?></span><strong><?php echo count( $mine ); ?></strong><span>Comigo agora</span><small>posts na minha etapa</small></a>
 		<div class="dsh-stat dsh-stat--b"><span class="dsh-ic"><?php echo lk_icon( 'relogio', 20 ); // phpcs:ignore ?></span><strong><?php echo count( $wait ); ?></strong><span>Aguardando cliente</span><small>em aprovação</small></div>
-		<div class="dsh-stat dsh-stat--c<?php echo $late ? ' is-alert' : ''; ?>"><span class="dsh-ic"><?php echo lk_icon( 'sino', 20 ); // phpcs:ignore ?></span><strong><?php echo count( $late ); ?></strong><span>Atrasados</span><small>passou da data e não está agendado</small></div>
+		<a class="dsh-stat dsh-stat--c<?php echo $late ? ' is-alert' : ''; ?>" href="<?php echo esc_url( lk_panel_url( 'tarefas', 0, array( 'col' => 'atrasadas', 'quem' => lk_is_admin() ? 'todas' : 'minhas' ) ) ); ?>" title="Ver as atrasadas"><span class="dsh-ic"><?php echo lk_icon( 'sino', 20 ); // phpcs:ignore ?></span><strong><?php echo count( $late ); ?></strong><span>Atrasados</span><small>passou da data e não está agendado</small></a>
 		<?php if ( $fin ) : ?>
 			<a class="dsh-stat dsh-stat--d" href="<?php echo esc_url( lk_panel_url( 'cobrancas' ) ); ?>"><span class="dsh-ic"><?php echo lk_icon( 'financeiro', 20 ); // phpcs:ignore ?></span><strong class="money"><?php echo esc_html( lk_money( lk_billing_mrr() ) ); ?></strong><span>Recorrente</span><small><?php echo count( $pend ); ?> cobrança(s) pendente(s)</small></a>
 		<?php else : ?>
 			<div class="dsh-stat dsh-stat--d"><span class="dsh-ic"><?php echo lk_icon( 'check', 20 ); // phpcs:ignore ?></span><strong><?php echo count( $today_posts ); ?></strong><span>Hoje</span><small>publicações</small></div>
 		<?php endif; ?>
+	</section>
+	<?php $tkc = lk_task_board_counts( get_current_user_id() ); ?>
+	<section class="dsh-card dsh-tk" data-dash="stats-prazo">
+		<div class="dsh-card-head"><h3>Minhas tarefas por prazo</h3><a class="small" href="<?php echo esc_url( lk_panel_url( 'tarefas' ) ); ?>">abrir tudo</a></div>
+		<div class="tk-chips">
+			<?php foreach ( lk_task_cols() as $ck => $cl ) : ?>
+				<a class="tk-chip tk-chip--<?php echo esc_attr( $ck ); ?><?php echo $tkc[ $ck ] ? '' : ' is-zero'; ?>" href="<?php echo esc_url( lk_panel_url( 'tarefas', 0, array( 'col' => $ck ) ) ); ?>"><strong><?php echo (int) $tkc[ $ck ]; ?></strong><span><?php echo esc_html( $cl ); ?></span></a>
+			<?php endforeach; ?>
+		</div>
 	</section>
 <?php $W['stats'] = ob_get_clean(); endif; ?>
 <?php if ( isset( $vis['chart'] ) ) : ob_start(); ?>
@@ -185,7 +194,7 @@ $vis['perfil'] = true; // sempre no topo: nome, função, nível
 <?php if ( isset( $vis['atrasados'] ) ) : ob_start(); ?>
 	<?php if ( $late ) : ?>
 		<section class="card">
-			<div class="card-head"><h3>Atrasados</h3><a class="small" href="<?php echo esc_url( lk_panel_url( 'time' ) ); ?>">ver equipe</a></div>
+			<div class="card-head"><h3>Atrasados</h3><span><a class="small" href="<?php echo esc_url( lk_panel_url( 'tarefas', 0, array( 'col' => 'atrasadas', 'quem' => 'todas' ) ) ); ?>">ver tarefas atrasadas</a> · <a class="small" href="<?php echo esc_url( lk_panel_url( 'time' ) ); ?>">equipe</a></span></div>
 			<ul class="mini-list">
 				<?php foreach ( array_slice( $late, 0, 8 ) as $p ) : ?><?php $o = get_userdata( lk_post_owner( $p ) ); ?>
 					<li><a href="<?php echo esc_url( lk_panel_url( 'post', $p->id ) ); ?>"><strong><?php echo esc_html( $p->title ); ?></strong><small><?php echo esc_html( lk_post_client_label( $p ) . ' · com ' . ( $o ? $o->display_name : 'ninguém' ) ); ?></small></a></li>

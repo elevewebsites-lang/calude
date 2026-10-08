@@ -9,16 +9,11 @@ $sec = function ( $key ) use ( $s ) {
 lk_panel_start( 'Configurações', 'config' );
 ?>
 <nav class="config-nav">
-	<a href="#modo">Modo de uso</a><a href="#marca">Marca</a><a href="#producao">Esteira e funil</a><a href="#redes">Redes e anúncios</a><a href="#pagamento">Pagamento</a><a href="#email">E-mail</a><a href="#google">Google</a><a href="#formulario-site">Site</a><a href="#seguranca">Segurança</a>
+	<a href="#marca">Marca</a><a href="#producao">Esteira e funil</a><a href="#redes">Redes e anúncios</a><a href="#pagamento">Pagamento</a><a href="#email">E-mail</a><a href="#google">Google</a><a href="#formulario-site">Site</a><a href="#seguranca">Segurança</a>
 </nav>
 
-<?php lk_form( 'settings_save', 'wizard' ); ?>
-	<section class="card step" id="modo">
-		<div class="step-head"><span class="step-n">00</span><div><h3>Modo de uso</h3><p class="muted small">Define se o sistema só gerencia o trabalho ou também publica nas redes.</p></div></div>
-		<?php lk_select( 'modo_gestao', 'Como usar o CRM agora', array( '1' => 'Só gerenciamento: sem postar e sem vincular redes sociais (o agendamento é feito à mão no mLabs)', '0' => 'Completo: vincular Instagram/Facebook e publicar pelo sistema' ), $s['modo_gestao'] ); ?>
-		<p class="muted small">No modo "só gerenciamento" ficam escondidos: vincular Instagram e outras redes, "Onde publicar" e "Publicar agora". A publicação automática fica parada. Cada post ganha o cartão <strong>Para agendar no mLabs</strong>, com a arte, a legenda e o botão para marcar como agendado.</p>
-	</section>
-
+<?php lk_form( 'settings_save', 'wizard', false, 'cfg-form' ); ?>
+	<button type="submit" form="cfg-form" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">Salvar</button><?php /* primeiro botão do form: o Enter nos campos salva, nunca apaga nem testa */ ?>
 	<section class="card step" id="marca">
 		<div class="step-head"><span class="step-n">01</span><div><h3>Marca e contato</h3></div></div>
 		<div class="grid-2">
@@ -70,17 +65,18 @@ lk_panel_start( 'Configurações', 'config' );
 		<div class="step-head"><span class="step-n">03</span><div><h3>Instagram, Facebook e Meta Ads</h3><p class="muted small">Um app só na Meta (developers.facebook.com), em modo desenvolvimento, com o Instagram de cada cliente como testador. Passo a passo completo em <a href="<?php echo esc_url( lk_panel_url( 'redes' ) ); ?>">Redes conectadas</a>.</p></div></div>
 		<div class="grid-2">
 			<?php lk_input( 'ig_app_id', 'ID do app do Instagram', $s['ig_app_id'], 'text', 'autocomplete="off"' ); ?>
-			<?php lk_input( 'ig_app_secret', 'Chave secreta do app do Instagram', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'ig_app_secret' ) ) . '"' ); ?>
+			<div><?php lk_input( 'ig_app_secret', 'Chave secreta do app do Instagram', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'ig_app_secret' ) ) . '"' );  lk_secret_row( 'ig_app_secret' ); ?></div>
 			<?php lk_input( 'meta_app_id', 'ID do app (Facebook)', $s['meta_app_id'], 'text', 'autocomplete="off"' ); ?>
-			<?php lk_input( 'meta_app_secret', 'Chave secreta do app (Facebook)', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'meta_app_secret' ) ) . '"' ); ?>
+			<div><?php lk_input( 'meta_app_secret', 'Chave secreta do app (Facebook)', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'meta_app_secret' ) ) . '"' );  lk_secret_row( 'meta_app_secret' ); ?></div>
 		</div>
 		<p class="muted small">Redirecionamento Instagram: <code><?php echo esc_html( lk_social_redirect( 'instagram' ) ); ?></code><br>Redirecionamento Facebook: <code><?php echo esc_html( lk_social_redirect( 'facebook' ) ); ?></code></p>
-		<?php lk_input( 'meta_ads_token', 'Token do Meta Ads (usuário do sistema do Business, permissão ads_read)', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'meta_ads_token' ) ) . '"' ); ?>
+		<?php $lg = get_option( 'lk_social_log', array() ); if ( $lg ) : ?><details class="small"><summary>Diário das conexões (últimas <?php echo (int) count( $lg ); ?>)</summary><pre style="white-space:pre-wrap;font-size:11px"><?php echo esc_html( implode( "\n", array_reverse( (array) $lg ) ) ); ?></pre></details><?php endif; ?>
+		<div><?php lk_input( 'meta_ads_token', 'Token do Meta Ads (usuário do sistema do Business, permissão ads_read)', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'meta_ads_token' ) ) . '"' );  lk_secret_row( 'meta_ads_token' ); ?></div>
 		<p class="muted small">Google Ads: lance os números do mês em Tráfego pago até a Google liberar o token de desenvolvedor.</p>
 		<p class="small" style="margin:16px 0 6px"><strong>LinkedIn (Páginas de empresa)</strong> <span class="muted">app em developer.linkedin.com com o produto "Community Management API"</span></p>
 		<div class="grid-2">
 			<?php lk_input( 'linkedin_client_id', 'Client ID do LinkedIn', $s['linkedin_client_id'], 'text', 'autocomplete="off"' ); ?>
-			<?php lk_input( 'linkedin_client_secret', 'Client Secret do LinkedIn', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'linkedin_client_secret' ) ) . '"' ); ?>
+			<div><?php lk_input( 'linkedin_client_secret', 'Client Secret do LinkedIn', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'linkedin_client_secret' ) ) . '"' );  lk_secret_row( 'linkedin_client_secret' ); ?></div>
 		</div>
 		<p class="muted small">Redirecionamento LinkedIn: <code><?php echo esc_html( lk_social_redirect( 'linkedin' ) ); ?></code><br>YouTube e Google Meu Negócio usam o app do Google (passo 02). Adicione este redirecionamento lá: <code><?php echo esc_html( lk_social_redirect( 'google' ) ); ?></code></p>
 	</section>
@@ -109,7 +105,7 @@ lk_panel_start( 'Configurações', 'config' );
 			<?php lk_input( 'smtp_port', 'Porta', $s['smtp_port'], 'number', 'placeholder="465"' ); ?>
 			<?php lk_select( 'smtp_secure', 'Segurança', array( 'ssl' => 'SSL (porta 465)', 'tls' => 'TLS (porta 587)', '' => 'Nenhuma' ), $s['smtp_secure'] ); ?>
 			<?php lk_input( 'smtp_user', 'Usuário (e-mail completo)', $s['smtp_user'], 'email', 'placeholder="suporte@ldkmarketingdigital.com.br" autocomplete="off"' ); ?>
-			<?php lk_input( 'smtp_pass', 'Senha do e-mail', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'smtp_pass' ) ) . '"' ); ?>
+			<div><?php lk_input( 'smtp_pass', 'Senha do e-mail', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'smtp_pass' ) ) . '"' );  lk_secret_row( 'smtp_pass' ); ?></div>
 			<?php lk_input( 'mail_from_name', 'Nome do remetente', $s['mail_from_name'] ); ?>
 		</div>
 		<?php lk_input( 'mail_from', 'E-mail do remetente (se for diferente do usuário)', $s['mail_from'], 'email' ); ?>
@@ -139,9 +135,9 @@ lk_panel_start( 'Configurações', 'config' );
 		<?php endif; ?>
 		<div class="grid-3">
 			<?php lk_input( 'google_client_id', 'Client ID', $s['google_client_id'], 'text', 'autocomplete="off"' ); ?>
-			<?php lk_input( 'google_client_secret', 'Client Secret', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'google_client_secret' ) ) . '"' ); ?>
+			<div><?php lk_input( 'google_client_secret', 'Client Secret', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'google_client_secret' ) ) . '"' );  lk_secret_row( 'google_client_secret' ); ?></div>
 			<?php lk_input( 'google_pasta', 'Pasta principal no Drive', $s['google_pasta'], 'text', 'placeholder="' . esc_attr( $s['empresa'] ) . '"' ); ?>
-			<?php lk_input( 'places_key', 'Chave da Places API (Prospecção)', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'places_key' ) ) . '"' ); ?>
+			<div><?php lk_input( 'places_key', 'Chave da Places API (Prospecção)', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'places_key' ) ) . '"' );  lk_secret_row( 'places_key' ); ?></div>
 		</div>
 	</section>
 
@@ -151,14 +147,14 @@ lk_panel_start( 'Configurações', 'config' );
 		<p class="muted small">Escolha qual IA usar e cole a chave dela. <b>Groq</b> tem plano grátis sem cartão (console.groq.com → API Keys); o <b>Gemini</b> e a <b>Mistral</b> também têm plano grátis. Preencha só a do provedor que for usar.</p>
 		<div class="grid-3">
 			<?php lk_select( 'ai_choice', 'IA em uso', array( '' => 'Automática (a primeira com chave)', 'groq' => 'Groq (grátis)', 'gemini' => 'Gemini', 'mistral' => 'Mistral', 'openrouter' => 'OpenRouter' ), $s['ai_choice'] ); ?>
-			<?php lk_input( 'groq_key', 'Chave da Groq', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'groq_key' ) ) . '"' ); ?>
+			<div><?php lk_input( 'groq_key', 'Chave da Groq', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'groq_key' ) ) . '"' );  lk_secret_row( 'groq_key' ); ?></div>
 			<?php lk_input( 'groq_model', 'Modelo da Groq', $s['groq_model'], 'text', 'placeholder="llama-3.3-70b-versatile"' ); ?>
-			<?php lk_input( 'gemini_key', 'Chave do Gemini', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'gemini_key' ) ) . '"' ); ?>
+			<div><?php lk_input( 'gemini_key', 'Chave do Gemini', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'gemini_key' ) ) . '"' );  lk_secret_row( 'gemini_key' ); ?></div>
 			<?php lk_input( 'gemini_model', 'Modelo do Gemini', $s['gemini_model'], 'text', 'placeholder="gemini-2.5-flash"' ); ?>
-			<?php lk_input( 'mistral_key', 'Chave da Mistral', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'mistral_key' ) ) . '"' ); ?>
+			<div><?php lk_input( 'mistral_key', 'Chave da Mistral', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'mistral_key' ) ) . '"' );  lk_secret_row( 'mistral_key' ); ?></div>
 			<?php lk_input( 'mistral_model', 'Modelo da Mistral', $s['mistral_model'], 'text', 'placeholder="mistral-small-latest"' ); ?>
-			<?php lk_input( 'openrouter_key', 'Chave do OpenRouter', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'openrouter_key' ) ) . '"' ); ?>
-			<div class="field"><span>&nbsp;</span><?php lk_action_button( 'ai_test', array(), 'Testar a IA', 'btn btn--ghost' ); ?></div>
+			<div><?php lk_input( 'openrouter_key', 'Chave do OpenRouter', '', 'password', 'autocomplete="new-password" placeholder="' . esc_attr( $sec( 'openrouter_key' ) ) . '"' );  lk_secret_row( 'openrouter_key' ); ?></div>
+			<div class="field"><span>&nbsp;</span><button type="submit" form="aitest-form" class="btn btn--ghost">Testar a IA</button></div>
 		</div>
 		<p class="muted small">Salve as chaves antes de testar. Se o teste mostrar "limite grátis atingido", espere um minuto. Não envie dados sensíveis de clientes em planos grátis.</p>
 	</section>
@@ -175,6 +171,9 @@ lk_panel_start( 'Configurações', 'config' );
 		<div class="grid-2">
 			<?php lk_select( 'apontamentos', 'Botão Apontar para a equipe', array( '1' => 'Ligado', '0' => 'Desligado' ), $s['apontamentos'] ); ?>
 			<?php lk_select( 'apontamentos_clientes', 'Botão Apontar na área do cliente', array( '0' => 'Desligado', '1' => 'Ligado (os clientes também apontam)' ), $s['apontamentos_clientes'] ); ?>
+			<?php lk_input( 'apontamentos_eleve', 'Enviar os apontamentos para o Eleve CRM (cole aqui o endereço da página do projeto no Eleve CRM; cada apontamento vira uma tarefa lá)', $s['apontamentos_eleve'], 'url', 'placeholder="https://painel.elevewebsites.com.br/wp-json/ecrm/v1/apontamento?chave=…&projeto=…"' ); ?>
+			<p><button type="button" class="btn btn--ghost btn--sm" data-fb-test data-nonce="<?php echo esc_attr( wp_create_nonce( 'lk_feedback_test' ) ); ?>">🔌 Testar conexão com o Eleve CRM</button> <span class="muted small">Salve antes de testar.</span></p>
+			<script>document.addEventListener('click',function(e){var b=e.target.closest('[data-fb-test]');if(!b)return;var f=document.createElement('form');f.method='post';f.action='<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>';[['action','lk'],['do','feedback_test'],['_wpnonce',b.dataset.nonce]].forEach(function(p){var i=document.createElement('input');i.type='hidden';i.name=p[0];i.value=p[1];f.appendChild(i);});document.body.appendChild(f);f.submit();});</script>
 			<?php lk_input( 'apontamentos_email', 'E-mail que recebe o aviso (vazio = e-mail do administrador do WordPress)', $s['apontamentos_email'], 'email' ); ?>
 		</div>
 	</section>
@@ -190,8 +189,8 @@ lk_panel_start( 'Configurações', 'config' );
 		</div>
 		<details class="howto">
 			<summary>Modelo do contrato (texto)</summary>
-			<?php lk_input( 'pacotes', 'Pacotes (um por linha: Nome | valor mensal | artes por mês | serviço 1; serviço 2)', $s['pacotes'] ? $s['pacotes'] : lk_default_packages(), 'textarea', 'rows="6" class="mono"' ); ?>
-			<p class="muted small">Os pacotes aparecem como botão de seleção no contrato, no cadastro do cliente e no contrato já assinado. Ao escolher, serviços, valor e artes são preenchidos (dá para ajustar). Os valores acima são exemplos: troque pelos da agência.</p>
+			<?php lk_input( 'pacotes', 'Pacotes (um por linha: Nome | valor mensal | artes por mês | serviço 1; serviço 2 | vídeos por mês)', $s['pacotes'] ? $s['pacotes'] : lk_default_packages(), 'textarea', 'rows="6" class="mono"' ); ?>
+			<p class="muted small">Os pacotes aparecem como botão de seleção no contrato, no cadastro do cliente e no contrato já assinado. Ao escolher, serviços, valor, quantidade de artes e de vídeos são preenchidos (dá para ajustar). Os valores acima são exemplos: troque pelos da agência.</p>
 			<?php lk_input( 'contrato_modelo', 'Texto (em branco = modelo padrão)', $s['contrato_modelo'] ? $s['contrato_modelo'] : lk_default_contract(), 'textarea', 'rows="20" class="mono"' ); ?>
 			<p class="muted small">Marcadores: <?php echo esc_html( implode( ' ', array_keys( lk_contract_tags() ) ) ); ?></p>
 		</details>
@@ -202,11 +201,11 @@ lk_panel_start( 'Configurações', 'config' );
 		<div class="grid-3">
 			<?php lk_input( 'voz_turn_url', 'TURN: endereço(s) (separe por vírgula)', $s['voz_turn_url'], 'text', 'placeholder="turn:global.relay.metered.ca:80,turns:global.relay.metered.ca:443"' ); ?>
 			<?php lk_input( 'voz_turn_user', 'TURN: usuário', $s['voz_turn_user'] ); ?>
-			<?php lk_input( 'voz_turn_pass', 'TURN: senha', '', 'password', 'autocomplete="new-password" placeholder="' . ( $s['voz_turn_pass'] ? '•••••• (salva)' : '' ) . '"' ); ?>
+			<div><?php lk_input( 'voz_turn_pass', 'TURN: senha', '', 'password', 'autocomplete="new-password" placeholder="' . ( $s['voz_turn_pass'] ? '•••••• (salva)' : '' ) . '"' );  lk_secret_row( 'voz_turn_pass' ); ?></div>
 		</div>
 	</section>
 
-	<div class="form-actions form-actions--sticky"><button type="submit" class="btn btn--primary">Salvar configurações</button></div>
+	<div class="form-actions form-actions--sticky"><button type="submit" form="cfg-form" class="btn btn--primary">Salvar configurações</button></div>
 </form>
 
 <section class="card">
@@ -249,5 +248,6 @@ lk_panel_start( 'Configurações', 'config' );
 		<?php endforeach; ?>
 	</ul>
 </section>
+<?php lk_secret_forms(); lk_form( 'ai_test', '', false, 'aitest-form' ); echo '</form>'; ?>
 <?php
 lk_panel_end();

@@ -1,4 +1,7 @@
 <?php
+/**
+ * Login da LDK: cartão de vidro sobre fundo azul animado, logo no topo e boas-vindas.
+ */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -12,12 +15,15 @@ $aviso = isset( $_GET['aviso'] ) ? sanitize_key( $_GET['aviso'] ) : ''; // phpcs
 if ( ! $error && isset( $avisos[ $aviso ] ) ) {
 	$error = $avisos[ $aviso ];
 }
-$back  = isset( $_GET['volta'] ) ? esc_url_raw( wp_unslash( $_GET['volta'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+$back = isset( $_GET['volta'] ) ? esc_url_raw( wp_unslash( $_GET['volta'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+$hour = (int) current_time( 'G' );
+$wa   = lk_setting( 'whatsapp' ) ? lk_wa_link( lk_setting( 'whatsapp' ), 'Olá! Preciso de ajuda para acessar o painel.' ) : '';
 lk_head( 'Entrar' );
+lk_glass_start( true );
 ?>
-<body class="lk lk-auth lk-lobby">
-<?php lk_lobby_start( true ); ?>
-		<form method="post" class="lobby-form" data-login-form>
+		<div class="lg-head"><h1>Seja bem-vindo</h1>
+		<p class="lg-sub">Entre para acessar o painel da <?php echo esc_html( lk_setting( 'empresa' ) ? lk_setting( 'empresa' ) : 'LDK' ); ?>.</p></div>
+		<form method="post" class="lobby-form" data-login-form data-lg-form>
 			<div class="gate-stage">
 				<div class="gate-card" data-g-card>
 					<span class="gc-brand"><?php echo lk_lobby_logo(); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><span class="gc-title">Cartão de acesso</span>
@@ -28,20 +34,16 @@ lk_head( 'Entrar' );
 				<div class="gate-reader"><span class="gate-led" data-g-led></span><span class="gate-screen" data-g-screen>Aproxime o cartão</span><span class="gate-slot"></span></div>
 			</div>
 			<div class="lobby-welcome"><strong data-g-hello></strong><small data-g-role></small><em>✓ Acesso autorizado</em></div>
-			<h1>Acesso restrito</h1>
-			<p class="muted">Só entra quem tem permissão. Use o e-mail e a senha que você cadastrou.</p>
-			<?php if ( $error ) : ?><div class="flash flash--erro"><?php echo esc_html( $error ); ?></div><?php endif; ?>
+			<?php if ( $error ) : ?><div class="lg-err flash--erro"><?php echo esc_html( $error ); ?></div><?php endif; ?>
 			<?php wp_nonce_field( 'lk_login', 'lk_login_nonce' ); ?>
 			<input type="hidden" name="volta" value="<?php echo esc_attr( $back ); ?>">
-			<?php lk_input( 'email', 'E-mail', isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '', 'text', 'autocomplete="username" required autofocus' ); // phpcs:ignore WordPress.Security.NonceVerification ?>
-			<?php lk_input( 'senha', 'Senha', '', 'password', 'autocomplete="current-password" required' ); ?>
-			<div class="auth-row">
-				<?php lk_check( 'lembrar', 'Manter conectado', true ); ?>
+			<label class="lg-field"><?php echo lk_glass_icon( 'mail' ); // phpcs:ignore ?><input type="text" name="email" placeholder="E-mail" value="<?php echo esc_attr( isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification ?>" autocomplete="username" required autofocus></label>
+			<label class="lg-field"><?php echo lk_glass_icon( 'lock' ); // phpcs:ignore ?><input type="password" name="senha" placeholder="Senha" autocomplete="current-password" required><button type="button" class="lg-eye" data-lg-eye aria-label="Mostrar senha"><?php echo lk_glass_icon( 'eye' ); // phpcs:ignore ?></button></label>
+			<div class="lg-row">
+				<label class="lg-check"><input type="checkbox" name="lembrar" value="1" checked> Manter conectado</label>
 				<a href="<?php echo esc_url( wp_lostpassword_url( lk_url( 'entrar' ) ) ); ?>">Esqueci a senha</a>
 			</div>
-			<button type="submit" class="btn btn--primary btn--block">Entrar <?php echo lk_icon( 'seta', 16 ); // phpcs:ignore ?></button>
+			<div class="lg-btn-wrap"><button type="submit" class="lg-btn" data-lg-btn>Entrar</button></div>
 		</form>
-<?php lk_lobby_end(); ?>
-<script src="<?php echo esc_url( LK_URL . 'assets/login-card.js?ver=' . LK_VERSION ); ?>"></script>
-</body>
-</html>
+		<?php if ( $wa ) : ?><p class="lg-alt">primeiro acesso? <a href="<?php echo esc_url( $wa ); ?>" target="_blank" rel="noopener">fale com a gente</a></p><?php endif; ?>
+<?php lk_glass_end( '<script src="' . esc_url( LK_URL . 'assets/login-card.js?ver=' . LK_VERSION ) . '"></script>' ); ?>

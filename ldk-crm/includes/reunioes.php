@@ -47,11 +47,45 @@ function lk_client_picker( $selected = 0 ) {
 }
 
 function lk_meeting_row_html( $m, $show_client = true ) {
-	$c    = $m->client_id ? lk_get( 'clients', $m->client_id ) : null;
-	$link = $m->place && preg_match( '#^https?://#i', $m->place ) ? '<a class="btn btn--primary btn--sm" href="' . esc_url( $m->place ) . '" target="_blank" rel="noopener">Entrar</a>' : '';
-	$data = lk_meeting_data( $m );
-	$h    = '<li class="meet"><span class="meet-time">' . esc_html( lk_meeting_when( $m ) ) . '</span><span class="meet-main"><strong>' . esc_html( $m->title ) . '</strong><small>' . esc_html( ( $show_client && $c ? lk_client_label( $c ) . ' · ' : '' ) . ( lk_meeting_kinds()[ $m->kind ] ?? '' ) . ( $m->place && ! $link ? ' · ' . $m->place : '' ) ) . '</small></span><span class="meet-btns">' . $link;
-	$h   .= '<button type="button" class="icon-btn" title="Editar / registrar ata" data-open="editar-reuniao-crm" data-reuniao="' . esc_attr( wp_json_encode( $data ) ) . '">' . lk_icon( 'editar', 15 ) . '</button></span></li>';
+	$c     = $m->client_id ? lk_get( 'clients', $m->client_id ) : null;
+	$link  = $m->place && preg_match( '#^https?://#i', $m->place ) ? $m->place : ( $m->meet_link ? $m->meet_link : '' );
+	$data  = lk_meeting_data( $m );
+	$team  = array();
+	foreach ( array_filter( array_map( 'absint', explode( ',', (string) $m->team_ids ) ) ) as $uid ) {
+		$u = get_userdata( $uid );
+		if ( $u ) {
+			$team[] = $u->display_name;
+		}
+	}
+	$ts   = strtotime( $m->starts_at );
+	$info = array(
+		'title'  => $m->title,
+		'when'   => ucfirst( lk_date_long( gmdate( 'Y-m-d', $ts ) ) ) . ' · ' . gmdate( 'H:i', $ts ) . ' às ' . gmdate( 'H:i', $ts + (int) $m->duration * 60 ) . ' (' . (int) $m->duration . ' min)',
+		'client' => $c ? lk_client_label( $c ) : 'Reunião interna',
+		'kind'   => lk_meeting_kinds()[ $m->kind ] ?? '',
+		'status' => lk_meeting_status_labels()[ $m->status ] ?? '',
+		'link'   => $link,
+		'place'  => $link ? '' : (string) $m->place,
+		'guests' => (string) $m->guests,
+		'team'   => $team,
+		'notes'  => (string) $m->notes,
+	);
+	$h  = '<li class="meet is-click" tabindex="0" role="button" aria-label="Abrir a reunião ' . esc_attr( $m->title ) . '" data-meet-info="' . esc_attr( wp_json_encode( $info ) ) . '"><span class="meet-time">' . esc_html( lk_meeting_when( $m ) ) . '</span><span class="meet-main"><strong>' . esc_html( $m->title ) . '</strong><small>' . esc_html( ( $show_client && $c ? lk_client_label( $c ) . ' · ' : '' ) . ( lk_meeting_kinds()[ $m->kind ] ?? '' ) ) . '</small></span><span class="meet-go" aria-hidden="true">›</span>';
+	// Ações que aparecem dentro da janela (copiadas por JavaScript).
+	$h .= '<template data-meet-actions>';
+	$wa = function_exists( 'lk_meeting_wa' ) ? lk_meeting_wa( $m ) : '';
+	$h .= '<button type="button" class="btn btn--ghost btn--sm" data-open="remarcar-reuniao-crm" data-remarcar="' . esc_attr( wp_json_encode( array( 'id' => (int) $m->id, 'date' => gmdate( 'Y-m-d', $ts ), 'time' => gmdate( 'H:i', $ts ), 'title' => $m->title, 'has_client' => $c && is_email( $c->email ) ? 1 : 0 ) ) ) . '">' . lk_icon( 'relogio', 14 ) . '<span>Remarcar</span></button>';
+	$h .= '<button type="button" class="btn btn--ghost btn--sm" data-open="editar-reuniao-crm" data-reuniao="' . esc_attr( wp_json_encode( $data ) ) . '">' . lk_icon( 'editar', 14 ) . '<span>Editar / ata</span></button>';
+	if ( $wa ) {
+		$h .= '<a class="btn btn--wa btn--sm" href="' . esc_url( $wa ) . '" target="_blank" rel="noopener">' . lk_icon( 'whatsapp', 14 ) . '<span>WhatsApp do cliente</span></a>';
+	}
+	ob_start();
+	if ( $c && is_email( $c->email ) ) {
+		lk_action_button( 'reuniao_enviar', array( 'id' => $m->id ), lk_icon( 'email', 14 ) . '<span>Enviar por e-mail</span>', 'btn btn--ghost btn--sm', 'Enviar esta reunião ao cliente por e-mail?' );
+	}
+	lk_action_button( 'reuniao_excluir', array( 'id' => $m->id ), '<span>Excluir</span>', 'btn btn--ghost btn--sm btn--danger-text', 'Excluir a reunião "' . $m->title . '"? ' . ( $c && is_email( $c->email ) ? 'O cliente recebe um aviso de cancelamento.' : '' ) );
+	$h .= ob_get_clean();
+	$h .= '</template></li>';
 	return $h;
 }
 
@@ -72,8 +106,8 @@ function lk_meetings_widget_html() {
 				$day  = wp_date( 'Y-m-d', $e['start'] );
 				$d    = lk_days_until( $day );
 				$when = ( 0 === $d ? 'Hoje' : ( 1 === $d ? 'Amanhã' : lk_date( $day, 'd/m' ) . ' · ' . lk_dow_short( $day ) ) ) . ( $e['all_day'] ? '' : ' · ' . wp_date( 'H:i', $e['start'] ) );
-				$btn  = $e['meet'] ? '<a class="btn btn--primary btn--sm" href="' . esc_url( $e['meet'] ) . '" target="_blank" rel="noopener">Meet</a>' : '';
-				$items[] = array( $e['start'], '<li class="meet"><span class="meet-time">' . esc_html( $when ) . '</span><span class="meet-main"><strong>' . esc_html( $e['title'] ) . '</strong><small>Google Agenda</small></span><span class="meet-btns">' . $btn . '</span></li>' );
+				$info    = array( 'title' => $e['title'], 'when' => ucfirst( lk_date_long( $day ) ) . ( $e['all_day'] ? ' · dia todo' : ' · ' . wp_date( 'H:i', $e['start'] ) . ' às ' . wp_date( 'H:i', $e['end'] ) ), 'client' => '', 'kind' => 'Google Agenda', 'link' => $e['meet'] ? $e['meet'] : ( $e['link'] ? $e['link'] : '' ), 'guests' => $e['attendees'] );
+				$items[] = array( $e['start'], '<li class="meet is-click" tabindex="0" role="button" data-meet-info="' . esc_attr( wp_json_encode( $info ) ) . '"><span class="meet-time">' . esc_html( $when ) . '</span><span class="meet-main"><strong>' . esc_html( $e['title'] ) . '</strong><small>Google Agenda</small></span><span class="meet-go" aria-hidden="true">›</span></li>' );
 			}
 		}
 	}
@@ -136,6 +170,19 @@ function lk_meeting_modals_html( $client_id = 0 ) {
 	lk_modal_start( 'editar-reuniao-crm', 'Reunião' );
 	lk_meeting_form( 0, true );
 	lk_modal_end();
+	lk_modal_start( 'detalhe-reuniao', 'Reunião' );
+	echo '<div class="meet-detail" data-md-body></div><div class="meet-detail-acts" data-md-acts></div>';
+	lk_modal_end();
+	lk_modal_start( 'remarcar-reuniao-crm', 'Remarcar reunião' );
+	lk_form( 'reuniao_remarcar', 'stack' );
+	echo '<input type="hidden" name="id" value="0"><p class="muted small" data-remarcar-title></p>';
+	echo '<div class="grid-2">';
+	lk_input( 'date', 'Nova data', lk_today(), 'date', 'required' );
+	lk_input( 'time', 'Novo horário', '10:00', 'time', 'required' );
+	echo '</div>';
+	echo '<label class="check"><input type="checkbox" name="avisar" value="1" checked><span>Avisar o cliente por e-mail (com o novo horário)</span></label>';
+	echo '<div class="form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button type="submit" class="btn btn--primary">Remarcar</button></div></form>';
+	lk_modal_end();
 	?>
 	<script>
 	(function(){
@@ -143,10 +190,35 @@ function lk_meeting_modals_html( $client_id = 0 ) {
 		if(h.value&&h.value!=='0'&&btn){sel.hidden=false;sel.innerHTML='<span>✓ <b></b></span><button type="button" data-cchange>trocar</button>'+(btn.dataset.cmail==='0'?'<em>sem e-mail na ficha: não dá para avisar</em>':'');sel.querySelector('b').textContent=btn.dataset.cname;root.classList.add('is-picked');}
 		else{sel.hidden=true;sel.innerHTML='';root.classList.remove('is-picked');if(h.value==='0'){h.value='0';}}}
 	window.lkPickSync=sync;
+	function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+	window.lkMeetOpen=function(row){
+		var d={};try{d=JSON.parse(row.getAttribute('data-meet-info'))||{};}catch(x){return;}
+		var dlg=document.getElementById('detalhe-reuniao');if(!dlg)return;
+		var body=dlg.querySelector('[data-md-body]'),acts=dlg.querySelector('[data-md-acts]');
+		var h='<h3>'+esc(d.title)+'</h3><p class="meet-when">📅 '+esc(d.when)+'</p><dl class="meet-dl">';
+		if(d.client)h+='<dt>Cliente</dt><dd>'+esc(d.client)+'</dd>';
+		if(d.kind)h+='<dt>Tipo</dt><dd>'+esc(d.kind)+'</dd>';
+		if(d.status)h+='<dt>Situação</dt><dd>'+esc(d.status)+'</dd>';
+		if(d.place)h+='<dt>Local</dt><dd>'+esc(d.place)+'</dd>';
+		if(d.link)h+='<dt>Link</dt><dd><a href="'+esc(d.link)+'" target="_blank" rel="noopener">'+esc(d.link)+'</a></dd>';
+		if(d.guests&&d.guests.length)h+='<dt>Participantes</dt><dd>'+esc(Array.isArray(d.guests)?d.guests.join(', '):d.guests)+'</dd>';
+		if(d.team&&d.team.length)h+='<dt>Equipe</dt><dd>'+esc(d.team.join(', '))+'</dd>';
+		if(d.notes)h+='<dt>Pauta / ata</dt><dd style="white-space:pre-wrap">'+esc(d.notes)+'</dd>';
+		body.innerHTML=h+'</dl>';
+		var a='';if(d.link)a+='<a class="btn btn--primary" href="'+esc(d.link)+'" target="_blank" rel="noopener">Entrar na reunião</a>';
+		acts.innerHTML=a;
+		var tpl=row.querySelector('template[data-meet-actions]');if(tpl)acts.appendChild(tpl.content.cloneNode(true));
+		if(dlg.showModal){if(!dlg.open)dlg.showModal();}else{dlg.setAttribute('open','');}
+	};
+	document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('li.meet.is-click')){e.preventDefault();window.lkMeetOpen(e.target);}});
 	document.addEventListener('click',function(e){
 		var pb=e.target.closest&&e.target.closest('[data-cpick] [data-cid]');
 		if(pb){var root=pb.closest('[data-cpick]');root.querySelector('[name=client_id]').value=pb.dataset.cid;sync(root.closest('form'));return;}
 		if(e.target.closest&&e.target.closest('[data-cchange]')){var r=e.target.closest('[data-cpick]');r.querySelector('[name=client_id]').value='';sync(r.closest('form'));return;}
+		var row=e.target.closest&&e.target.closest('li.meet.is-click');
+		if(row&&!e.target.closest('a,button,form,input,select,textarea,summary')){lkMeetOpen(row);return;}
+		var rm=e.target.closest&&e.target.closest('[data-remarcar]');
+		if(rm){var dd=JSON.parse(rm.dataset.remarcar);setTimeout(function(){var f=document.querySelector('#remarcar-reuniao-crm form');if(!f)return;f.querySelector('[name=id]').value=dd.id;f.querySelector('[name=date]').value=dd.date;f.querySelector('[name=time]').value=dd.time;var t=f.querySelector('[data-remarcar-title]');if(t)t.textContent=dd.title;var a=f.querySelector('[name=avisar]');if(a){a.checked=!!dd.has_client;a.disabled=!dd.has_client;}},30);return;}
 		var b=e.target.closest&&e.target.closest('[data-reuniao],[data-reuniao-client],[data-reuniao-date]');if(!b)return;
 		setTimeout(function(){
 			var f;
@@ -180,6 +252,10 @@ function lk_meeting_form( $client_id = 0, $edit = false ) {
 	lk_select( 'kind', 'Tipo', lk_meeting_kinds(), 'online' );
 	lk_input( 'place', 'Link ou local', '', 'text', 'placeholder="https://meet.google.com/… ou endereço"' );
 	lk_input( 'guests', 'Participantes (nomes ou e-mails)', '', 'text', 'placeholder="Quem vai participar"' );
+	if ( ! $edit ) {
+		echo '<input type="hidden" name="team_picker" value="1">';
+		lk_meeting_team_picker();
+	}
 	if ( function_exists( 'lk_google_connected' ) && lk_google_connected() ) {
 		echo '<label class="check"><input type="checkbox" name="google" value="1" checked><span>Criar no Google Agenda com link do Google Meet (os e-mails em "Participantes" recebem o convite do Google)</span></label>';
 	} else {
@@ -257,6 +333,9 @@ function lk_do_reuniao_save() {
 	}
 	$data['created_by'] = get_current_user_id();
 	$mid                = lk_insert( 'meetings', $data );
+	if ( lk_in( 'team_picker', 'bool' ) ) {
+		lk_meeting_save_team( $mid, true );
+	}
 	$msg                = 'Reunião marcada. Ela aparece no dashboard, na Agenda e na área do cliente.';
 	if ( lk_in( 'google', 'bool' ) && function_exists( 'lk_calendar_create' ) && lk_google_connected() ) {
 		$emails = function_exists( 'lk_parse_emails' ) ? lk_parse_emails( $data['guests'] ) : array();
@@ -421,4 +500,56 @@ function lk_gcal_events( $from, $to ) {
 	}
 	$linked = array_filter( wp_list_pluck( lk_rows( 'meetings', "google_id <> ''", array() ), 'google_id' ) );
 	return array_values( array_filter( $ev, function ( $e ) use ( $linked ) { return ! in_array( $e['id'], $linked, true ); } ) );
+}
+
+/** Remarcar: muda o dia e a hora, move no Google Agenda e avisa o cliente (opcional). */
+function lk_do_reuniao_remarcar() {
+	if ( ! lk_is_team() ) {
+		wp_die( 'Sem permissão.' );
+	}
+	$m    = lk_get( 'meetings', lk_in( 'id', 'int' ) );
+	$date = lk_in( 'date', 'date' );
+	$time = preg_match( '/^\d{2}:\d{2}$/', (string) lk_in( 'time' ) ) ? lk_in( 'time' ) : '';
+	if ( ! $m || ! $date || ! $time ) {
+		lk_back( 'Informe a nova data e o horário.', 'erro' );
+	}
+	lk_update( 'meetings', $m->id, array( 'starts_at' => $date . ' ' . $time . ':00', 'reminded' => 0, 'status' => 'agendada' ) );
+	$m   = lk_get( 'meetings', $m->id );
+	$msg = 'Reunião remarcada para ' . lk_date( $date, 'd/m' ) . ' às ' . $time . '.';
+	if ( $m->google_id && function_exists( 'lk_calendar_move' ) ) {
+		$g = lk_calendar_move( $m->google_id, $date, $time );
+		$msg .= is_wp_error( $g ) ? ' (Google Agenda: ' . $g->get_error_message() . ')' : ' Google Agenda atualizado.';
+	}
+	if ( lk_in( 'avisar', 'bool' ) && $m->client_id ) {
+		$msg .= lk_meeting_mail( $m, 'remarcada' ) ? ' O cliente foi avisado por e-mail.' : '';
+	}
+	if ( function_exists( 'lk_meeting_save_team' ) ) {
+		foreach ( array_filter( array_map( 'absint', explode( ',', (string) $m->team_ids ) ) ) as $uid ) {
+			lk_notify( $uid, '📅 Reunião remarcada: "' . $m->title . '" agora em ' . lk_date( $date, 'd/m' ) . ' às ' . $time, lk_panel_url( 'agenda' ) );
+		}
+	}
+	lk_back( $msg );
+}
+
+/** Excluir: apaga a reunião (e do Google Agenda) e avisa o cliente do cancelamento. */
+function lk_do_reuniao_excluir() {
+	if ( ! lk_is_team() ) {
+		wp_die( 'Sem permissão.' );
+	}
+	$m = lk_get( 'meetings', lk_in( 'id', 'int' ) );
+	if ( ! $m ) {
+		lk_back();
+	}
+	$msg = 'Reunião excluída.';
+	if ( $m->client_id && lk_meeting_mail( $m, 'cancelada' ) ) {
+		$msg .= ' O cliente foi avisado do cancelamento.';
+	}
+	if ( $m->google_id && function_exists( 'lk_calendar_delete' ) ) {
+		lk_calendar_delete( $m->google_id );
+	}
+	foreach ( array_filter( array_map( 'absint', explode( ',', (string) $m->team_ids ) ) ) as $uid ) {
+		lk_notify( $uid, '📅 Reunião cancelada: "' . $m->title . '"', lk_panel_url( 'agenda' ) );
+	}
+	lk_delete( 'meetings', $m->id );
+	lk_back( $msg );
 }

@@ -37,6 +37,98 @@ function lk_feedback_allowed() {
 	return '1' === (string) lk_setting( 'apontamentos_clientes' ) && lk_current_client() && lk_note_can();
 }
 
+/**
+ * Manda o apontamento para o Eleve CRM (vira tarefa no projeto). Em segundo plano: não trava a tela.
+ * Junto vai o endereço de volta: quando a tarefa for concluída lá, este sistema mostra "resolvido" para o cliente.
+ * $evento: novo | status
+ */
+function lk_feedback_push( $f, $evento = 'novo', $shot = '' ) {
+	$url = trim( (string) lk_setting( 'apontamentos_eleve' ) );
+	if ( ! $f || ! preg_match( '#^https://#i', $url ) ) {
+		return;
+	}
+	wp_remote_post(
+		$url,
+		array(
+			'timeout'  => 4,
+			'blocking' => false,
+			'headers'  => array( 'Content-Type' => 'application/json' ),
+			'body'     => wp_json_encode(
+				array(
+					'evento'    => $evento,
+					'sistema'   => (string) wp_parse_url( home_url(), PHP_URL_HOST ),
+					'ref'       => (int) $f->id,
+					'status'    => (string) $f->status,
+					'body'      => (string) $f->body,
+					'page'      => (string) $f->page,
+					'path'      => (string) $f->path,
+					'snippet'   => (string) $f->snippet,
+					'url'       => (string) $f->url . ( false === strpos( (string) $f->url, '?' ) ? '?' : '&' ) . 'apontamento=' . (int) $f->id,
+					'autor'     => lk_feedback_author( $f ),
+					'reply'     => (string) $f->reply,
+					'retorno'   => rest_url( 'lk/v1/feedback-retorno' ),
+					'retorno_k' => lk_feedback_k( (int) $f->id ),
+					'shot'      => ( is_string( $shot ) && preg_match( '#^data:image/(jpeg|png);base64,#', $shot ) && strlen( $shot ) < 1200000 ) ? $shot : '',
+				)
+			),
+		)
+	);
+}
+
+/** Chave que só este sistema sabe fazer: protege o endereço de volta. */
+function lk_feedback_k( $ref ) {
+	return substr( hash_hmac( 'sha256', 'retorno|' . (int) $ref, wp_salt( 'auth' ) ), 0, 24 );
+}
+
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_route( 'lk/v1', '/feedback-retorno', array( 'methods' => 'POST', 'permission_callback' => '__return_true', 'callback' => 'lk_api_feedback_retorno' ) );
+	}
+);
+
+/** O Eleve CRM avisa que o apontamento foi resolvido (ou reaberto): aparece para o cliente no botão Apontar. */
+function lk_api_feedback_retorno( WP_REST_Request $r ) {
+	$j   = json_decode( (string) $r->get_body(), true );
+	$j   = is_array( $j ) ? $j : array();
+	$ref = absint( $j['ref'] ?? 0 );
+	if ( ! $ref || ! hash_equals( lk_feedback_k( $ref ), (string) ( $j['k'] ?? '' ) ) ) {
+		return new WP_Error( 'lk', 'Chave inválida.', array( 'status' => 403 ) );
+	}
+	$f = lk_get( 'feedback', $ref );
+	if ( ! $f ) {
+		return new WP_Error( 'lk', 'Apontamento não encontrado.', array( 'status' => 404 ) );
+	}
+	$done = 'resolvido' === ( $j['status'] ?? '' );
+	$data = array( 'status' => $done ? 'resolvido' : 'aberto', 'resolved_by' => 0, 'resolved_at' => $done ? lk_now() : null );
+	if ( $done && '' === trim( (string) $f->reply ) ) {
+		$data['reply'] = 'Resolvido pela equipe da Eleve. ✓';
+	}
+	lk_update( 'feedback', $ref, $data );
+	return array( 'ok' => true );
+}
+
+/** Botão "Testar conexão" na configuração. */
+function lk_do_feedback_test() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Sem permissão.' );
+	}
+	$url = trim( (string) lk_setting( 'apontamentos_eleve' ) );
+	if ( ! preg_match( '#^https://#i', $url ) ) {
+		lk_back( 'Cole primeiro o endereço do Eleve CRM, salve e depois teste.', 'erro' );
+	}
+	$res = wp_remote_post( $url, array( 'timeout' => 12, 'headers' => array( 'Content-Type' => 'application/json' ), 'body' => wp_json_encode( array( 'evento' => 'teste', 'sistema' => (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) ) ) );
+	if ( is_wp_error( $res ) ) {
+		lk_back( 'Não consegui falar com o Eleve CRM: ' . $res->get_error_message(), 'erro' );
+	}
+	$code = (int) wp_remote_retrieve_response_code( $res );
+	$j    = json_decode( wp_remote_retrieve_body( $res ), true );
+	if ( 200 === $code && ! empty( $j['ok'] ) ) {
+		lk_back( 'Conectado ✓ Projeto: ' . ( $j['projeto'] ?? '' ) . ( ! empty( $j['cliente'] ) ? ' · Cliente: ' . $j['cliente'] : '' ) . '. Os apontamentos já caem lá como tarefa.', 'ok' );
+	}
+	lk_back( 'O Eleve CRM respondeu: ' . ( is_array( $j ) && ! empty( $j['message'] ) ? $j['message'] : 'erro ' . $code ) . '. Confira o endereço copiado do projeto.', 'erro' );
+}
+
 function lk_feedback_open_count() {
 	global $wpdb;
 	return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . lk_table( 'feedback' ) . " WHERE status = 'aberto' AND path <> 'feedback'" ); // phpcs:ignore WordPress.DB.PreparedSQL
@@ -133,6 +225,7 @@ function lk_api_feedback_add( WP_REST_Request $r ) {
 	);
 	$f = lk_get( 'feedback', $id );
 	lk_feedback_email( $f );
+	lk_feedback_push( $f, 'novo', (string) $r['shot'] );
 	return array( 'item' => lk_feedback_json( $f ), 'open' => lk_is_team() ? lk_feedback_open_count() : 0 );
 }
 
@@ -160,6 +253,9 @@ function lk_api_feedback_edit( WP_REST_Request $r ) {
 	}
 	if ( $data ) {
 		lk_update( 'feedback', $f->id, $data );
+		if ( isset( $data['status'] ) && $data['status'] !== $f->status ) {
+			lk_feedback_push( lk_get( 'feedback', $f->id ), 'status' );
+		}
 	}
 	return array( 'item' => lk_feedback_json( lk_get( 'feedback', $f->id ) ), 'open' => lk_is_team() ? lk_feedback_open_count() : 0 );
 }

@@ -44,16 +44,10 @@ $sec_week = lk_focus_seconds_since( $week );
 global $wpdb;
 $top = $wpdb->get_results( $wpdb->prepare( 'SELECT f.project_id, SUM(f.seconds) AS s, p.title FROM ' . lk_table( 'focus' ) . ' f LEFT JOIN ' . lk_table( 'projects' ) . ' p ON p.id = f.project_id WHERE f.user_id = %d AND f.created_at >= %s AND f.project_id > 0 GROUP BY f.project_id ORDER BY s DESC LIMIT 5', get_current_user_id(), $week . ' 00:00:00' ) ); // phpcs:ignore WordPress.DB.PreparedSQL
 
-$group_of = function ( $t ) use ( $today ) {
-	if ( ! $t->due_date ) {
-		return 'Sem prazo';
-	}
-	if ( $t->due_date < $today ) {
-		return 'Atrasadas';
-	}
-	return $t->due_date === $today ? 'Para hoje' : 'Próximas';
+$group_of = function ( $t ) {
+	return lk_task_cols()[ lk_task_col_for( $t->due_date ) ];
 };
-$grouped = array( 'Atrasadas' => array(), 'Para hoje' => array(), 'Próximas' => array(), 'Sem prazo' => array() );
+$grouped = array_fill_keys( array_values( lk_task_cols() ), array() );
 foreach ( $tasks as $t ) {
 	$grouped[ $group_of( $t ) ][] = $t;
 }
@@ -73,6 +67,31 @@ lk_panel_start( 'Modo foco', 'foco' );
 			<small>Ainda nada registrado. O tempo aparece aqui depois do primeiro bloco.</small>
 		<?php endif; ?>
 	</div>
+</section>
+
+<?php $tkc = lk_task_board_counts( get_current_user_id() ); ?>
+<section class="card focus-agg">
+	<div class="card-head"><h3>Minhas tarefas, juntas</h3><a class="small" href="<?php echo esc_url( lk_panel_url( 'tarefas' ) ); ?>">abrir o quadro</a></div>
+	<div class="tk-chips">
+		<?php foreach ( lk_task_cols() as $ck => $cl ) : ?>
+			<a class="tk-chip tk-chip--<?php echo esc_attr( $ck ); ?><?php echo $tkc[ $ck ] ? '' : ' is-zero'; ?>" href="#foco-<?php echo esc_attr( $ck ); ?>"><strong><?php echo (int) $tkc[ $ck ]; ?></strong><span><?php echo esc_html( $cl ); ?></span></a>
+		<?php endforeach; ?>
+	</div>
+	<?php
+	$agg = lk_task_board( array( 'user_id' => get_current_user_id() ) );
+	foreach ( array( 'hoje' => 'Hoje', 'amanha' => 'Amanhã', 'semana' => 'Esta semana' ) as $ck => $cl ) :
+		$list = array_values( array_filter( $agg, function ( $i ) use ( $ck ) { return $ck === $i['col']; } ) );
+		?>
+		<div class="focus-agg-col" id="foco-<?php echo esc_attr( $ck ); ?>">
+			<h4><?php echo esc_html( $cl ); ?> <em><?php echo (int) count( $list ); ?></em></h4>
+			<?php if ( ! $list ) : ?><p class="muted small">Nada por aqui.</p><?php endif; ?>
+			<ul class="mini-list">
+				<?php foreach ( array_slice( $list, 0, 8 ) as $i ) : ?>
+					<li><a href="<?php echo esc_url( $i['url'] ); ?>"><strong><?php echo esc_html( $i['title'] ); ?></strong><span><?php echo esc_html( trim( $i['client'] . ( $i['label'] ? ' · ' . $i['label'] : '' ) ) ); ?></span></a><?php echo lk_due_badge( $i['due'] ); // phpcs:ignore ?></li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
+	<?php endforeach; ?>
 </section>
 
 <?php if ( $fclients ) : ?>

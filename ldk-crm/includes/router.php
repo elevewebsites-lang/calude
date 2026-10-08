@@ -97,6 +97,8 @@ function lk_route() {
 			wp_safe_redirect( lk_home_for( get_current_user_id() ) );
 			exit;
 		}
+		// Quem não tem a permissão "Financeiro" vê os valores em dinheiro escondidos em todo o painel.
+		$GLOBALS['lk_mask_money'] = ! lk_can( 'financeiro' );
 		$map = array(
 			''            => array( 'dashboard', '' ),
 			'clientes'    => array( 'clientes', 'clientes' ),
@@ -107,6 +109,10 @@ function lk_route() {
 			'conteudo'    => array( 'conteudo', 'conteudo' ),
 			'post'        => array( 'post', 'conteudo' ),
 			'planejamento' => array( 'planejamento', 'conteudo' ),
+			'roteiros'    => array( 'roteiros', 'conteudo' ),
+			'semana'      => array( 'semana', 'conteudo' ),
+			'enviar'      => array( 'enviar', 'conteudo' ),
+			'alteracoes'  => array( 'alteracoes', 'conteudo' ),
 			'time'        => array( 'time', '' ),
 			'chat'        => array( 'chat', '' ),
 			'foco'        => array( 'foco', '' ),
@@ -155,9 +161,6 @@ function lk_route() {
 			'ranking'     => array( 'ranking', '' ),
 			'metas'       => array( 'metas', 'admin' ),
 			'contratos'   => array( 'contratos', 'clientes' ),
-			'vencimentos' => array( 'vencimentos', 'clientes' ),
-			'importar'    => array( 'importar', 'conteudo' ),
-			'relatorio-importar' => array( 'relatorio-importar', 'relatorios' ),
 			'prospeccao'  => array( 'prospeccao', 'leads' ),
 			'gamificacao' => array( 'gamificacao', 'admin' ),
 		);
@@ -184,7 +187,7 @@ function lk_route() {
 			wp_safe_redirect( lk_home_for( get_current_user_id() ) );
 			exit;
 		}
-		$views = array( '' => 'inicio', 'perfil' => 'perfil', 'aprovacoes' => 'aprovacoes', 'conteudos' => 'conteudos', 'briefing' => 'briefing', 'relatorios' => 'relatorios', 'mensagens' => 'mensagens', 'projeto' => 'projeto', 'contratos' => 'contratos', 'formulario' => 'formulario' );
+		$views = array( '' => 'inicio', 'perfil' => 'perfil', 'aprovacoes' => 'aprovacoes', 'conteudos' => 'conteudos', 'roteiros' => 'roteiros', 'briefing' => 'briefing', 'relatorios' => 'relatorios', 'mensagens' => 'mensagens', 'projeto' => 'projeto', 'contratos' => 'contratos', 'formulario' => 'formulario' );
 		$view  = isset( $views[ $section ] ) ? $views[ $section ] : 'inicio';
 		lk_render( 'client/' . $view, array( 'id' => $id, 'client' => $client ) );
 	}

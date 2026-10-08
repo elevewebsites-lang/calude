@@ -25,7 +25,7 @@ add_action(
 		if ( ! $rows || ( 'rascunho' === $rows[0]->status && ! lk_is_team() ) ) {
 			lk_render( 'public/indisponivel' );
 		}
-		lk_render( 'mlabs' === $rows[0]->kind ? 'public/relatorio-mlabs' : 'public/relatorio', array( 'r' => $rows[0] ) );
+		lk_render( 'public/relatorio', array( 'r' => $rows[0] ) );
 	},
 	0
 );

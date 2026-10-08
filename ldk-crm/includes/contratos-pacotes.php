@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 function lk_default_packages() {
-	return "Essencial | 990 | 12 | Planejamento mensal de conteúdo; Criação de artes e legendas; Programação das postagens; Relatório mensal de resultados\nCrescimento | 1790 | 20 | Planejamento mensal de conteúdo; Criação de artes e legendas; Reels e vídeos curtos; Programação das postagens; Relatório mensal de resultados\nCompleto | 2890 | 30 | Planejamento mensal de conteúdo; Criação de artes e legendas; Reels e vídeos curtos; Programação das postagens; Gestão de tráfego pago (Meta Ads); Relatório mensal de resultados";
+	return "Essencial | 990 | 12 | Planejamento mensal de conteúdo; Criação de artes e legendas; Programação das postagens; Relatório mensal de resultados | 0\nCrescimento | 1790 | 16 | Planejamento mensal de conteúdo; Criação de artes e legendas; Reels e vídeos curtos; Programação das postagens; Relatório mensal de resultados | 4\nCompleto | 2890 | 20 | Planejamento mensal de conteúdo; Criação de artes e legendas; Reels e vídeos curtos; Programação das postagens; Gestão de tráfego pago (Meta Ads); Relatório mensal de resultados | 8";
 }
 
 /** Pacotes de Configurações → Contrato. Linha: Nome | valor mensal | artes por mês | serviço 1; serviço 2 */
@@ -27,6 +27,7 @@ function lk_packages() {
 			'value'    => $val,
 			'arts'     => isset( $p[2] ) ? (int) $p[2] : 0,
 			'services' => isset( $p[3] ) ? array_values( array_filter( array_map( 'trim', explode( ';', $p[3] ) ) ) ) : array(),
+			'videos'   => isset( $p[4] ) ? (int) $p[4] : 0,
 		);
 	}
 	return $out;
@@ -43,13 +44,14 @@ function lk_package_picker( $selected = '', $label = 'Pacote' ) {
 	}
 	echo '<label class="field"><span>' . esc_html( $label ) . '</span><select name="package" data-lk-package><option value="">— Personalizado (sem pacote) —</option>';
 	foreach ( $pk as $p ) {
-		echo '<option value="' . esc_attr( $p['name'] ) . '" data-v="' . esc_attr( number_format( $p['value'], 2, ',', '.' ) ) . '" data-a="' . (int) $p['arts'] . '" data-s="' . esc_attr( implode( "\n", $p['services'] ) ) . '"' . selected( $selected, $p['name'], false ) . '>' . esc_html( $p['name'] . ( $p['value'] > 0 ? ' · ' . lk_money( $p['value'] ) . '/mês' : '' ) . ( $p['arts'] ? ' · ' . $p['arts'] . ' artes' : '' ) ) . '</option>';
+		$can = lk_can( 'financeiro' );
+		echo '<option value="' . esc_attr( $p['name'] ) . '" data-v="' . ( $can ? esc_attr( number_format( $p['value'], 2, ',', '.' ) ) : '' ) . '" data-a="' . (int) $p['arts'] . '" data-vd="' . (int) $p['videos'] . '" data-s="' . esc_attr( implode( "\n", $p['services'] ) ) . '"' . selected( $selected, $p['name'], false ) . '>' . esc_html( $p['name'] . ( $can && $p['value'] > 0 ? ' · ' . lk_money( $p['value'] ) . '/mês' : '' ) . ( $p['arts'] ? ' · ' . $p['arts'] . ' artes' : '' ) . ( $p['videos'] ? ' · ' . $p['videos'] . ' vídeos' : '' ) ) . '</option>';
 	}
 	echo '</select></label>';
 	static $js = false;
 	if ( ! $js ) {
 		$js = true;
-		echo '<script>document.addEventListener("change",function(e){var s=e.target;if(!s.matches||!s.matches("select[data-lk-package]"))return;var o=s.options[s.selectedIndex],f=s.form;if(!f||!o.value)return;var set=function(n,v){var i=f.querySelector("[name="+n+"]");if(i)i.value=v;};set("monthly_value",o.dataset.v);set("monthly_fee",o.dataset.v);set("posts_quota",o.dataset.a);set("services",o.dataset.s);});</script>';
+		echo '<script>document.addEventListener("change",function(e){var s=e.target;if(!s.matches||!s.matches("select[data-lk-package]"))return;var o=s.options[s.selectedIndex],f=s.form;if(!f||!o.value)return;var set=function(n,v){var i=f.querySelector("[name="+n+"]");if(i)i.value=v;};if(o.dataset.v){set("monthly_value",o.dataset.v);set("monthly_fee",o.dataset.v);}set("posts_quota",o.dataset.a);set("videos_quota",o.dataset.vd);set("services",o.dataset.s);});</script>';
 	}
 }
 

@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 	/* ---- Limites do Instagram (valores vêm do servidor em window.LK_LIMITS) ---- */
-	var L = window.LK_LIMITS || { image_mb: 8, image_max_w: 1440, video_mb: 300, video_min_s: 3, video_max_s: 900, story_mb: 100, story_min_s: 3, story_max_s: 60, carousel_max: 10, video_ext: ['mp4', 'mov'] };
+	var L = window.LK_LIMITS || { image_mb: 8, image_max_w: 1440, video_mb: 300, video_min_s: 3, video_max_s: 900, story_mb: 100, story_min_s: 3, story_max_s: 60, carousel_max: 20, video_ext: ['mp4', 'mov'] };
 	function fmtNow() { return (document.querySelector('select[name="format"]') || {}).value || ''; }
 	function mb(n) { return (n / 1048576).toFixed(n > 10485760 ? 0 : 1) + ' MB'; }
 	function reencode(img, file) { // JPEG, até a largura máxima e dentro do peso máximo
@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	input.addEventListener('change', function () {
 		var files = Array.prototype.slice.call(input.files), chain = Promise.resolve();
 		input.value = '';
-		if (fmtNow() === 'carrossel') { // carrossel: no máximo 10 itens no total
+		if (fmtNow() === 'carrossel') { // carrossel: no máximo 20 itens no total
 			var have = (grid ? grid.querySelectorAll('.media-item').length : 0) + JSON.parse(hid.value || '[]').length, room = L.carousel_max - have;
 			if (files.length > room) { alert('Carrossel aceita no máximo ' + L.carousel_max + ' itens (já tem ' + have + '). Vou usar só os primeiros ' + Math.max(0, room) + '.'); files = files.slice(0, Math.max(0, room)); }
 		}
@@ -172,7 +172,10 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 	function send(file) {
 		{
-			var el = document.createElement('div'); el.className = 'upfile'; el.innerHTML = '<span>' + file.name + '</span><div class="upbar"><i></i></div>'; list.appendChild(el);
+			var el = document.createElement('div'); el.className = 'upfile';
+			var pv = '';
+			try { var bu = URL.createObjectURL(file); pv = /^video\//.test(file.type) || /\.(mp4|mov|m4v|webm)$/i.test(file.name) ? '<video class="up-prev" src="' + bu + '#t=0.5" muted playsinline preload="metadata"></video>' : '<img class="up-prev" src="' + bu + '" alt="">'; } catch (e) {}
+			el.innerHTML = pv + '<span>' + file.name + '</span><div class="upbar"><i></i></div>'; list.appendChild(el);
 			busy++; toggle();
 			var isVideo = /^video\//.test(file.type) || /\.(mp4|mov|m4v|webm)$/i.test(file.name);
 			var go = (!isVideo && file.size < 25 * 1048576)
@@ -183,9 +186,16 @@ document.addEventListener('DOMContentLoaded', function () {
 				});
 			go.then(function (res) {
 				var arr = JSON.parse(hid.value || '[]'); arr.push(res); hid.value = JSON.stringify(arr);
-				el.className = 'upfile is-done'; el.innerHTML = '<span>✓ ' + res.name + '</span><small>enviado · agora clique em Salvar</small>';
+				el.className = 'upfile is-done'; el.innerHTML = '<span>✓ ' + res.name + '</span><small>enviado · salvando…</small>';
 			}).catch(function (err) { el.classList.add('is-err'); el.innerHTML += '<small class="text-late">' + err.message + '</small>'; })
-			  .then(function () { busy--; toggle(); });
+			  .then(function () {
+				busy--; toggle();
+				// Salvar a arte sozinho assim que todos os arquivos terminarem de subir.
+				if (busy === 0 && JSON.parse(hid.value || '[]').length) {
+					var sb = form.querySelector('[name=so_salvar]') || form.querySelector('[data-media-save]');
+					setTimeout(function () { try { form.requestSubmit(sb); } catch (e) { if (sb) sb.click(); } }, 400);
+				}
+			  });
 		}
 	}
 	// Ordem do carrossel (arrastar).
@@ -195,5 +205,17 @@ document.addEventListener('DOMContentLoaded', function () {
 		grid.addEventListener('dragover', function (e) { e.preventDefault(); var t = e.target.closest('.media-item'); if (t && drag && t !== drag) { var r = t.getBoundingClientRect(); grid.insertBefore(drag, (e.clientX - r.left) > r.width / 2 ? t.nextSibling : t); } });
 		grid.addEventListener('drop', function () { form.querySelector('[data-order]').value = Array.prototype.map.call(grid.querySelectorAll('.media-item'), function (m) { return m.getAttribute('data-i'); }).join(','); });
 	}
-	form.addEventListener('submit', function (e) { if (busy) { e.preventDefault(); alert('Espere terminar o envio.'); } });
+	form.addEventListener('submit', function (e) {
+		if (busy) { e.preventDefault(); alert('Espere terminar o envio.'); return; }
+		// Vídeo sem capa: avisa antes de salvar (é fácil esquecer).
+		var cov = form.querySelector('[name=cover_file]');
+		if (cov) {
+			var hasVideo = JSON.parse(hid.value || '[]').some(function (m) { return m.type === 'video'; }) || !!form.querySelector('video.media-play, .media-video');
+			var hasCover = (cov.files && cov.files.length) || !!form.querySelector('.vcover img');
+			if (hasVideo && !hasCover && !form.dataset.coverOk) {
+				if (confirm('Você não escolheu a capa do vídeo. 😉\n\nQuer usar a capa automática (um quadro do vídeo)?\n\nOK = usar a capa automática\nCancelar = voltar e escolher a capa')) { form.dataset.coverOk = '1'; }
+				else { e.preventDefault(); cov.scrollIntoView({ behavior: 'smooth', block: 'center' }); cov.closest('.drop') && cov.closest('.drop').classList.add('is-pulse'); }
+			}
+		}
+	});
 });

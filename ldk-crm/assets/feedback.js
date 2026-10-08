@@ -143,8 +143,23 @@
 			'</div>';
 		pop.hidden = false; aim(pin);
 	}
+	/* Print da tela com o ponto marcado (vai junto para o Eleve CRM). html2canvas carrega só quando precisa. */
+	function loadH2C() {
+		if (window.html2canvas) return Promise.resolve();
+		return new Promise(function (res, rej) { var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
+	}
+	function capture(x, y) {
+		return loadH2C().then(function () {
+			return window.html2canvas(document.documentElement, { useCORS: true, logging: false, scale: Math.min(1, 900 / window.innerWidth), x: window.scrollX, y: window.scrollY, width: window.innerWidth, height: window.innerHeight, windowWidth: document.documentElement.clientWidth, windowHeight: window.innerHeight, ignoreElements: function (el) { return !!(el.className && /(^|\s)fb-/.test(String(el.className.baseVal != null ? el.className.baseVal : el.className))); } });
+		}).then(function (cv) {
+			var c = cv.getContext('2d'), k = cv.width / window.innerWidth;
+			c.lineWidth = Math.max(3, 4 * k); c.strokeStyle = '#ff2d55'; c.beginPath(); c.arc(x * k, y * k, 30 * k, 0, Math.PI * 2); c.stroke();
+			return cv.toDataURL('image/jpeg', 0.7);
+		}).catch(function () { return ''; });
+	}
 	function newDraft(x, y, target) {
 		closePop();
+		var shotP = capture(x, y);
 		var r = target.getBoundingClientRect();
 		draft = document.createElement('div');
 		draft.className = 'fb-pin fb-pin--draft is-on';
@@ -164,6 +179,7 @@
 			py: Math.round(y + window.scrollY),
 			vw: window.innerWidth
 		};
+		draft._shot = shotP;
 		pop.innerHTML =
 			'<div class="fb-pop-h"><strong>Novo apontamento</strong><small>' + (snippet ? 'Em: “' + esc(snippet.slice(0, 50)) + (snippet.length > 50 ? '…' : '') + '”' : 'Neste ponto da tela') + '</small><button type="button" class="fb-x" data-fb-close aria-label="Fechar">×</button></div>' +
 			'<textarea rows="4" data-fb-body placeholder="O que precisa mudar aqui? Ex.: trocar o texto para…, este botão não funciona…, a cor ficou…"></textarea>' +
@@ -259,7 +275,7 @@
 		if (!body) { pop.querySelector('[data-fb-body]').focus(); return; }
 		btn.disabled = true; btn.textContent = 'Salvando…';
 		var data = Object.assign({ body: body }, draft._data);
-		api('feedback', { method: 'POST', body: JSON.stringify(data) }).then(function (j) {
+		Promise.resolve(draft._shot).then(function (shot) { data.shot = shot || ''; return api('feedback', { method: 'POST', body: JSON.stringify(data) }); }).then(function (j) {
 			draft.remove(); draft = null; pop.hidden = true;
 			items.push(j.item); drawPins(); badge(j.open);
 			toast('Apontamento salvo (' + items.length + ' nesta tela). Obrigado!');

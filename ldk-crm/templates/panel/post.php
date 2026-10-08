@@ -43,7 +43,7 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 <?php if ( $send && $send['wa'] ) : ?>
 	<section class="card card--accent ready-bar"><div><strong>Enviado por e-mail.</strong> Reforce pelo WhatsApp com a mensagem pronta:</div><a class="btn btn--wa" href="<?php echo esc_url( $send['wa'] ); ?>" target="_blank" rel="noopener"><?php echo lk_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>Mandar no WhatsApp</span></a></section>
 <?php endif; ?>
-<?php if ( $p->publish_error && ! lk_manage_only() ) : ?><div class="flash flash--erro"><strong>Não publicou:</strong> <?php echo esc_html( $p->publish_error ); ?></div><?php endif; ?>
+<?php if ( $p->publish_error ) : ?><div class="flash flash--erro"><strong>Não publicou:</strong> <?php echo esc_html( $p->publish_error ); ?></div><?php endif; ?>
 <?php if ( 'alteracao' === $p->client_status ) : ?><div class="flash flash--warn"><strong>O cliente pediu ajuste na <?php echo esc_html( $p->change_target ); ?>.</strong> <?php echo 'arte' === $p->change_target ? 'Está com o design.' : 'Está com o social media: ajuste a legenda e reenvie.'; ?></div><?php endif; ?>
 
 <div class="split">
@@ -66,9 +66,11 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 				<?php if ( in_array( $p->stage, array( lk_stage_for( 'revisao' ), lk_stage_for( 'aprovacao' ) ), true ) && $media ) : ?>
 					<?php lk_action_button( 'post_approve_manual', array( 'id' => $p->id ), 'Aprovar manualmente', 'btn btn--ghost', 'Marcar como aprovado pelo cliente (ele aprovou por fora) e agendar?' ); ?>
 				<?php endif; ?>
-				<?php if ( $wa && $p->sent_at ) : ?><a class="btn btn--wa" href="<?php echo esc_url( $wa ); ?>" target="_blank" rel="noopener"><?php echo lk_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>WhatsApp</span></a><?php endif; ?>
+				<?php if ( $wa ) : ?><a class="btn btn--wa" href="<?php echo esc_url( $wa ); ?>" target="_blank" rel="noopener"><?php echo lk_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>Enviar no WhatsApp</span></a><?php endif; ?>
+				<?php if ( in_array( $p->change_target, array( 'legenda', 'ambos' ), true ) ) : ?><?php lk_action_button( 'post_redone_caption', array( 'id' => $p->id ), '✓ Refiz a legenda', 'btn btn--primary', 'Já ajustou a legenda? O atendimento será avisado para enviar ao cliente.' ); ?><?php endif; ?>
+				<?php lk_action_button( 'post_pause', array( 'id' => $p->id ), $p->paused ? '▶ Retomar postagem' : '⏸ Pausar postagem', 'btn btn--ghost', $p->paused ? '' : 'Pausar? O post não será publicado sozinho até você retomar.' ); ?>
 				<button type="button" class="btn btn--ghost" data-copy="<?php echo esc_attr( lk_post_url( $p ) ); ?>">Copiar link de aprovação</button>
-				<?php if ( ! lk_manage_only() && ( $p->stage === lk_stage_for( 'agendado' ) || $p->publish_error ) ) : ?>
+				<?php if ( $p->stage === lk_stage_for( 'agendado' ) || $p->publish_error ) : ?>
 					<?php lk_action_button( 'post_publish_now', array( 'id' => $p->id ), 'Publicar agora', 'btn btn--ghost', 'Publicar agora nas redes marcadas?' ); ?>
 				<?php endif; ?>
 				<?php if ( $p->stage !== lk_stage_for( 'publicado' ) ) : ?><?php lk_action_button( 'post_mark_published', array( 'id' => $p->id ), 'Marcar como publicado', 'btn btn--link btn--sm' ); ?><?php endif; ?>
@@ -92,8 +94,9 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 					</div>
 					<?php if ( count( $media ) > 1 ) : ?><p class="muted small">Arraste para mudar a ordem do carrossel.</p><?php endif; ?>
 				<?php endif; ?>
-				<label class="drop drop--file"><input type="file" multiple accept="image/*,video/*" data-media-upload data-client="<?php echo (int) $p->client_id; ?>"><?php echo lk_icon( 'upload', 20 ); // phpcs:ignore ?><span><strong>Subir arte, fotos ou vídeo</strong><small>Instagram: imagem JPG até 8 MB · vídeo MP4/MOV até 300 MB (3 s a 15 min) · Story até 100 MB (60 s) · carrossel até 10 · vídeo grande vai direto para o Drive</small></span></label>
+				<label class="drop drop--file"><input type="file" multiple accept="image/*,video/*" data-media-upload data-client="<?php echo (int) $p->client_id; ?>"><?php echo lk_icon( 'upload', 20 ); // phpcs:ignore ?><span><strong>Subir arte, fotos ou vídeo</strong><small>Instagram: imagem JPG até 8 MB · vídeo MP4/MOV até 300 MB (3 s a 15 min) · Story até 100 MB (60 s) · carrossel até 20 · salva sozinho ao terminar de subir · vídeo grande vai direto para o Drive</small></span></label>
 				<div class="upfiles" data-upfiles></div>
+				<?php $pc = lk_get( 'clients', $p->client_id ); echo $pc ? lk_post_picker_html( $pc ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				<?php echo lk_video_opts_html( $p, true ); // phpcs:ignore ?>
 				<div class="form-actions">
 					<?php if ( $p->stage === lk_stage_for( 'design' ) ) : ?>
@@ -109,7 +112,7 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 		<section class="card" id="apontamentos">
 			<div class="card-head"><h3>Apontamentos</h3><span class="muted small"><?php echo count( array_filter( $notes, function ( $n ) { return ! $n->resolved; } ) ); ?> aberto(s)</span></div>
 			<?php if ( lk_note_can() ) : ?><details class="note-new"><summary class="btn btn--primary btn--sm">📌 Fazer apontamento</summary>
-				<?php lk_form( 'post_note', 'stack' ); ?>
+				<?php lk_form( 'post_note', 'stack', true ); ?>
 					<input type="hidden" name="id" value="<?php echo (int) $p->id; ?>">
 					<div class="grid-2">
 						<?php lk_select( 'assignee', 'Para quem é', $teamu, '' ); ?>
@@ -117,7 +120,8 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 						<?php lk_select( 'media_i', 'Em qual arquivo', $mopts, '' ); ?>
 						<label class="field"><span>No tempo do vídeo (mm:ss)</span><span class="note-at"><input type="text" name="at" placeholder="0:12" inputmode="numeric"><button type="button" class="btn btn--ghost btn--sm" data-grab>📍 Pegar do player</button></span></label>
 					</div>
-					<?php lk_input( 'body', 'O que precisa mudar', '', 'textarea', 'rows="3" required placeholder="Ex.: trocar a trilha aos 0:12; texto cortado na lateral"' ); ?>
+					<?php lk_input( 'body', 'O que precisa mudar (ou grave um áudio)', '', 'textarea', 'rows="3" placeholder="Ex.: trocar a trilha aos 0:12; texto cortado na lateral"' ); ?>
+					<div class="note-att" data-audio-rec><label class="field"><span>Anexar referência (imagem, PDF ou vídeo)</span><input type="file" name="ref_file" accept="image/*,application/pdf,video/mp4"></label><input type="file" name="audio_file" hidden data-audio-input><button type="button" class="btn btn--ghost btn--sm" data-audio-btn>🎙️ Gravar áudio</button> <audio controls hidden data-audio-prev></audio></div>
 					<div class="form-actions"><?php lk_check( 'visible', 'Mostrar também ao cliente (desmarcado = só a equipe vê, antes de chegar nele)', false ); ?><button type="submit" class="btn btn--primary">Enviar apontamento</button></div>
 				</form>
 			</details><?php else : ?><p class="muted small">Seu usuário não está liberado para fazer apontamentos (o administrador decide).</p><?php endif; ?>
@@ -130,8 +134,8 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 				<?php foreach ( $comments as $cm ) : ?>
 					<?php $u = get_userdata( $cm->user_id ); ?>
 					<li class="<?php echo $cm->from_client ? 'is-client' : ''; ?><?php echo 'log' === $cm->target ? ' is-log' : ''; ?>"><span class="timeline-dot"></span><div>
-						<?php if ( 'log' !== $cm->target ) : ?><strong><?php echo esc_html( $cm->from_client ? 'Cliente' : ( $u ? $u->display_name : '' ) ); ?></strong><?php echo in_array( $cm->target, array( 'arte', 'legenda' ), true ) ? ' <em class="badge badge--warn">ajuste na ' . esc_html( $cm->target ) . '</em>' : ( 'planejamento' === $cm->target ? ' <em class="badge badge--warn">no planejamento</em>' : '' ); ?><?php echo $cm->internal ? ' <em class="badge">interno</em>' : ''; ?><br><?php endif; ?>
-						<?php echo nl2br( esc_html( $cm->body ) ); ?><small><?php echo esc_html( lk_ago( $cm->created_at ) ); ?></small></div></li>
+						<?php if ( 'log' !== $cm->target ) : ?><strong><?php echo esc_html( $cm->from_client ? 'Cliente' : ( $u ? $u->display_name : '' ) ); ?></strong><?php echo in_array( $cm->target, array( 'arte', 'legenda', 'ambos' ), true ) ? ' <em class="badge badge--warn">ajuste na ' . esc_html( $cm->target ) . '</em>' : ( 'planejamento' === $cm->target ? ' <em class="badge badge--warn">no planejamento</em>' : '' ); ?><?php echo $cm->internal ? ' <em class="badge">interno</em>' : ''; ?><br><?php endif; ?>
+						<?php echo nl2br( esc_html( $cm->body ) ); ?><?php echo lk_attach_html( $cm ); // phpcs:ignore ?><small><?php echo esc_html( lk_ago( $cm->created_at ) ); ?></small></div></li>
 				<?php endforeach; ?>
 			</ul>
 			<?php lk_form( 'post_comment', 'stack' ); ?>
@@ -142,7 +146,6 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 		</section>
 	</div>
 	<aside class="split-side">
-		<?php if ( lk_manage_only() ) { echo lk_post_mlabs_html( $p ); } // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		<section class="card">
 			<div class="card-head"><h3>Post</h3></div>
 			<?php lk_post_form( $p ); ?>
@@ -160,7 +163,9 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 </div>
 <script>window.LK_LIMITS = <?php echo wp_json_encode( lk_media_limits() ); ?>;</script>
 <script src="<?php echo esc_url( LK_URL . 'assets/media.js?ver=' . LK_VERSION ); ?>"></script>
+<script src="<?php echo esc_url( LK_URL . 'assets/cliente-arquivos.js?ver=' . LK_VERSION ); ?>"></script>
 <script src="<?php echo esc_url( LK_URL . 'assets/notes.js?ver=' . LK_VERSION ); ?>"></script>
+<script src="<?php echo esc_url( LK_URL . 'assets/audio.js?ver=' . LK_VERSION ); ?>"></script>
 <script src="<?php echo esc_url( LK_URL . 'assets/content.js?ver=' . LK_VERSION ); ?>"></script>
 <?php
 lk_panel_end();

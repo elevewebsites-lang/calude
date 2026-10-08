@@ -106,7 +106,6 @@ function lk_default_settings() {
 		'empresa_representante' => '',
 		'contrato_modelo'       => '',
 		'pacotes'              => '',
-		'modo_gestao'          => '1',
 		'login_card'           => '1',
 		'login_bg'             => '',
 		// Sala de voz: servidor TURN opcional (para redes muito fechadas).
@@ -133,6 +132,7 @@ function lk_default_settings() {
 		'apontamentos'   => '1',
 		'apontamentos_clientes' => '0',
 		'apontamentos_email' => '',
+		'apontamentos_eleve' => '',
 	);
 }
 
@@ -259,7 +259,7 @@ function lk_areas() {
 		'trafego'    => 'Tráfego pago',
 		'emails'     => 'E-mails para clientes',
 		'tarefas'    => 'Tarefas',
-		'financeiro' => 'Financeiro',
+		'financeiro' => 'Financeiro: ver e mexer em valores (mensalidade, contratos, preços, receita)',
 	);
 }
 
@@ -402,6 +402,10 @@ function lk_wa_link( $phone, $message = '' ) {
  * -------------------------------------------------------------------- */
 
 function lk_money( $value ) {
+	// Equipe sem a permissão "Financeiro" não vê valores no painel (o admin decide quem vê).
+	if ( ! empty( $GLOBALS['lk_mask_money'] ) ) {
+		return 'R$ ••••';
+	}
 	return 'R$ ' . number_format( (float) $value, 2, ',', '.' );
 }
 
