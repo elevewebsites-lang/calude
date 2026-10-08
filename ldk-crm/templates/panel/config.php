@@ -9,8 +9,21 @@ $sec = function ( $key ) use ( $s ) {
 lk_panel_start( 'Configurações', 'config' );
 ?>
 <nav class="config-nav">
-	<a href="#marca">Marca</a><a href="#producao">Esteira e funil</a><a href="#redes">Redes e anúncios</a><a href="#pagamento">Pagamento</a><a href="#email">E-mail</a><a href="#google">Google</a><a href="#formulario-site">Site</a><a href="#seguranca">Segurança</a>
+	<a href="#modo">Modo de uso</a><a href="#marca">Marca</a><a href="#producao">Esteira e funil</a><a href="#redes">Redes e anúncios</a><a href="#pagamento">Pagamento</a><a href="#email">E-mail</a><a href="#google">Google</a><a href="#formulario-site">Site</a><a href="#seguranca">Segurança</a>
 </nav>
+
+<section class="card step" id="modo">
+	<div class="step-head"><span class="step-n">00</span><div><h3>Postar e vincular redes</h3><p class="muted small">Um botão liga ou desliga tudo que depende das redes sociais.</p></div></div>
+	<?php if ( lk_manage_only() ) : ?>
+		<p><em class="badge badge--ok">Desligado: só gerenciamento</em></p>
+		<p class="muted small">Estão escondidos: vincular Instagram/Facebook e outras redes, "Onde publicar", "Publicar agora", a página de Tráfego pago e o relatório puxado das redes. Nada é publicado pelo sistema: o post agendado no mLabs vira <strong>Publicado</strong> sozinho na hora marcada, e dá para marcar como publicado à mão. Cada post mostra o cartão <strong>Para agendar no mLabs</strong> (arte, legenda e botão de agendado).</p>
+		<?php lk_action_button( 'modo_gestao_toggle', array(), 'Ligar de novo postar e vincular', 'btn btn--ghost', 'Voltar ao modo completo (vincular redes e publicar pelo sistema)?' ); ?>
+	<?php else : ?>
+		<p><em class="badge">Ligado: modo completo</em></p>
+		<p class="muted small">Ao desligar, o sistema passa a só gerenciar: some tudo sobre vincular redes e postar, e você agenda no mLabs à mão.</p>
+		<?php lk_action_button( 'modo_gestao_toggle', array(), 'Desligar postar e vincular', 'btn btn--primary', 'Esconder tudo que depende de postar e vincular redes?' ); ?>
+	<?php endif; ?>
+</section>
 
 <?php lk_form( 'settings_save', 'wizard', false, 'cfg-form' ); ?>
 	<button type="submit" form="cfg-form" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">Salvar</button><?php /* primeiro botão do form: o Enter nos campos salva, nunca apaga nem testa */ ?>

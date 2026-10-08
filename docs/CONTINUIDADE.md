@@ -1,5 +1,8 @@
 # LDK CRM · Contexto e continuidade
 
+> **ATUALIZAÇÃO (08/10/2026, fim da sessão):** o site em produção estava na **1.37.12**, que não estava no repositório. O usuário enviou o zip dela; a branch `claude/charming-dijkstra-ioq2t7` agora tem a **1.37.12 como base + tudo deste documento portado por cima = versão 1.38.0** (merge feito por 3 vias a partir da 1.27.0). Diferenças do que está descrito abaixo: (a) o botão de desligar postar/vincular fica em **Configurações → "Postar e vincular redes"** (botão que liga/desliga na hora, padrão **desligado** = modo completo) e há uma pílula "Sem postar / vincular" no topo para administradores; (b) os arquivos por cliente usam o `cliente-arquivos.php` que já existia na 1.37.12 (a aba "Drive e arquivos" mostra o bloco dele); (c) foram escondidos também "Pausar postagem", "Collab", o campo Redes do planejamento e os chips de rede das páginas públicas; (d) novidades da 1.38.0 em `includes/central.php`. Zip para instalar: `dist/ldk-crm-1.38.0.zip`. Lembrete: o histórico do git guarda a 1.31.0 (commit `111cc6e`) e a base 1.27.0 (`102c5de`).
+
+
 Documento para continuar o trabalho em outra conta/sessão. Escrito em 08/10/2026.
 
 ## 1. Projeto

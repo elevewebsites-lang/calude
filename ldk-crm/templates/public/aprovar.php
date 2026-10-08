@@ -32,7 +32,7 @@ lk_head( 'Aprovação · ' . $p->title );
 			</span>
 			<h1><?php echo esc_html( $p->title ); ?></h1>
 			<p><?php echo esc_html( lk_formats()[ $p->format ] ?? '' ); ?><?php if ( $p->scheduled_at ) : ?> · agendado para <strong><?php echo esc_html( lk_date( $p->scheduled_at, 'd/m' ) . ' às ' . substr( $p->scheduled_at, 11, 5 ) ); ?></strong><?php endif; ?></p>
-			<div class="apx-nets">
+			<div class="apx-nets"<?php echo lk_manage_only() ? ' hidden' : ''; ?>>
 				<?php foreach ( $nets as $n ) : ?><span class="apx-net apx-net--<?php echo esc_attr( $n ); ?>" title="<?php echo esc_attr( lk_networks()[ $n ] ?? $n ); ?>"><?php echo esc_html( lk_networks()[ $n ] ?? $n ); ?></span><?php endforeach; ?>
 			</div>
 		</div>

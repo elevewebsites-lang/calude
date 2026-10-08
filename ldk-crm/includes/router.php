@@ -161,6 +161,9 @@ function lk_route() {
 			'ranking'     => array( 'ranking', '' ),
 			'metas'       => array( 'metas', 'admin' ),
 			'contratos'   => array( 'contratos', 'clientes' ),
+			'vencimentos' => array( 'vencimentos', 'clientes' ),
+			'importar'    => array( 'importar', 'conteudo' ),
+			'relatorio-importar' => array( 'relatorio-importar', 'relatorios' ),
 			'prospeccao'  => array( 'prospeccao', 'leads' ),
 			'gamificacao' => array( 'gamificacao', 'admin' ),
 		);

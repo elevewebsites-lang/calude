@@ -271,6 +271,7 @@ function lk_do_contract_save() {
 		'posts_quota'   => lk_in( 'posts_quota', 'int' ),
 		'extra'         => lk_in( 'extra', 'textarea' ),
 		'clauses'       => lk_in( 'clauses', 'textarea' ),
+		'subject'       => implode( ',', lk_contract_subjects_from_post() ),
 	);
 	if ( $old ) {
 		lk_update( 'contracts', $old->id, $data );
@@ -519,6 +520,7 @@ function lk_contract_form( $client, $k = null ) {
 	<?php if ( $k ) : ?><input type="hidden" name="regerar" value="1"><?php endif; ?>
 	<?php lk_input( 'title', 'Título', $k ? $k->title : 'Contrato de prestação de serviços de marketing digital' ); ?>
 	<?php lk_package_picker( $k ? (string) $k->package : '' ); ?>
+	<?php lk_service_type_boxes( $k ? lk_contract_subjects( $k ) : array() ); ?>
 	<?php lk_input( 'services', 'Serviços contratados (um por linha)', $k ? $k->services : "Planejamento mensal de conteúdo\nCriação de artes e legendas\nProgramação das postagens\nRelatório mensal de resultados", 'textarea', 'rows="5"' ); ?>
 	<div class="grid-3">
 		<?php if ( ! lk_can( 'financeiro' ) ) : ?><p class="muted small" style="grid-column:1/-1">🔒 Valores do contrato só aparecem para quem o administrador libera em Equipe → Financeiro.</p><?php else : ?>

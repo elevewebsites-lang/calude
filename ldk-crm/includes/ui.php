@@ -127,6 +127,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 		'Clientes' => array(
 			'clientes'   => array( 'Clientes', 'clientes', 'clientes' ),
 			'contratos'  => array( 'Contratos', 'proposta', 'clientes' ),
+			'vencimentos' => array( 'Hospedagem e domínios', 'globo', 'clientes' ),
 			'formularios' => array( 'Briefings e pesquisas', 'lista', 'clientes' ),
 			'redes'      => array( 'Redes conectadas', 'globo', 'clientes' ),
 			'mensagens'  => array( 'Mensagens', 'chat', 'clientes' ),
@@ -162,7 +163,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 		unset( $items['Operação']['apontamentos'] );
 	}
 	?>
-<body class="lk lk-panel">
+<body class="lk lk-panel<?php echo lk_manage_only() ? ' modo-gestao' : ''; ?>">
 <div class="app">
 	<aside class="side" id="side">
 		<a class="side-brand" href="<?php echo esc_url( lk_panel_url() ); ?>">
@@ -192,6 +193,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 					<a href="<?php echo esc_url( lk_panel_url( $slug ) ); ?>" class="<?php echo $active === $slug ? 'is-active' : ''; ?>">
 						<?php echo lk_icon( $it[1] ); // phpcs:ignore ?><span><?php echo esc_html( $it[0] ); ?></span>
 						<?php if ( in_array( $slug, array( 'alteracoes', 'enviar' ), true ) && lk_flow_menu_count( $slug ) ) : ?><em class="side-count"><?php echo (int) lk_flow_menu_count( $slug ); ?></em><?php endif; ?>
+						<?php if ( 'contratos' === $slug && lk_contracts_pending_count() ) : ?><em class="side-count"><?php echo (int) lk_contracts_pending_count(); ?></em><?php endif; ?>
 						<?php if ( 'tarefas' === $slug && $today_count ) : ?><em class="side-count"><?php echo (int) $today_count; ?></em><?php endif; ?>
 						<?php if ( 'novidades' === $slug && lk_changelog_unseen() ) : ?><em class="side-count side-count--new">novo</em><?php endif; ?>
 						<?php if ( 'feedback' === $slug && lk_is_admin() && lk_feedback_open_mine() ) : ?><em class="side-count"><?php echo (int) lk_feedback_open_mine(); ?></em><?php endif; ?>
@@ -225,7 +227,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 		<header class="top">
 			<button type="button" class="top-menu" data-side-open aria-label="Menu"><?php echo lk_icon( 'menu', 20 ); // phpcs:ignore ?></button>
 			<h1 class="top-title"><?php echo esc_html( $title ); ?></h1>
-			<div class="top-actions"><?php echo $actions; // phpcs:ignore -- HTML montado pelas telas com esc_*. ?><?php echo lk_team_bell_html(); // phpcs:ignore ?></div>
+			<div class="top-actions"><?php echo $actions; // phpcs:ignore -- HTML montado pelas telas com esc_*. ?><?php echo lk_manage_pill_html(); // phpcs:ignore ?><?php echo lk_team_bell_html(); // phpcs:ignore ?></div>
 		</header>
 		<div class="content">
 			<?php echo lk_welcome_html(); // phpcs:ignore WordPress.Security.EscapeOutput ?>

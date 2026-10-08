@@ -886,13 +886,13 @@ function lk_post_form( $p = null, $client_id = 0, $back = '' ) {
 		</div>
 		<?php lk_prazos_fields( $p ); ?>
 		<?php if ( ! $p && function_exists( 'lk_form_picker_html' ) ) : echo lk_form_picker_html( $cid ); endif; // phpcs:ignore WordPress.Security.EscapeOutput ?>
-		<fieldset class="nets-pick">
+		<?php if ( ! lk_manage_only() ) : ?><fieldset class="nets-pick">
 			<legend class="small">Onde publicar</legend>
 			<?php foreach ( lk_networks() as $n => $nl ) : ?>
 				<label class="chk"><input type="checkbox" name="networks[]" value="<?php echo esc_attr( $n ); ?>"<?php checked( in_array( $n, $nets, true ) ); ?>> <?php echo esc_html( $nl ); ?><?php if ( $cid && ! isset( $accs[ $n ] ) ) : ?> <em class="badge badge--off">não vinculado</em><?php endif; ?></label>
 			<?php endforeach; ?>
-		</fieldset>
-		<?php lk_input( 'collab', 'Collab no Instagram (perfil convidado, ex.: @parceiro; até 3 separados por vírgula)', $p ? (string) $p->collab : '', 'text', 'placeholder="@perfil_parceiro"' ); ?>
+		</fieldset><?php endif; ?>
+		<?php if ( ! lk_manage_only() ) { lk_input( 'collab', 'Collab no Instagram (perfil convidado, ex.: @parceiro; até 3 separados por vírgula)', $p ? (string) $p->collab : '', 'text', 'placeholder="@perfil_parceiro"' ); } ?>
 		<details class="post-more"<?php echo $p ? '' : ''; ?>>
 			<summary class="small">Responsáveis e observações</summary>
 			<div class="grid-3">
@@ -915,9 +915,17 @@ function lk_post_form( $p = null, $client_id = 0, $back = '' ) {
  */
 function lk_do_client_team() {
 	lk_require( 'clientes' );
+	if ( ! lk_client_team_apply() ) {
+		lk_back( 'Cliente não encontrado.', 'erro' );
+	}
+	lk_back( 'Cliente atualizado.' );
+}
+
+/** Salva equipe, pacote, mensalidade e preferências do cliente (campos do formulário). Devolve false se não achou o cliente. */
+function lk_client_team_apply() {
 	$c = lk_get( 'clients', lk_in( 'id', 'int' ) );
 	if ( ! $c ) {
-		lk_back( 'Cliente não encontrado.', 'erro' );
+		return false;
 	}
 	$data = array(
 		'designer_id'     => lk_in( 'designer_id', 'int' ),
@@ -940,7 +948,16 @@ function lk_do_client_team() {
 	}
 	lk_update( 'clients', $c->id, $data );
 	lk_billing_generate();
-	lk_back( 'Cliente atualizado.' );
+	return true;
+}
+
+/** Botão "Salvar tudo" da ficha do cliente: dados, equipe, mensalidade e preferências de uma vez. */
+function lk_do_client_save_all() {
+	lk_require( 'clientes' );
+	if ( ! lk_client_team_apply() ) {
+		lk_back( 'Cliente não encontrado.', 'erro' );
+	}
+	lk_do_client_save(); // salva os dados e volta com o aviso
 }
 
 /* -----------------------------------------------------------------------

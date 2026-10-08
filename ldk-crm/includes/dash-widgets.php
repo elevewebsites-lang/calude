@@ -45,7 +45,7 @@ function lk_dash_allowed( $id ) {
 		return false; // perfil + demandas ficam sempre fixos no topo, fora da personalização
 	}
 	$w = lk_dash_widgets()[ $id ] ?? null;
-	if ( ! $w || ! lk_is_team() ) {
+	if ( ! $w || ! lk_is_team() || ! apply_filters( 'lk_dash_widget_allowed', true, $id ) ) {
 		return false;
 	}
 	if ( '' === $w[2] ) {

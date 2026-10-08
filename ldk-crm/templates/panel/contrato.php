@@ -30,6 +30,7 @@ lk_panel_start( 'Contrato · ' . lk_client_label( $client ), 'clientes', $acoes 
 			<button type="button" class="btn btn--ghost" data-open="contrato-dados">Editar dados</button>
 		<?php elseif ( 'enviado' === $k->status ) : ?>
 			<button type="button" class="btn btn--ghost" data-copy="<?php echo esc_attr( lk_contract_url( $k ) ); ?>">Copiar link</button>
+			<?php lk_action_button( 'contract_remind', array( 'id' => $k->id ), lk_icon( 'email', 16 ) . '<span>Lembrar por e-mail</span>', 'btn btn--ghost' ); ?>
 			<?php if ( $client->whatsapp ) : ?><a class="btn btn--wa" href="<?php echo esc_url( lk_wa_link( $client->whatsapp, 'Olá! O seu contrato com a ' . lk_setting( 'empresa' ) . ' está pronto para assinar: ' . lk_contract_url( $k ) ) ); ?>" target="_blank" rel="noopener"><?php echo lk_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>WhatsApp</span></a><?php endif; ?>
 		<?php endif; ?>
 		<?php if ( in_array( $k->status, array( 'enviado', 'assinado' ), true ) && ! $k->agency_signed_at && lk_is_admin() ) : ?>
@@ -40,6 +41,18 @@ lk_panel_start( 'Contrato · ' . lk_client_label( $client ), 'clientes', $acoes 
 	</div>
 </section>
 
+<?php $dw = lk_contract_days_waiting( $k ); ?>
+<?php if ( $dw >= 1 ) : ?><section class="card card--accent ready-bar"><div><strong>Sem assinatura há <?php echo (int) $dw; ?> <?php echo 1 === $dw ? 'dia' : 'dias'; ?>.</strong> <?php echo $k->viewed_at ? 'O cliente abriu o link em ' . esc_html( lk_date( $k->viewed_at, 'd/m H:i' ) ) . ' mas não assinou.' : 'O cliente ainda não abriu o link.'; ?></div></section><?php endif; ?>
+<?php $subs = lk_contract_subjects( $k ); if ( $subs ) : $types = lk_service_types(); ?>
+<section class="card">
+	<div class="card-head"><h3>Briefing de cada serviço</h3><span class="muted small">peça ao cliente as informações do que ele contratou</span></div>
+	<?php foreach ( $subs as $sk ) : ?>
+		<div class="pay-row"><span><strong><?php echo esc_html( $types[ $sk ]['name'] ); ?></strong><small>Modelo: <?php echo esc_html( lk_form_defaults()[ $types[ $sk ]['briefing'] ]['title'] ?? 'Briefing' ); ?></small></span>
+			<?php lk_form( 'form_quick', 'inline-form' ); ?><input type="hidden" name="client_id" value="<?php echo (int) $client->id; ?>"><input type="hidden" name="ref" value="default:<?php echo esc_attr( $types[ $sk ]['briefing'] ); ?>"><button type="submit" class="btn btn--primary btn--sm" data-confirm="Enviar este briefing para <?php echo esc_attr( lk_client_label( $client ) ); ?>?">Enviar briefing</button></form></div>
+	<?php endforeach; ?>
+	<?php if ( in_array( 'hospedagem', $subs, true ) ) : ?><p class="muted small">Hospedagem e domínio: depois de assinado, cadastre as datas de vencimento na <a href="<?php echo esc_url( lk_panel_url( 'cliente', $client->id ) ); ?>#vencimentos">ficha do cliente</a> para a equipe ser avisada antes de vencer.</p><?php endif; ?>
+</section>
+<?php endif; ?>
 <?php echo lk_contract_parties_html( $k, $client ); // phpcs:ignore ?>
 <?php if ( 'rascunho' === $k->status ) : ?>
 <section class="card" id="clausulas">

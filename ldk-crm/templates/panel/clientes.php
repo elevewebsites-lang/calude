@@ -31,7 +31,7 @@ lk_panel_start( 'Clientes', 'clientes', $actions );
 		<?php foreach ( $clients as $c ) : ?>
 			<?php $n = isset( $counts[ $c->id ] ) ? $counts[ $c->id ] : null; ?>
 			<a class="table-row" href="<?php echo esc_url( lk_panel_url( 'cliente', $c->id ) ); ?>">
-				<span class="cell-main"><?php echo lk_client_avatar_html( $c ); // phpcs:ignore ?><span><strong><?php echo esc_html( lk_client_label( $c ) ); ?></strong><small><?php echo esc_html( $c->company && $c->name ? $c->name : $c->cnpj ); ?></small></span></span>
+				<span class="cell-main"><?php echo lk_client_avatar_html( $c ); // phpcs:ignore ?><span><strong><?php echo esc_html( lk_client_label( $c ) ); ?></strong><small><?php echo esc_html( $c->company && $c->name ? $c->name : $c->cnpj ); ?></small><?php echo lk_client_service_tags_html( $c ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></span>
 				<span data-label="Contato"><?php echo esc_html( $c->whatsapp ? $c->whatsapp : $c->phone ); ?><small><?php echo esc_html( $c->email ); ?></small></span>
 				<span data-label="Projetos"><?php echo $n ? (int) $n->active . ' ativo' . ( 1 === (int) $n->active ? '' : 's' ) . ' <small>' . (int) $n->n . ' no total</small>' : '<span class="muted">—</span>'; // phpcs:ignore ?></span>
 				<span data-label="Acesso"><?php echo lk_status_badge( $c->user_id ? 'ativo' : 'convidado' ); // phpcs:ignore ?></span>

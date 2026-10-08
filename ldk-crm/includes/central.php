@@ -13,6 +13,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.38.0' => array(
+			'date'  => '2026-10-08',
+			'title' => 'Sem postar e sem vincular, contratos por assunto, ficha em abas e relatório do mLabs',
+			'items' => array(
+				array( '🔌', 'Botão para desligar postar e vincular', 'Em Configurações → Postar e vincular redes, um botão esconde tudo que depende das redes (vincular Instagram, onde publicar, publicar agora, tráfego pago). O post agendado no mLabs vira Publicado sozinho no horário, e dá para marcar à mão. Cada post mostra o cartão "Para agendar no mLabs".' ),
+				array( '📄', 'Contratos por assunto', 'A tela de Contratos abre em Pendentes, com menu por situação e por assunto. O botão "Gerar contrato" preenche tudo com os dados do cliente. Contrato enviado e não assinado avisa a equipe depois de 1 dia, e cada serviço tem o seu briefing.' ),
+				array( '🌐', 'Hospedagem, domínio e vencimentos', 'Cadastre hospedagem, domínio e outros itens com data e valor, marque pago e receba aviso antes de vencer. Cada serviço ativo ganha uma tag com pago ou não pago.' ),
+				array( '🗂️', 'Ficha do cliente em abas', 'Resumo, Dados, Contratos, Briefing, Posts, Drive, Acessos, Vencimentos, Relatórios e Reuniões, com um botão "Salvar tudo". A aba Acessos guarda logins e senhas por cliente.' ),
+				array( '📥', 'Importar planilha do Excel', 'Suba o Excel (ou CSV) do Monday no cliente e o sistema cria os posts, só com as linhas que têm texto.' ),
+				array( '📊', 'Relatório a partir do PDF do mLabs', 'Suba o PDF do mLabs e o sistema lê indicadores, gráficos e tabelas e monta o relatório no padrão da plataforma.' ),
+			),
+		),
 		'1.36.0' => array(
 			'date'  => '2026-10-06',
 			'title' => 'Temas festivos (opcionais)',

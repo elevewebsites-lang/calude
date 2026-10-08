@@ -16,7 +16,7 @@ $nets   = array();
 $fmts   = array();
 $days   = array();
 foreach ( $posts as $p ) {
-	foreach ( lk_post_networks( $p ) as $n ) {
+	foreach ( lk_manage_only() ? array() : lk_post_networks( $p ) as $n ) {
 		$nets[ $n ] = lk_networks()[ $n ] ?? $n;
 	}
 	$fmts[ $p->format ] = ( $fmts[ $p->format ] ?? 0 ) + 1;

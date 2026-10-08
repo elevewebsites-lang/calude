@@ -37,7 +37,7 @@ $today_posts = lk_posts( 'DATE(p.scheduled_at) = %s', array( $today ), 'p.schedu
 $where = "t.status <> 'done' AND t.due_date IS NOT NULL AND t.due_date <= %s AND t.assignee = %d";
 $tasks = lk_tasks( $where, array( $today, $me ), "t.due_date, FIELD(t.priority, 'urgente', 'alta', 'normal', 'baixa'), t.id" );
 $pend  = $fin ? lk_billing_pending() : array();
-$nocon = array_filter( lk_clients(), function ( $c ) { return ! isset( lk_social_accounts( $c->id )['instagram'] ); } );
+$nocon = lk_manage_only() ? array() : array_filter( lk_clients(), function ( $c ) { return ! isset( lk_social_accounts( $c->id )['instagram'] ); } );
 
 // Gráficos: publicações 14 dias atrás → 14 dias à frente, tarefas concluídas (7 dias) e posts por etapa.
 $win_from = gmdate( 'Y-m-d', strtotime( $today . ' -14 day' ) );

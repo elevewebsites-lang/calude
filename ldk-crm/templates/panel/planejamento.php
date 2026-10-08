@@ -223,7 +223,7 @@ if ( $hol_list ) :
 					<?php lk_input( 'date', 'Dia', $new_day, 'date', 'required min="' . esc_attr( $ym . '-01' ) . '" max="' . esc_attr( gmdate( 'Y-m-t', strtotime( $ym . '-01' ) ) ) . '"' ); ?>
 					<?php lk_input( 'time', 'Horário', '18:00', 'time' ); ?>
 					<?php lk_select( 'format', 'Formato', lk_formats(), 'arte' ); ?>
-					<label class="field"><span>Redes</span><span class="plan-nets"><?php foreach ( lk_networks() as $n => $nl ) : ?><label class="chk"><input type="checkbox" name="networks[]" value="<?php echo esc_attr( $n ); ?>"<?php checked( in_array( $n, array( 'instagram', 'facebook' ), true ) ); ?>> <?php echo esc_html( 'gmn' === $n ? 'GMN' : $nl ); ?></label><?php endforeach; ?></span></label>
+					<?php if ( ! lk_manage_only() ) : ?><label class="field"><span>Redes</span><span class="plan-nets"><?php foreach ( lk_networks() as $n => $nl ) : ?><label class="chk"><input type="checkbox" name="networks[]" value="<?php echo esc_attr( $n ); ?>"<?php checked( in_array( $n, array( 'instagram', 'facebook' ), true ) ); ?>> <?php echo esc_html( 'gmn' === $n ? 'GMN' : $nl ); ?></label><?php endforeach; ?></span></label><?php endif; ?>
 				</div>
 				<?php lk_input( 'title', 'Tema / título do post', '', 'text', 'required placeholder="Ex.: Outubro Rosa: prevenção começa no cuidado"' ); ?>
 				<?php lk_input( 'caption', 'Ideia da legenda', '', 'textarea', 'rows="3" placeholder="A legenda (ou a ideia dela) que a cliente vai aprovar…"' ); ?>

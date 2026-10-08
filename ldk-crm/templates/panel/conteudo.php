@@ -32,7 +32,7 @@ $base = array_filter( array( 'cliente' => $cid ) ) + array( 'meus' => $mine ? 1 
 $tab  = function ( $v, $label, $icon ) use ( $view, $base, $ym ) {
 	return '<a class="' . ( $view === $v ? 'is-active' : '' ) . '" href="' . esc_url( lk_panel_url( 'conteudo', 0, $base + array( 'ver' => $v, 'mes' => $ym ) ) ) . '">' . lk_icon( $icon, 15 ) . ' ' . $label . '</a>';
 };
-$actions = ( $cid ? '<a class="btn btn--ghost" href="' . esc_url( lk_panel_url( 'planejamento', 0, array( 'cliente' => $cid, 'mes' => $ym ) ) ) . '">' . lk_icon( 'lista', 16 ) . '<span>Planejamento</span></a>' : '' ) . '<div class="seg">' . $tab( 'calendario', 'Calendário', 'calendario' ) . $tab( 'kanban', 'Kanban', 'projetos' ) . $tab( 'lista', 'Lista', 'lista' ) . '</div><button type="button" class="btn btn--primary" data-open="novo-post" data-date="">' . lk_icon( 'mais', 16 ) . '<span>Post</span></button>';
+$actions = '<a class="btn btn--ghost" href="' . esc_url( lk_panel_url( 'importar', 0, array_filter( array( 'cliente' => $cid ) ) ) ) . '">' . lk_icon( 'upload', 16 ) . '<span>Importar planilha</span></a>' . ( $cid ? '<a class="btn btn--ghost" href="' . esc_url( lk_panel_url( 'planejamento', 0, array( 'cliente' => $cid, 'mes' => $ym ) ) ) . '">' . lk_icon( 'lista', 16 ) . '<span>Planejamento</span></a>' : '' ) . '<div class="seg">' . $tab( 'calendario', 'Calendário', 'calendario' ) . $tab( 'kanban', 'Kanban', 'projetos' ) . $tab( 'lista', 'Lista', 'lista' ) . '</div><button type="button" class="btn btn--primary" data-open="novo-post" data-date="">' . lk_icon( 'mais', 16 ) . '<span>Post</span></button>';
 lk_panel_start( $client ? 'Conteúdo · ' . lk_client_label( $client ) : 'Conteúdo', 'conteudo', $actions );
 $badge = function ( $p ) use ( $stages ) {
 	$late = lk_post_late( $p );
@@ -54,7 +54,7 @@ $nets = function ( $p ) {
 		<input type="hidden" name="meus" value="0"><label class="chk"><input type="checkbox" name="meus" value="1" onchange="this.form.submit()"<?php checked( $mine ); ?>> Só o que está comigo</label>
 	</form>
 	<?php echo $client ? lk_quota_html( $client, $ym ) : ''; // phpcs:ignore ?>
-	<?php if ( $client ) : ?>
+	<?php if ( $client && ! lk_manage_only() ) : ?>
 		<span class="acc-row"><?php foreach ( lk_networks() as $n => $nl ) : ?><em class="badge <?php echo isset( $accs[ $n ] ) ? 'badge--ok' : 'badge--off'; ?>"><?php echo esc_html( $nl . ( isset( $accs[ $n ] ) ? '' : ': não vinculado' ) ); ?></em><?php endforeach; ?></span>
 	<?php endif; ?>
 </div>
