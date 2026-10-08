@@ -783,6 +783,7 @@ function lk_install_tables() {
 			due_date date NULL,
 			value decimal(12,2) NOT NULL DEFAULT 0,
 			cycle varchar(20) NOT NULL DEFAULT 'anual',
+			paid tinyint(1) NOT NULL DEFAULT 0,
 			notes text NULL,
 			notified_days int(11) NOT NULL DEFAULT 999,
 			created_at datetime NOT NULL,

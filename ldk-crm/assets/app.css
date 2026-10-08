@@ -3366,3 +3366,13 @@ body.lk-lobby { margin: 0; background: #02060b; }
 	.ctr-nav { position: static; flex-direction: row; flex-wrap: wrap; }
 	.ctr-nav .side-label { width: 100%; }
 }
+
+/* Tags de serviço ativo + pagamento */
+.svc-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: -4px 0 4px; }
+.svc-tags { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 5px; }
+.svc-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; line-height: 1.6; background: var(--bg); border: 1px solid var(--line); color: var(--ink-3); white-space: nowrap; }
+.svc-tag b { font-weight: 700; }
+.svc-tag--ok { background: var(--ok-soft); border-color: #c9ecca; color: var(--ok-text); }
+.svc-tag--wait { background: var(--warn-soft); border-color: #f3dfa8; color: var(--warn-text); }
+.svc-tag--late { background: var(--late-soft); border-color: #f3c7c7; color: var(--late-text); }
+.table-row .svc-tags { margin-top: 6px; }

@@ -19,6 +19,8 @@ lk_panel_start( $label, 'clientes', $actions );
 
 <a class="back" href="<?php echo esc_url( lk_panel_url( 'clientes' ) ); ?>"><?php echo lk_icon( 'voltar', 16 ); // phpcs:ignore ?> Clientes</a>
 
+<?php $svc_tags = lk_client_service_tags_html( $c ); if ( $svc_tags ) : ?><div class="svc-bar"><span class="muted small">Serviços ativos</span><?php echo $svc_tags; // phpcs:ignore WordPress.Security.EscapeOutput ?></div><?php endif; ?>
+
 <div class="detail-grid">
 	<div class="detail-main">
 		<?php if ( $invite ) : ?>
