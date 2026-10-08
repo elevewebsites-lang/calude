@@ -157,6 +157,7 @@ function lk_route() {
 			'contratos'   => array( 'contratos', 'clientes' ),
 			'vencimentos' => array( 'vencimentos', 'clientes' ),
 			'importar'    => array( 'importar', 'conteudo' ),
+			'relatorio-importar' => array( 'relatorio-importar', 'relatorios' ),
 			'prospeccao'  => array( 'prospeccao', 'leads' ),
 			'gamificacao' => array( 'gamificacao', 'admin' ),
 		);

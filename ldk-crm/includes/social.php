@@ -448,7 +448,11 @@ add_action(
 add_action( 'lk_publish_tick', 'lk_publish_due' );
 function lk_publish_due() {
 	if ( function_exists( 'lk_manage_only' ) && lk_manage_only() ) {
-		return; // modo gerenciamento: nada é publicado pelo sistema
+		// Modo gerenciamento: o sistema não publica. O post agendado no mLabs vira "Publicado" sozinho quando chega a hora.
+		foreach ( lk_posts( 'p.stage = %s AND p.scheduled_at IS NOT NULL AND p.scheduled_at <= %s', array( lk_stage_for( 'agendado' ), lk_now() ), 'p.scheduled_at LIMIT 50' ) as $p ) {
+			lk_post_move( $p, lk_stage_for( 'publicado' ), 'Marcado como publicado no horário agendado (mLabs).' );
+		}
+		return;
 	}
 	if ( get_transient( 'lk_publishing' ) ) {
 		return;

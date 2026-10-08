@@ -34,6 +34,7 @@ $tabs = array(
 	'drive'       => array( 'Drive e arquivos', 'drive', $n_files ),
 	'acessos'     => array( 'Acessos', 'chave', $n_acc ),
 	'vencimentos' => array( 'Vencimentos', 'globo', $n_late ),
+	'relatorios'  => array( 'Relatórios', 'grafico', 0 ),
 	'reunioes'    => array( 'Reuniões', 'relogio', 0 ),
 );
 if ( ! $manage ) {
@@ -237,6 +238,16 @@ $ym_nxt = gmdate( 'Y-m', strtotime( $ym_now . '-01 +1 month' ) );
 
 <div class="ctab-panel" data-tab-panel="vencimentos" hidden>
 	<?php echo lk_client_renewals_html( $c ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+</div>
+
+<div class="ctab-panel" data-tab-panel="relatorios" hidden>
+	<?php $creps = lk_rows( 'reports', 'client_id = %d', array( $c->id ), 'period DESC, id DESC' ); ?>
+	<section class="card" id="relatorios">
+		<div class="card-head"><h3>Relatórios</h3><a class="btn btn--primary btn--sm" href="<?php echo esc_url( lk_panel_url( 'relatorio-importar', 0, array( 'cliente' => $c->id ) ) ); ?>"><?php echo lk_icon( 'upload', 15 ); // phpcs:ignore ?><span>Subir relatório do mLabs</span></a></div>
+		<p class="muted small">Suba o PDF que o mLabs envia e o sistema monta o relatório no padrão da plataforma.</p>
+		<?php if ( ! $creps ) : ?><p class="muted small">Nenhum relatório ainda.</p><?php endif; ?>
+		<ul class="mini-list"><?php foreach ( $creps as $rp ) : ?><li><a href="<?php echo esc_url( lk_panel_url( 'relatorio', $rp->id ) ); ?>"><strong><?php echo esc_html( ucfirst( lk_month_label( $rp->period ) ) ); ?></strong><small><?php echo esc_html( lk_report_kind_label( $rp ) ); ?> · <?php echo esc_html( 'publicado' === $rp->status ? ( $rp->sent_at ? 'enviado' : 'publicado' ) : 'rascunho' ); ?></small></a><a class="btn btn--ghost btn--sm" href="<?php echo esc_url( lk_report_url( $rp ) ); ?>" target="_blank" rel="noopener">Ver</a></li><?php endforeach; ?></ul>
+	</section>
 </div>
 
 <div class="ctab-panel" data-tab-panel="reunioes" hidden>
