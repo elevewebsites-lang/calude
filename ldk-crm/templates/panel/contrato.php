@@ -50,6 +50,7 @@ lk_panel_start( 'Contrato · ' . lk_client_label( $client ), 'clientes', $acoes 
 		<div class="pay-row"><span><strong><?php echo esc_html( $types[ $sk ]['name'] ); ?></strong><small>Modelo: <?php echo esc_html( lk_form_defaults()[ $types[ $sk ]['briefing'] ]['title'] ?? 'Briefing' ); ?></small></span>
 			<?php lk_form( 'form_quick', 'inline-form' ); ?><input type="hidden" name="client_id" value="<?php echo (int) $client->id; ?>"><input type="hidden" name="ref" value="default:<?php echo esc_attr( $types[ $sk ]['briefing'] ); ?>"><button type="submit" class="btn btn--primary btn--sm" data-confirm="Enviar este briefing para <?php echo esc_attr( lk_client_label( $client ) ); ?>?">Enviar briefing</button></form></div>
 	<?php endforeach; ?>
+	<?php if ( in_array( 'hospedagem', $subs, true ) ) : ?><p class="muted small">Hospedagem e domínio: depois de assinado, cadastre as datas de vencimento na <a href="<?php echo esc_url( lk_panel_url( 'cliente', $client->id ) ); ?>#vencimentos">ficha do cliente</a> para a equipe ser avisada antes de vencer.</p><?php endif; ?>
 </section>
 <?php endif; ?>
 <?php echo lk_contract_parties_html( $k, $client ); // phpcs:ignore ?>

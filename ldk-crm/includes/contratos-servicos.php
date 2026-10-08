@@ -35,6 +35,11 @@ function lk_service_types() {
 				'services' => array( 'Criação de site ou landing page', 'Configuração de domínio e hospedagem', 'Integração com WhatsApp e formulários', 'Suporte após a entrega' ),
 				'briefing' => 'briefing_site',
 			),
+			'hospedagem' => array(
+				'name'     => 'Hospedagem e domínio',
+				'services' => array( 'Registro e renovação do domínio', 'Hospedagem do site com certificado SSL', 'Contas de e-mail profissional', 'Cópias de segurança e monitoramento', 'Aviso de vencimento antes da renovação' ),
+				'briefing' => 'briefing_hospedagem',
+			),
 			'branding'   => array(
 				'name'     => 'Identidade visual',
 				'services' => array( 'Logotipo e variações', 'Paleta de cores e tipografia', 'Manual de marca', 'Papelaria e peças de apresentação' ),
@@ -188,6 +193,25 @@ function lk_service_briefings() {
 					lk_fq( 'short', 'Qual domínio e onde está registrado?', array(), false ),
 					lk_fq( 'yesno', 'Já tem textos e fotos, ou a gente produz?' ),
 					lk_fq( 'multi', 'Integrações desejadas', array( 'WhatsApp', 'Formulário por e-mail', 'Google Maps', 'Instagram', 'Agenda online', 'Pagamento' ), false, true ),
+				) ),
+			) ),
+		),
+		'briefing_hospedagem' => array(
+			'kind'   => 'briefing',
+			'title'  => 'Briefing · Hospedagem e domínio',
+			'intro'  => 'Precisamos saber o que já existe para cuidar da hospedagem e do domínio sem tirar o site do ar.',
+			'schema' => array( 'steps' => array(
+				array( 'title' => 'Domínio', 'questions' => array(
+					lk_fq( 'yesno', 'Você já tem um domínio registrado?' ),
+					lk_fq( 'short', 'Qual é o domínio? (ex.: meusite.com.br)', array(), false ),
+					lk_fq( 'short', 'Onde ele está registrado e em nome de quem?', array(), false ),
+					lk_fq( 'short', 'Data de vencimento do domínio (se souber)', array(), false ),
+				) ),
+				array( 'title' => 'Hospedagem e e-mail', 'questions' => array(
+					lk_fq( 'yesno', 'O site já está hospedado em algum lugar?' ),
+					lk_fq( 'short', 'Qual empresa de hospedagem e até quando está pago?', array(), false ),
+					lk_fq( 'multi', 'O que você precisa?', array( 'Hospedar o site', 'Registrar um domínio novo', 'Transferir domínio ou site para nós', 'E-mails profissionais', 'Certificado SSL (cadeado)' ), true, true ),
+					lk_fq( 'short', 'Quantas contas de e-mail você precisa?', array(), false ),
 				) ),
 			) ),
 		),
