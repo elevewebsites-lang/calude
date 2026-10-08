@@ -43,7 +43,7 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 <?php if ( $send && $send['wa'] ) : ?>
 	<section class="card card--accent ready-bar"><div><strong>Enviado por e-mail.</strong> Reforce pelo WhatsApp com a mensagem pronta:</div><a class="btn btn--wa" href="<?php echo esc_url( $send['wa'] ); ?>" target="_blank" rel="noopener"><?php echo lk_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>Mandar no WhatsApp</span></a></section>
 <?php endif; ?>
-<?php if ( $p->publish_error ) : ?><div class="flash flash--erro"><strong>Não publicou:</strong> <?php echo esc_html( $p->publish_error ); ?></div><?php endif; ?>
+<?php if ( $p->publish_error && ! lk_manage_only() ) : ?><div class="flash flash--erro"><strong>Não publicou:</strong> <?php echo esc_html( $p->publish_error ); ?></div><?php endif; ?>
 <?php if ( 'alteracao' === $p->client_status ) : ?><div class="flash flash--warn"><strong>O cliente pediu ajuste na <?php echo esc_html( $p->change_target ); ?>.</strong> <?php echo 'arte' === $p->change_target ? 'Está com o design.' : 'Está com o social media: ajuste a legenda e reenvie.'; ?></div><?php endif; ?>
 
 <div class="split">
@@ -68,7 +68,7 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 				<?php endif; ?>
 				<?php if ( $wa && $p->sent_at ) : ?><a class="btn btn--wa" href="<?php echo esc_url( $wa ); ?>" target="_blank" rel="noopener"><?php echo lk_icon( 'whatsapp', 16 ); // phpcs:ignore ?><span>WhatsApp</span></a><?php endif; ?>
 				<button type="button" class="btn btn--ghost" data-copy="<?php echo esc_attr( lk_post_url( $p ) ); ?>">Copiar link de aprovação</button>
-				<?php if ( $p->stage === lk_stage_for( 'agendado' ) || $p->publish_error ) : ?>
+				<?php if ( ! lk_manage_only() && ( $p->stage === lk_stage_for( 'agendado' ) || $p->publish_error ) ) : ?>
 					<?php lk_action_button( 'post_publish_now', array( 'id' => $p->id ), 'Publicar agora', 'btn btn--ghost', 'Publicar agora nas redes marcadas?' ); ?>
 				<?php endif; ?>
 				<?php if ( $p->stage !== lk_stage_for( 'publicado' ) ) : ?><?php lk_action_button( 'post_mark_published', array( 'id' => $p->id ), 'Marcar como publicado', 'btn btn--link btn--sm' ); ?><?php endif; ?>
@@ -142,6 +142,7 @@ lk_panel_start( $p->title, 'conteudo', ob_get_clean() );
 		</section>
 	</div>
 	<aside class="split-side">
+		<?php if ( lk_manage_only() ) { echo lk_post_mlabs_html( $p ); } // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		<section class="card">
 			<div class="card-head"><h3>Post</h3></div>
 			<?php lk_post_form( $p ); ?>

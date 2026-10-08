@@ -54,7 +54,7 @@ $nets = function ( $p ) {
 		<input type="hidden" name="meus" value="0"><label class="chk"><input type="checkbox" name="meus" value="1" onchange="this.form.submit()"<?php checked( $mine ); ?>> Só o que está comigo</label>
 	</form>
 	<?php echo $client ? lk_quota_html( $client, $ym ) : ''; // phpcs:ignore ?>
-	<?php if ( $client ) : ?>
+	<?php if ( $client && ! lk_manage_only() ) : ?>
 		<span class="acc-row"><?php foreach ( lk_networks() as $n => $nl ) : ?><em class="badge <?php echo isset( $accs[ $n ] ) ? 'badge--ok' : 'badge--off'; ?>"><?php echo esc_html( $nl . ( isset( $accs[ $n ] ) ? '' : ': não vinculado' ) ); ?></em><?php endforeach; ?></span>
 	<?php endif; ?>
 </div>

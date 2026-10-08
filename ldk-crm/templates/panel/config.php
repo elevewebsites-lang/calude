@@ -9,10 +9,16 @@ $sec = function ( $key ) use ( $s ) {
 lk_panel_start( 'Configurações', 'config' );
 ?>
 <nav class="config-nav">
-	<a href="#marca">Marca</a><a href="#producao">Esteira e funil</a><a href="#redes">Redes e anúncios</a><a href="#pagamento">Pagamento</a><a href="#email">E-mail</a><a href="#google">Google</a><a href="#formulario-site">Site</a><a href="#seguranca">Segurança</a>
+	<a href="#modo">Modo de uso</a><a href="#marca">Marca</a><a href="#producao">Esteira e funil</a><a href="#redes">Redes e anúncios</a><a href="#pagamento">Pagamento</a><a href="#email">E-mail</a><a href="#google">Google</a><a href="#formulario-site">Site</a><a href="#seguranca">Segurança</a>
 </nav>
 
 <?php lk_form( 'settings_save', 'wizard' ); ?>
+	<section class="card step" id="modo">
+		<div class="step-head"><span class="step-n">00</span><div><h3>Modo de uso</h3><p class="muted small">Define se o sistema só gerencia o trabalho ou também publica nas redes.</p></div></div>
+		<?php lk_select( 'modo_gestao', 'Como usar o CRM agora', array( '1' => 'Só gerenciamento: sem postar e sem vincular redes sociais (o agendamento é feito à mão no mLabs)', '0' => 'Completo: vincular Instagram/Facebook e publicar pelo sistema' ), $s['modo_gestao'] ); ?>
+		<p class="muted small">No modo "só gerenciamento" ficam escondidos: vincular Instagram e outras redes, "Onde publicar" e "Publicar agora". A publicação automática fica parada. Cada post ganha o cartão <strong>Para agendar no mLabs</strong>, com a arte, a legenda e o botão para marcar como agendado.</p>
+	</section>
+
 	<section class="card step" id="marca">
 		<div class="step-head"><span class="step-n">01</span><div><h3>Marca e contato</h3></div></div>
 		<div class="grid-2">

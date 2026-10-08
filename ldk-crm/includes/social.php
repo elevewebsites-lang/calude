@@ -447,6 +447,9 @@ add_action(
 
 add_action( 'lk_publish_tick', 'lk_publish_due' );
 function lk_publish_due() {
+	if ( function_exists( 'lk_manage_only' ) && lk_manage_only() ) {
+		return; // modo gerenciamento: nada é publicado pelo sistema
+	}
 	if ( get_transient( 'lk_publishing' ) ) {
 		return;
 	}

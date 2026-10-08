@@ -154,6 +154,7 @@ function lk_install_tables() {
 		'CREATE TABLE ' . lk_table( 'files' ) . " (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			project_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			client_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			label varchar(190) NOT NULL DEFAULT '',
 			url text NULL,
 			kind varchar(20) NOT NULL DEFAULT 'link',
@@ -167,6 +168,7 @@ function lk_install_tables() {
 		'CREATE TABLE ' . lk_table( 'access' ) . " (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			project_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			client_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			label varchar(190) NOT NULL DEFAULT '',
 			url varchar(255) NOT NULL DEFAULT '',
 			login varchar(190) NOT NULL DEFAULT '',

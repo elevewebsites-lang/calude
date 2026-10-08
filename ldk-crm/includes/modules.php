@@ -31,6 +31,9 @@ function lk_module( $name ) {
  * A página do painel pertence a um módulo desligado?
  */
 function lk_page_off( $slug ) {
+	if ( 'redes' === $slug && function_exists( 'lk_manage_only' ) && lk_manage_only() ) {
+		return true; // modo gerenciamento: sem vincular redes
+	}
 	foreach ( lk_module_map() as $mod => $info ) {
 		if ( in_array( $slug, $info[1], true ) && ! lk_module( $mod ) ) {
 			return true;

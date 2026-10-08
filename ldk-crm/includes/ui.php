@@ -156,7 +156,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 		unset( $items['Operação']['apontamentos'] );
 	}
 	?>
-<body class="lk lk-panel">
+<body class="lk lk-panel<?php echo lk_manage_only() ? ' modo-gestao' : ''; ?>">
 <div class="app">
 	<aside class="side" id="side">
 		<a class="side-brand" href="<?php echo esc_url( lk_panel_url() ); ?>">
