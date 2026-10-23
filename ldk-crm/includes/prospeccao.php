@@ -175,52 +175,66 @@ function lk_api_prospect_email( WP_REST_Request $r ) {
 }
 
 function lk_api_prospect_add( WP_REST_Request $r ) {
-	$funnel = array_keys( lk_funnel() );
-	$known  = lk_prospect_known();
-	$added  = 0;
-	$skip   = 0;
-	$ids    = array();
+	$known = lk_prospect_known();
+	$added = 0;
+	$skip  = 0;
 	foreach ( (array) $r['items'] as $it ) {
-		$name  = sanitize_text_field( $it['name'] ?? '' );
-		$phone = sanitize_text_field( $it['phone'] ?? '' );
-		$email = sanitize_email( $it['email'] ?? '' );
-		$pid   = preg_replace( '/[^\w-]/', '', (string) ( $it['id'] ?? '' ) );
-		$d     = lk_digits( $phone );
-		if ( '' === $name || ( $pid && isset( $known['places'][ $pid ] ) ) || ( strlen( $d ) >= 8 && isset( $known['phones'][ substr( $d, -8 ) ] ) ) || ( $email && isset( $known['emails'][ strtolower( $email ) ] ) ) ) {
+		if ( lk_prospect_insert( (array) $it, $known ) ) {
+			$added++;
+		} else {
 			$skip++;
-			continue;
 		}
-		$notes = array(
-			'Prospecção Google: "' . sanitize_text_field( $it['query'] ?? '' ) . '"',
-			! empty( $it['niche'] ) ? 'Segmento: ' . sanitize_text_field( $it['niche'] ) : '',
-			! empty( $it['website'] ) ? 'Site: ' . esc_url_raw( $it['website'] ) : '',
-			! empty( $it['instagram'] ) ? 'Instagram: @' . preg_replace( '/[^A-Za-z0-9._]/', '', (string) $it['instagram'] ) . ' (https://instagram.com/' . preg_replace( '/[^A-Za-z0-9._]/', '', (string) $it['instagram'] ) . ')' : '',
-			! empty( $it['address'] ) ? 'Endereço: ' . sanitize_text_field( $it['address'] ) : '',
-			! empty( $it['rating'] ) ? 'Nota no Google: ' . (float) $it['rating'] . ' (' . (int) ( $it['count'] ?? 0 ) . ' avaliações)' : '',
-			! empty( $it['maps'] ) ? 'Maps: ' . esc_url_raw( $it['maps'] ) : '',
-			$pid ? 'place:' . $pid : '',
-		);
-		$id = lk_insert(
-			'leads',
-			array(
-				'name'     => '',
-				'company'  => $name,
-				'email'    => $email,
-				'whatsapp' => $phone,
-				'source'   => 'Prospecção Google',
-				'stage'    => $funnel[0],
-				'notes'    => implode( "\n", array_filter( $notes ) ),
-			)
-		);
-		lk_lead_log( $id, 'Lead criado pela Prospecção Google.' );
-		if ( $pid ) {
-			$known['places'][ $pid ] = 'lead';
-		}
-		if ( strlen( $d ) >= 8 ) {
-			$known['phones'][ substr( $d, -8 ) ] = 'lead';
-		}
-		$ids[] = $id;
-		$added++;
 	}
 	return array( 'added' => $added, 'skipped' => $skip, 'funnel' => lk_panel_url( 'leads' ) );
+}
+
+/**
+ * Empresa da busca → lead no funil (sem duplicar quem já está no funil ou é cliente).
+ * $known é atualizado; $extra completa a linha do lead (origem, agente do SDR…). Devolve o id ou 0.
+ */
+function lk_prospect_insert( $it, &$known, $extra = array() ) {
+	$funnel = array_keys( lk_funnel() );
+	$name   = sanitize_text_field( $it['name'] ?? '' );
+	$phone  = sanitize_text_field( $it['phone'] ?? '' );
+	$email  = sanitize_email( $it['email'] ?? '' );
+	$pid    = preg_replace( '/[^\w-]/', '', (string) ( $it['id'] ?? '' ) );
+	$d      = lk_digits( $phone );
+	if ( '' === $name || ( $pid && isset( $known['places'][ $pid ] ) ) || ( strlen( $d ) >= 8 && isset( $known['phones'][ substr( $d, -8 ) ] ) ) || ( $email && isset( $known['emails'][ strtolower( $email ) ] ) ) || isset( $known['names'][ sanitize_title( $name ) ] ) ) {
+		return 0;
+	}
+	$ig    = preg_replace( '/[^A-Za-z0-9._]/', '', (string) ( $it['instagram'] ?? '' ) );
+	$notes = array(
+		'Prospecção Google: "' . sanitize_text_field( $it['query'] ?? '' ) . '"',
+		! empty( $it['niche'] ) ? 'Segmento: ' . sanitize_text_field( $it['niche'] ) : '',
+		! empty( $it['website'] ) ? 'Site: ' . esc_url_raw( $it['website'] ) : '',
+		$ig ? 'Instagram: @' . $ig . ' (https://instagram.com/' . $ig . ')' : '',
+		! empty( $it['address'] ) ? 'Endereço: ' . sanitize_text_field( $it['address'] ) : '',
+		! empty( $it['rating'] ) ? 'Nota no Google: ' . (float) $it['rating'] . ' (' . (int) ( $it['count'] ?? 0 ) . ' avaliações)' : '',
+		! empty( $it['maps'] ) ? 'Maps: ' . esc_url_raw( $it['maps'] ) : '',
+		$pid ? 'place:' . $pid : '',
+	);
+	$extra = $extra + array( 'source' => 'Prospecção Google' );
+	$id    = lk_insert(
+		'leads',
+		array(
+			'name'     => '',
+			'company'  => $name,
+			'email'    => $email,
+			'whatsapp' => $phone,
+			'stage'    => $funnel[0],
+			'notes'    => implode( "\n", array_filter( $notes ) ),
+		) + $extra
+	);
+	lk_lead_log( $id, 'Lead criado pela ' . $extra['source'] . '.' );
+	if ( $pid ) {
+		$known['places'][ $pid ] = 'lead';
+	}
+	if ( strlen( $d ) >= 8 ) {
+		$known['phones'][ substr( $d, -8 ) ] = 'lead';
+	}
+	if ( $email ) {
+		$known['emails'][ strtolower( $email ) ] = 'lead';
+	}
+	$known['names'][ sanitize_title( $name ) ] = 'lead';
+	return $id;
 }

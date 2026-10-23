@@ -13,6 +13,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function lk_changelog() {
 	return array(
+		'1.28.0' => array(
+			'date'  => '2026-10-23',
+			'title' => 'Time de SDR com IA',
+			'items' => array(
+				array( '🤖', 'Contrate SDRs de IA', 'Em Comercial → Time de SDR, crie agentes com nicho, cidade, oferta e meta de contatos por dia. A cada hora eles buscam empresas novas no Google, leem o site e dão uma nota de 0 a 10 para o encaixe.' ),
+				array( '✍️', 'Mensagens prontas para aprovar', 'Para cada empresa boa, o SDR cria o lead no funil e escreve o primeiro contato (WhatsApp ou e-mail). Nada sai sozinho: você edita, envia ou descarta na fila.' ),
+				array( '🔁', 'Follow-up automático', 'Sem resposta depois de X dias, o SDR escreve o próximo follow-up (com um ângulo novo) e, no último, se despede. Marcou "Respondeu"? O lead vai para a próxima etapa e vira tarefa para hoje.' ),
+			),
+		),
 		'1.16.0' => array(
 			'date'  => '2026-10-05',
 			'title' => 'Dashboard personalizável',

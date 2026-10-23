@@ -3347,3 +3347,20 @@ body.lk-lobby { margin: 0; background: #02060b; }
 .vcover{display:grid;gap:10px}
 .vcover img{width:96px;aspect-ratio:9/16;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
 @media (max-width:640px){.vopts-r{grid-template-columns:1fr}}
+
+/* ---------- Time de SDR ---------- */
+.sdr-queue, .sdr-agents { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 14px; }
+.sdr-agents { margin-bottom: 16px; }
+.sdr-item, .sdr-agent { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); min-width: 0; }
+.sdr-agent.is-off { opacity: .65; }
+.sdr-item-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.sdr-item-head > span:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sdr-item-head small { font-size: 12px; }
+.sdr-why { margin: 0; }
+.sdr-form textarea { width: 100%; font-size: 14px; line-height: 1.5; }
+.sdr-form { gap: 8px; }
+.sdr-btns, .sdr-more { justify-content: flex-start; flex-wrap: wrap; }
+.sdr-more { border-top: 1px solid var(--line); padding-top: 10px; }
+.sdr-edit > summary, .sdr-new > summary { list-style: none; cursor: pointer; display: inline-flex; }
+.sdr-edit > summary::-webkit-details-marker, .sdr-new > summary::-webkit-details-marker { display: none; }
+.sdr-edit[open] > summary, .sdr-new[open] > summary { margin-bottom: 12px; }

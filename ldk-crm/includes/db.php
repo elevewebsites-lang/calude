@@ -259,6 +259,8 @@ function lk_install_tables() {
 			proposal_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			position int(11) NOT NULL DEFAULT 0,
 			last_contact datetime NULL,
+			sdr_agent bigint(20) unsigned NOT NULL DEFAULT 0,
+			sdr_status varchar(20) NOT NULL DEFAULT '',
 			created_at datetime NOT NULL,
 			updated_at datetime NOT NULL,
 			PRIMARY KEY  (id),
@@ -827,6 +829,51 @@ function lk_install_tables() {
 			PRIMARY KEY  (id),
 			KEY client_id (client_id),
 			KEY starts_at (starts_at)
+		) $c;"
+	);
+
+	// Time de SDR (IA): os agentes e a fila de mensagens esperando aprovação.
+	dbDelta(
+		'CREATE TABLE ' . lk_table( 'sdr_agents' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			name varchar(60) NOT NULL DEFAULT '',
+			emoji varchar(16) NOT NULL DEFAULT '',
+			niche varchar(190) NOT NULL DEFAULT '',
+			city varchar(190) NOT NULL DEFAULT '',
+			offer text NULL,
+			ideal text NULL,
+			channel varchar(20) NOT NULL DEFAULT 'auto',
+			daily_limit int(11) NOT NULL DEFAULT 10,
+			min_score int(11) NOT NULL DEFAULT 5,
+			followups int(11) NOT NULL DEFAULT 2,
+			gap_days int(11) NOT NULL DEFAULT 3,
+			active tinyint(1) NOT NULL DEFAULT 1,
+			page_token text NULL,
+			last_run datetime NULL,
+			last_note varchar(255) NOT NULL DEFAULT '',
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id)
+		) $c;"
+	);
+	dbDelta(
+		'CREATE TABLE ' . lk_table( 'sdr_queue' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			agent_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			lead_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			step int(11) NOT NULL DEFAULT 0,
+			channel varchar(20) NOT NULL DEFAULT 'whatsapp',
+			subject varchar(190) NOT NULL DEFAULT '',
+			body text NULL,
+			score int(11) NOT NULL DEFAULT 0,
+			reason varchar(255) NOT NULL DEFAULT '',
+			status varchar(20) NOT NULL DEFAULT 'pendente',
+			sent_at datetime NULL,
+			sent_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY agent_id (agent_id),
+			KEY lead_id (lead_id),
+			KEY status (status)
 		) $c;"
 	);
 

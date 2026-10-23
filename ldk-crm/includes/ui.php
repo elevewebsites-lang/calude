@@ -132,6 +132,7 @@ function lk_panel_start( $title, $active = '', $actions = '' ) {
 			'propostas'  => array( 'Propostas', 'proposta', 'orcamentos' ),
 			'propostas-servicos' => array( 'Serviços das propostas', 'lista', 'orcamentos' ),
 			'prospeccao' => array( 'Prospecção', 'busca', 'leads' ),
+			'sdr'        => array( 'Time de SDR', 'megafone', 'leads' ),
 			'marketing'  => array( 'Ideias de conteúdo', 'lampada', 'leads' ),
 			'emails'     => array( 'E-mails para clientes', 'email', 'emails' ),
 		),

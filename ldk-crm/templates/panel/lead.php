@@ -94,6 +94,7 @@ lk_panel_start( $label, 'leads', $actions );
 	</div>
 
 	<aside class="detail-side">
+		<?php lk_sdr_lead_box( $l ); ?>
 		<section class="card">
 			<div class="card-head"><h3>Dados</h3></div>
 			<?php lk_form( 'lead_save', 'stack' ); ?>
