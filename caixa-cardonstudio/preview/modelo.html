@@ -1,0 +1,251 @@
+<title>Caixa Cardon Studio 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: palco 3D grande à esquerda, ficha técnica e controles numa coluna estreita; empilha no celular */
+:root {
+  --bg: #eef0f3;
+  --panel: #ffffff;
+  --fg: #16191f;
+  --muted: #5b6270;
+  --line: #d6dae1;
+  --accent: #1f5bd8;
+  --stage: #dfe3ea;
+  --display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111318; --panel: #191c23; --fg: #e9ecf1; --muted: #9aa2b1; --line: #2b303b; --accent: #6f9bff; --stage: #1d2129;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111318; --panel: #191c23; --fg: #e9ecf1; --muted: #9aa2b1; --line: #2b303b; --accent: #6f9bff; --stage: #1d2129;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px;
+}
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 4vw, 38px); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; background: var(--stage); border-radius: 14px; overflow: hidden; aspect-ratio: 4 / 3.4; max-width: 100%; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.hint { position: absolute; left: 14px; bottom: 12px; font-family: var(--mono); font-size: 12px; color: var(--muted); pointer-events: none; }
+.angle { position: absolute; right: 14px; top: 12px; font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+aside { display: grid; gap: 16px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; }
+.card h2 { font-family: var(--display); font-weight: 500; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+button {
+  font: 500 14px var(--body); color: var(--fg); background: transparent;
+  border: 1px solid var(--line); border-radius: 8px; padding: 9px 14px; cursor: pointer;
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+button:focus-visible, .sw:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--line); padding: 0; cursor: pointer; }
+.sw[aria-checked="true"] { border-color: var(--fg); box-shadow: 0 0 0 2px var(--panel) inset; }
+dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; }
+dt { color: var(--muted); }
+dd { margin: 0; font-family: var(--mono); font-size: 13.5px; font-variant-numeric: tabular-nums; text-align: right; }
+ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.files { font-family: var(--mono); font-size: 13px; display: grid; gap: 4px; }
+.files span { color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Caixa Cardon Studio 3D</h1>
+    <span class="tag">200 × 200 × 300 mm · parede 2 mm · tampa com dobradiça</span>
+  </header>
+
+  <div class="grid">
+    <div class="stage" id="stage">
+      <span class="angle" id="angle">0°</span>
+      <span class="hint">arraste para girar · role para aproximar</span>
+    </div>
+
+    <aside>
+      <div class="card">
+        <h2>Tampa</h2>
+        <div class="row">
+          <button class="primary" id="toggle" type="button">Abrir tampa</button>
+          <button id="loop" type="button" aria-pressed="true">Abrindo e fechando</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Cor da caixa</h2>
+        <div class="swatches" id="swatches" role="radiogroup" aria-label="Cor da caixa"></div>
+        <span class="tag">A logo da tampa fica sempre branca.</span>
+      </div>
+
+      <div class="card">
+        <h2>Medidas</h2>
+        <dl>
+          <dt>Externa (fechada)</dt><dd>200 × 200 × 300 mm</dd>
+          <dt>Espaço interno</dt><dd>196 × 196 × 277 mm</dd>
+          <dt>Paredes e fundo</dt><dd>2 mm</dd>
+          <dt>Logo embutida</dt><dd>0,6 mm (3 camadas)</dd>
+          <dt>Pino da dobradiça</dt><dd>filamento 1,75 mm</dd>
+        </dl>
+      </div>
+
+      <div class="card">
+        <h2>Peças para imprimir</h2>
+        <div class="files">
+          <div>caixa_base.stl <span>· em pé</span></div>
+          <div>tampa_corpo.stl <span>· cor da caixa</span></div>
+          <div>tampa_logo_branco.stl <span>· branco</span></div>
+          <div>pino_dobradica.stl <span>· opcional</span></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { STLLoader } from "three/addons/loaders/STLLoader.js";
+
+const DATA = { base: "__BASE__", tampa: "__TAMPA__", logo: "__LOGO__" };
+const EIXO = __EIXO__;
+const ABERTA = 105; // graus
+const CORES = [
+  ["Preto", "#1b1c20"], ["Grafite", "#4a4f57"], ["Azul", "#1f4fb8"], ["Vermelho", "#c4262e"],
+  ["Verde", "#1f7a4c"], ["Rosa", "#e46fa3"], ["Amarelo", "#f2b705"], ["Roxo", "#6a3fb5"],
+];
+
+const stage = document.getElementById("stage");
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+stage.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 10, 5000);
+camera.position.set(520, 640, 1080);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 205, 0);
+controls.enableDamping = true;
+controls.minDistance = 300;
+controls.maxDistance = 1800;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f99, 1.6));
+const sol = new THREE.DirectionalLight(0xffffff, 2.2);
+sol.position.set(300, 700, 400);
+sol.castShadow = true;
+sol.shadow.bias = -0.0004;
+sol.shadow.normalBias = 1.5;
+sol.shadow.mapSize.set(2048, 2048);
+Object.assign(sol.shadow.camera, { left: -400, right: 400, top: 400, bottom: -400, near: 100, far: 2000 });
+scene.add(sol);
+const fill = new THREE.DirectionalLight(0xffffff, 0.6);
+fill.position.set(-500, 200, -300);
+scene.add(fill);
+
+const chao = new THREE.Mesh(new THREE.CircleGeometry(900, 64), new THREE.ShadowMaterial({ opacity: 0.18 }));
+chao.rotation.x = -Math.PI / 2;
+chao.receiveShadow = true;
+scene.add(chao);
+
+function geo(b64) {
+  const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const g = new STLLoader().parse(bin.buffer);
+  g.computeVertexNormals();
+  return g;
+}
+
+const corMat = new THREE.MeshStandardMaterial({ color: CORES[2][1], roughness: 0.55, metalness: 0.02 });
+const brancoMat = new THREE.MeshStandardMaterial({ color: 0xf7f7f5, roughness: 0.5 });
+
+// o modelo usa Z para cima; o grupo gira para o Y do three.js
+const modelo = new THREE.Group();
+modelo.rotation.x = -Math.PI / 2;
+scene.add(modelo);
+
+const base = new THREE.Mesh(geo(DATA.base), corMat);
+const pivo = new THREE.Group();
+pivo.position.set(0, EIXO.y, EIXO.z);
+const tampa = new THREE.Mesh(geo(DATA.tampa), corMat);
+const logo = new THREE.Mesh(geo(DATA.logo), brancoMat);
+for (const m of [tampa, logo]) { m.position.set(0, -EIXO.y, -EIXO.z); pivo.add(m); }
+for (const m of [base, tampa, logo]) { m.castShadow = true; m.receiveShadow = true; }
+modelo.add(base, pivo);
+
+function resize() {
+  const { width, height } = stage.getBoundingClientRect();
+  renderer.setSize(width, height, false);
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+resize();
+
+const reduz = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let angulo = 0, alvo = 0, emLoop = !reduz, espera = 0.8;
+const btn = document.getElementById("toggle");
+const btnLoop = document.getElementById("loop");
+const rot = document.getElementById("angle");
+btnLoop.setAttribute("aria-pressed", String(emLoop));
+
+btn.addEventListener("click", () => {
+  emLoop = false;
+  btnLoop.setAttribute("aria-pressed", "false");
+  alvo = alvo > 0 ? 0 : ABERTA;
+});
+btnLoop.addEventListener("click", () => {
+  emLoop = !emLoop;
+  btnLoop.setAttribute("aria-pressed", String(emLoop));
+});
+
+const sw = document.getElementById("swatches");
+CORES.forEach(([nome, hex], i) => {
+  const b = document.createElement("button");
+  b.className = "sw"; b.type = "button"; b.id = "cor-" + i;
+  b.style.background = hex; b.title = nome;
+  b.setAttribute("role", "radio"); b.setAttribute("aria-label", nome);
+  b.setAttribute("aria-checked", String(i === 2));
+  b.addEventListener("click", () => {
+    corMat.color.set(hex);
+    sw.querySelectorAll(".sw").forEach(x => x.setAttribute("aria-checked", String(x === b)));
+  });
+  sw.append(b);
+});
+
+const relogio = new THREE.Clock();
+function quadro() {
+  const dt = Math.min(relogio.getDelta(), 0.05);
+  if (emLoop && Math.abs(angulo - alvo) < 0.3) {
+    espera -= dt;
+    if (espera <= 0) { alvo = alvo > 0 ? 0 : ABERTA; espera = 1.2; }
+  }
+  angulo += (alvo - angulo) * Math.min(1, dt * 3.2);
+  pivo.rotation.x = -THREE.MathUtils.degToRad(angulo);
+  rot.textContent = Math.round(angulo) + "°";
+  btn.textContent = alvo > 0 ? "Fechar tampa" : "Abrir tampa";
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(quadro);
+}
+quadro();
+</script>
